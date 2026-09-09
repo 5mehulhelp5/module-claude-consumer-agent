@@ -1,0 +1,64 @@
+<?php
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\LucideIcons;
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+use MageOS\ClaudeConsumerAgent\ViewModel\Assistant;
+
+/** @var Escaper $escaper */
+/** @var Template $block */
+/** @var ViewModelRegistry $viewModels */
+
+/** @var LucideIcons $lucideIcons */
+$lucideIcons = $viewModels->require(LucideIcons::class);
+/** @var Assistant $assistant */
+$assistant = $viewModels->require(Assistant::class);
+$contactUrl = $assistant->contactUrl();
+$compact = (bool)$block->getData('compact');
+$autofocus = (bool)$block->getData('autofocus');
+?>
+<form x-data="initAiAgentComposer" @submit.prevent="submit" class="shrink-0 border-t border-container p-3 flex flex-col gap-2">
+    <div x-show="hasChips" class="flex flex-wrap gap-2">
+        <template x-for="chip in chips" :key="chip">
+            <button type="button" class="btn btn-secondary btn-size-sm disabled:opacity-50" :data-text="chip" :disabled="running" @click="pick" x-text="chip"></button>
+        </template>
+    </div>
+    <div class="flex items-end gap-2">
+        <textarea
+            :value="text"
+            @input="setText"
+            @keydown.enter="onEnter"
+            rows="1"
+            <?= $autofocus ? 'autofocus' : '' ?>
+            :disabled="disabled"
+            :placeholder="placeholder"
+            class="form-textarea flex-1 w-full min-h-11 resize-none max-h-32"
+        ></textarea>
+        <button
+            type="submit"
+            :disabled="cannotSend"
+            class="btn btn-primary btn-size-sm shrink-0"
+            aria-label="<?= $escaper->escapeHtmlAttr(__('Send')) ?>"
+        >
+            <span x-show="idle">
+                <?= $lucideIcons->sendHtml('', 18, 18, ['aria-hidden' => 'true']) ?>
+            </span>
+            <svg x-show="running" class="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+        </button>
+    </div>
+    <?php if (!$compact): ?>
+        <div class="flex items-center justify-between gap-2 text-xs text-secondary">
+            <span x-text="hint"></span>
+            <?php if ($contactUrl !== ''): ?>
+                <a href="<?= $escaper->escapeUrl($contactUrl) ?>" class="underline">
+                    <?= $escaper->escapeHtml($assistant->contactLabel()) ?>
+                </a>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+</form>

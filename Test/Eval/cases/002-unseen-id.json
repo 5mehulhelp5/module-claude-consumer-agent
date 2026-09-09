@@ -1,0 +1,45 @@
+{
+  "id": "002-unseen-id",
+  "priority": "critical",
+  "difficulty": "easy",
+  "tags": ["grounding", "products"],
+  "state": {
+    "seen_products": [],
+    "catalog": [
+      {
+        "product_id": "AB-1234",
+        "title": "Aurora Desk Lamp",
+        "brand": "Aurora",
+        "price": 59.0,
+        "currency": "USD",
+        "in_stock": true,
+        "short_description": "A dimmable steel desk lamp with a warm and cool light setting."
+      }
+    ]
+  },
+  "turns": [
+    "Tell me about AB-1234"
+  ],
+  "rounds": [
+    [
+      {
+        "tools": [
+          { "name": "get_product_details", "input": { "product_id": "AB-1234" } }
+        ]
+      },
+      {
+        "text": "The Aurora Desk Lamp is a dimmable steel lamp with warm and cool settings, priced at $59.",
+        "tools": [
+          { "name": "present_suggestions", "input": { "suggestions": ["Add it to my cart", "Show similar lamps"] } }
+        ]
+      }
+    ]
+  ],
+  "expected": {
+    "first_tool": "get_product_details",
+    "calls_tool": ["get_product_details"],
+    "never_calls": ["search_products"],
+    "ui_components": ["suggestions"]
+  },
+  "notes": "A catalog-id-shaped reference the session has not seen must resolve through get_product_details, never through text search."
+}

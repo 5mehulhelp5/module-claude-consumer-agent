@@ -1,0 +1,43 @@
+<?php
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\HyvaCsp;
+use Magento\Framework\Escaper;
+use MageOS\ClaudeConsumerAgent\Block\ProductAsk;
+
+/** @var Escaper $escaper */
+/** @var ProductAsk $block */
+/** @var HyvaCsp $hyvaCsp */
+/** @var ViewModelRegistry $viewModels */
+
+$hyvaCsp = $viewModels->require(HyvaCsp::class);
+?>
+<script>
+    function initAiAgentAsk() {
+        return {
+            ask() {
+                this.$dispatch('ai-agent:open', {
+                    view: 'chat',
+                    page: {type: 'product', productId: this.$el.dataset.productId}
+                });
+            }
+        };
+    }
+
+    window.addEventListener('alpine:init', () => {
+        Alpine.data('initAiAgentAsk', initAiAgentAsk);
+    }, {once: true});
+</script>
+<?php $hyvaCsp->registerInlineScript() ?>
+
+<button
+    type="button"
+    id="ai-agent-ask"
+    x-data="initAiAgentAsk"
+    @click="ask"
+    data-product-id="<?= $escaper->escapeHtmlAttr($block->getProductId()) ?>"
+    class="btn btn-secondary w-full"
+>
+    <?= $escaper->escapeHtml(__('Ask about this product')) ?>
+</button>

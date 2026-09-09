@@ -1,0 +1,45 @@
+{
+  "id": "003-product-page-first-turn",
+  "priority": "high",
+  "difficulty": "easy",
+  "tags": ["grounding", "product-page"],
+  "state": {
+    "seen_products": [],
+    "page": { "page_type": "product", "product_id": "CD-4455" },
+    "catalog": [
+      {
+        "product_id": "CD-4455",
+        "title": "Harbor Steel Water Bottle",
+        "brand": "Harbor",
+        "price": 24.0,
+        "currency": "USD",
+        "in_stock": true,
+        "short_description": "An insulated steel bottle that keeps drinks cold for a day."
+      }
+    ]
+  },
+  "turns": [
+    "Tell me more about this"
+  ],
+  "rounds": [
+    [
+      {
+        "tools": [
+          { "name": "get_product_details", "input": { "product_id": "CD-4455" } }
+        ]
+      },
+      {
+        "text": "This is the Harbor Steel Water Bottle, an insulated bottle that keeps drinks cold for a day. It is $24.",
+        "tools": [
+          { "name": "present_suggestions", "input": { "suggestions": ["Add it to my cart", "Compare with another bottle"] } }
+        ]
+      }
+    ]
+  ],
+  "expected": {
+    "first_tool": "get_product_details",
+    "calls_tool": ["get_product_details"],
+    "ui_components": ["suggestions"]
+  },
+  "notes": "A first turn on a product page must read that product before answering, not the page's own title text."
+}

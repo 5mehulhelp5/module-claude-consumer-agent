@@ -1,0 +1,75 @@
+<?php
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\LucideIcons;
+use Magento\Framework\Escaper;
+use MageOS\ClaudeConsumerAgent\Block\Surface;
+
+/** @var Escaper $escaper */
+/** @var Surface $block */
+/** @var ViewModelRegistry $viewModels */
+
+/** @var LucideIcons $lucideIcons */
+$lucideIcons = $viewModels->require(LucideIcons::class);
+$assistant = $block->getAssistant();
+$aiLabel = $assistant->aiLabelText();
+?>
+<?php if ($block->usesBundledCss()): ?>
+<link rel="stylesheet" href="<?= $escaper->escapeUrl($block->getBundledCssUrl()) ?>">
+<?php endif; ?>
+<template id="ai-agent-shell" data-ai-agent-shell>
+<dialog
+    id="ai-agent-overlay"
+    aria-labelledby="ai-agent-overlay-title"
+    x-data="initAiAgentOverlay"
+    x-bind="listeners"
+    x-show="open"
+    x-bind:inert="isClosed"
+    x-htmldialog.modeless="close"
+    closeby="closerequest"
+    class="m-0 p-0 z-50 fixed inset-x-0 bottom-0 top-auto w-full max-w-none h-[85vh] max-h-none rounded-t-xl shadow-xl open:flex flex-col md:inset-y-0 md:left-auto md:right-0 md:w-[600px] md:max-w-[95vw] md:h-screen md:rounded-none md:border-l md:border-container"
+>
+    <?= $block->getChildHtml('cart_line') ?>
+    <div class="shrink-0 flex items-center justify-between gap-2 border-b border-container p-4">
+        <div class="flex items-center gap-2">
+            <p id="ai-agent-overlay-title" class="font-medium">
+                <?= $escaper->escapeHtml($assistant->name()) ?>
+            </p>
+            <?php if ($aiLabel !== ''): ?>
+                <span class="text-xs uppercase text-secondary border border-container rounded px-1.5 py-0.5">
+                    <?= $escaper->escapeHtml($aiLabel) ?>
+                </span>
+            <?php endif; ?>
+        </div>
+        <div class="flex items-center gap-1">
+            <button
+                type="button"
+                x-show="hasTranscript"
+                class="p-2 text-primary hover:text-secondary"
+                @click="newConversation"
+                aria-label="<?= $escaper->escapeHtmlAttr(__('New conversation')) ?>"
+            >
+                <?= $lucideIcons->messageCirclePlusHtml('', 20, 20, ['aria-hidden' => 'true']) ?>
+            </button>
+            <button
+                type="button"
+                class="p-2 text-primary hover:text-secondary"
+                @click="close"
+                aria-label="<?= $escaper->escapeHtmlAttr(__('Close assistant')) ?>"
+            >
+                <?= $lucideIcons->xHtml('', 20, 20, ['aria-hidden' => 'true']) ?>
+            </button>
+        </div>
+    </div>
+    <?= $block->getChildHtml('start') ?>
+    <?= $block->getChildHtml('transcript') ?>
+    <?php
+    $composerBlock = $block->getChildBlock('composer');
+    if ($composerBlock) {
+        $composerBlock->setData('autofocus', true);
+    }
+    ?>
+    <?= $block->getChildHtml('composer') ?>
+</dialog>
+</template>

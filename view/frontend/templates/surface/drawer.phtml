@@ -1,0 +1,92 @@
+<?php
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\HeroiconsSolid;
+use Hyva\Theme\ViewModel\LucideIcons;
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+use MageOS\ClaudeConsumerAgent\ViewModel\Assistant;
+
+/** @var Escaper $escaper */
+/** @var Template $block */
+/** @var ViewModelRegistry $viewModels */
+
+$heroiconsSolid = $viewModels->require(HeroiconsSolid::class);
+/** @var LucideIcons $lucideIcons */
+$lucideIcons = $viewModels->require(LucideIcons::class);
+/** @var Assistant $assistant */
+$assistant = $viewModels->require(Assistant::class);
+?>
+<template id="ai-agent-drawer-shell" data-ai-agent-shell>
+<div
+    id="ai-agent-drawer-panel"
+    x-data="initAiAgentDrawer"
+    x-bind="listeners"
+    :class="panelClasses"
+    role="region"
+    aria-label="<?= $escaper->escapeHtmlAttr($assistant->name()) ?>"
+>
+    <template x-if="isChatView">
+        <div class="contents">
+            <?= $block->getChildHtml('cart_strip') ?>
+            <div class="shrink-0 flex items-center gap-2 pb-2 mb-2 border-b border-container">
+                <p class="grow text-sm font-semibold truncate" x-text="$store.aiAgent.config.assistantName"></p>
+                <template x-if="$store.aiAgent.config.showAiLabel">
+                    <span class="text-xxs uppercase tracking-wide bg-container-lighter text-secondary rounded px-1.5 py-0.5">
+                        <?= $escaper->escapeHtml(__('AI')) ?>
+                    </span>
+                </template>
+                <button
+                    type="button"
+                    x-show="hasTranscript"
+                    class="rounded-full p-1.5"
+                    @click="newConversation"
+                    aria-label="<?= $escaper->escapeHtmlAttr(__('New conversation')) ?>"
+                >
+                    <?= $lucideIcons->messageCirclePlusHtml('w-5 h-5', 20, 20, ['aria-hidden' => 'true']) ?>
+                </button>
+                <button
+                    type="button"
+                    class="rounded-full p-1.5"
+                    @click="close"
+                    aria-label="<?= $escaper->escapeHtmlAttr(__('Close assistant')) ?>"
+                >
+                    <?= $heroiconsSolid->xHtml('w-5 h-5', 20, 20, ['aria-hidden' => 'true']) ?>
+                </button>
+            </div>
+            <div x-show="showStart" class="grow overflow-y-auto min-h-0">
+                <?= $block->getChildHtml('start') ?>
+            </div>
+            <div x-show="isTranscriptView" class="grow overflow-hidden flex flex-col min-h-0">
+                <?= $block->getChildHtml('transcript') ?>
+            </div>
+            <?= $block->getChildHtml('composer') ?>
+        </div>
+    </template>
+    <template x-if="isCartView">
+        <div class="contents">
+            <div class="flex items-center gap-2">
+                <p class="shrink-0 text-sm font-semibold" x-text="$store.aiAgent.config.assistantName"></p>
+                <p class="grow min-w-0 truncate text-sm text-secondary" x-text="lastLine"></p>
+                <button
+                    type="button"
+                    class="shrink-0 btn btn-secondary btn-sm"
+                    @click="showChat"
+                >
+                    <?= $escaper->escapeHtml(__('Chat')) ?>
+                </button>
+            </div>
+            <div class="w-full">
+                <?php
+                $composerBlock = $block->getChildBlock('composer');
+                if ($composerBlock) {
+                    $composerBlock->setData('compact', true);
+                }
+                ?>
+                <?= $block->getChildHtml('composer') ?>
+            </div>
+        </div>
+    </template>
+</div>
+</template>

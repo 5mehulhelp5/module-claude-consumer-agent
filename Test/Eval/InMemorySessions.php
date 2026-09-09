@@ -1,0 +1,40 @@
+<?php
+declare(strict_types=1);
+
+namespace MageOS\ClaudeConsumerAgent\Test\Eval;
+
+use MageOS\ClaudeConsumerAgent\Api\Session\SessionRepositoryInterface;
+use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
+use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
+use MageOS\ClaudeConsumerAgent\Model\Session\Binding;
+
+/**
+ * Session persistence for the eval runner: every save lands in an in-memory map instead
+ * of the aiagent_session table, so a case never writes to the database.
+ */
+final class InMemorySessions implements SessionRepositoryInterface
+{
+    private array $states = [];
+
+    public function bind(?string $sessionId, SessionContext $ctx, string $surface = 'overlay'): Binding
+    {
+        return $this->create($ctx, $surface);
+    }
+
+    public function create(SessionContext $ctx, string $surface = 'overlay'): Binding
+    {
+        return new Binding($ctx->sessionId, null, new SessionState(), true, 0, $ctx);
+    }
+
+    public function save(Binding $binding, SessionState $state): bool
+    {
+        $this->states[$binding->sessionId] = $state;
+        $binding->expectedVersion++;
+        return true;
+    }
+
+    public function delete(string $sessionId): void
+    {
+        unset($this->states[$sessionId]);
+    }
+}

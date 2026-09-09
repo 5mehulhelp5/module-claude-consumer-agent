@@ -1,0 +1,82 @@
+{
+  "id": "012-category-page-best-sellers",
+  "priority": "high",
+  "difficulty": "medium",
+  "tags": ["page-context", "category-page", "best-sellers"],
+  "state": {
+    "seen_products": [],
+    "page": { "page_type": "category", "category_id": "1050", "category_name": "Rugs" },
+    "catalog": [
+      {
+        "product_id": "RG-3001",
+        "title": "Wool Diamond Rug",
+        "brand": "Kestrel",
+        "price": 220.0,
+        "currency": "USD",
+        "in_stock": true,
+        "short_description": "A hand-knotted wool rug with a diamond motif.",
+        "category_ids": ["1050"],
+        "qty_ordered": 40
+      },
+      {
+        "product_id": "RG-3002",
+        "title": "Jute Runner Rug",
+        "brand": "Kestrel",
+        "price": 95.0,
+        "currency": "USD",
+        "in_stock": true,
+        "short_description": "A natural jute runner for hallways.",
+        "category_ids": ["1050"],
+        "qty_ordered": 65
+      },
+      {
+        "product_id": "RG-3003",
+        "title": "Braided Cotton Rug",
+        "brand": "Kestrel",
+        "price": 60.0,
+        "currency": "USD",
+        "in_stock": true,
+        "short_description": "A reversible braided cotton rug.",
+        "category_ids": ["1050"],
+        "qty_ordered": 12
+      }
+    ]
+  },
+  "turns": [
+    "What are the best sellers in this category?"
+  ],
+  "rounds": [
+    [
+      {
+        "tools": [
+          { "name": "search_products", "input": { "filters": { "category_id": 1050, "sort": "best_sellers" } } }
+        ]
+      },
+      {
+        "text": "The best sellers in Rugs are the Jute Runner Rug, the Wool Diamond Rug, and the Braided Cotton Rug.",
+        "tools": [
+          {
+            "name": "present_products",
+            "input": {
+              "picks": [
+                { "product_id": "RG-3002", "reason": "The top seller in this category." },
+                { "product_id": "RG-3001", "reason": "The second best seller." },
+                { "product_id": "RG-3003", "reason": "The third best seller." }
+              ]
+            }
+          },
+          {
+            "name": "present_suggestions",
+            "input": { "suggestions": ["Show me the Jute Runner Rug", "Compare these rugs", "Something under $100"] }
+          }
+        ]
+      }
+    ]
+  ],
+  "expected": {
+    "calls_tool": ["search_products"],
+    "ui_components": ["products"],
+    "max_tool_calls": 5
+  },
+  "notes": "The customer says \"this category\" on a category page; server-side page detection puts category_id 1050 into current_page, which search_products.filters.category_id must carry with no query, and sort best_sellers ranks the three picks by qty_ordered."
+}

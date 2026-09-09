@@ -1,0 +1,45 @@
+{
+  "id": "014-service-not-offered",
+  "priority": "high",
+  "difficulty": "medium",
+  "tags": ["store-facts", "not-offered", "policies-off"],
+  "config": {
+    "store_facts": [
+      {"topic": "Gift wrapping", "keywords": "gift wrap, wrapping, wrapped", "source": "not_offered", "value": ""},
+      {"topic": "Price match", "keywords": "price match, price guarantee, match the price", "source": "text", "value": "We match any advertised Canadian price on the same item within 14 days of purchase."}
+    ],
+    "include_core_facts": false
+  },
+  "state": {
+    "seen_products": []
+  },
+  "turns": [
+    "Gift-wrap options",
+    "do you price match?"
+  ],
+  "rounds": [
+    [
+      {
+        "text": "Gift wrapping is not offered here.",
+        "tools": [
+          {
+            "name": "present_suggestions",
+            "input": { "suggestions": ["See the return policy", "Show best sellers", "Browse gift sets"] }
+          }
+        ]
+      }
+    ],
+    [
+      {
+        "text": "We match any advertised Canadian price on the same item within 14 days of purchase.",
+        "tools": []
+      }
+    ]
+  ],
+  "expected": {
+    "never_calls": ["search_policies"],
+    "ui_components": ["suggestions"],
+    "reply_includes": ["not offered", "price"]
+  },
+  "notes": "store_facts config fixture: gift wrapping is a not_offered fact, price match is a text fact, and include_core_facts is off so no cms fact and no policy page enables search_policies. Turn 1 must not offer wrapping as a chip; turn 2 answers straight from the configured sentence with no tool call."
+}

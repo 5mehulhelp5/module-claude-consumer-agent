@@ -1,0 +1,30 @@
+<?php
+declare(strict_types=1);
+?>
+<div x-data="initAiAgentStart" x-show="visible" class="flex flex-col gap-4 p-4">
+    <p x-text="greeting" class="text-sm"></p>
+    <div class="flex flex-col gap-2">
+        <template x-for="s in starters" :key="s">
+            <button
+                type="button"
+                @click="pick"
+                :data-text="s"
+                x-text="s"
+                class="btn btn-secondary text-left"
+            ></button>
+        </template>
+    </div>
+    <template x-if="isProductPage">
+        <div class="flex flex-col gap-2">
+            <template x-for="chip in productChips" :key="chip">
+                <button
+                    type="button"
+                    @click="pick"
+                    :data-text="chip"
+                    x-text="chip"
+                    class="btn btn-secondary text-left"
+                ></button>
+            </template>
+        </div>
+    </template>
+</div>

@@ -1,0 +1,66 @@
+{
+  "id": "005-family-add-held",
+  "priority": "critical",
+  "difficulty": "medium",
+  "tags": ["cart", "options", "gate"],
+  "state": {
+    "seen_products": [
+      {
+        "product_id": "GH-3001",
+        "title": "Classic Recliner",
+        "brand": "Harbor Home",
+        "price": 399.0,
+        "currency": "USD",
+        "in_stock": true,
+        "options": { "Color": ["Charcoal", "Tan"] }
+      },
+      {
+        "product_id": "GH-3001-CHR",
+        "title": "Classic Recliner - Charcoal",
+        "brand": "Harbor Home",
+        "price": 399.0,
+        "currency": "USD",
+        "in_stock": true,
+        "variant_of": "GH-3001",
+        "option_values": { "Color": "Charcoal" }
+      },
+      {
+        "product_id": "GH-3001-TAN",
+        "title": "Classic Recliner - Tan",
+        "brand": "Harbor Home",
+        "price": 419.0,
+        "currency": "USD",
+        "in_stock": true,
+        "variant_of": "GH-3001",
+        "option_values": { "Color": "Tan" }
+      }
+    ]
+  },
+  "turns": [
+    "Add the Classic Recliner to my cart"
+  ],
+  "rounds": [
+    [
+      {
+        "tools": [
+          { "name": "add_to_cart", "input": { "product_id": "GH-3001" } }
+        ]
+      },
+      {
+        "text": "The Classic Recliner comes in Charcoal and Tan. Which color would you like?",
+        "tools": [
+          { "name": "present_products", "input": { "picks": [{ "product_id": "GH-3001-CHR", "reason": "The charcoal option." }, { "product_id": "GH-3001-TAN", "reason": "The tan option." }] } },
+          { "name": "present_suggestions", "input": { "suggestions": ["Charcoal", "Tan"] } }
+        ]
+      }
+    ]
+  ],
+  "expected": {
+    "calls_tool": ["add_to_cart"],
+    "ui_components": ["products", "suggestions"],
+    "cart_not_contains": ["GH-3001"],
+    "cart_item_count": 0,
+    "reply_includes": ["color"]
+  },
+  "notes": "Adding a family id with open options must be held by the options gate and the variants offered, not silently added as the parent."
+}

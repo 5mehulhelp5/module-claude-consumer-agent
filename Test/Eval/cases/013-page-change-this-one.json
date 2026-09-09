@@ -1,0 +1,69 @@
+{
+  "id": "013-page-change-this-one",
+  "priority": "high",
+  "difficulty": "medium",
+  "tags": ["page-context", "page-change", "comparison"],
+  "state": {
+    "seen_products": [],
+    "page": { "page_type": "product", "product_id": "BK-2", "product_name": "The Interior Design Handbook" },
+    "last_page": { "page_type": "product", "product_id": "BK-1", "product_name": "Resident Dog" },
+    "catalog": [
+      {
+        "product_id": "BK-1",
+        "title": "Resident Dog",
+        "brand": "Kestrel Press",
+        "price": 45.0,
+        "currency": "USD",
+        "in_stock": true,
+        "short_description": "A photography collection about dogs living the good life."
+      },
+      {
+        "product_id": "BK-2",
+        "title": "The Interior Design Handbook",
+        "brand": "Kestrel Press",
+        "price": 60.0,
+        "currency": "USD",
+        "in_stock": true,
+        "short_description": "A practical guide to furnishing and styling a home."
+      }
+    ]
+  },
+  "turns": [
+    "is this one better for a gift or the previous one?"
+  ],
+  "rounds": [
+    [
+      {
+        "tools": [
+          { "name": "get_product_details", "input": { "product_id": "BK-2" } },
+          { "name": "get_product_details", "input": { "product_id": "BK-1" } }
+        ]
+      },
+      {
+        "text": "The Interior Design Handbook suits a design-minded reader; Resident Dog is the lighter, more universal gift.",
+        "tools": [
+          {
+            "name": "present_comparison",
+            "input": {
+              "entries": [
+                { "product_id": "BK-2", "pros": ["Practical styling guidance"], "best_for": "A design enthusiast" },
+                { "product_id": "BK-1", "pros": ["Broadly appealing photography"], "best_for": "A dog lover" }
+              ],
+              "dimensions": ["gift fit"],
+              "recommended_product_id": "BK-1"
+            }
+          },
+          {
+            "name": "present_suggestions",
+            "input": { "suggestions": ["Add Resident Dog to cart", "Add The Interior Design Handbook to cart"] }
+          }
+        ]
+      }
+    ]
+  ],
+  "expected": {
+    "calls_tool": ["get_product_details"],
+    "ui_components": ["comparison"]
+  },
+  "notes": "The customer navigated from BK-1 to BK-2 between messages; the page-change note in the user turn names both pages by title so \"this one\" resolves to BK-2 (the current product page) and \"the previous one\" resolves to BK-1 (current_page at the prior turn), not to whichever product the assistant's last reply happened to describe."
+}

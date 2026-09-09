@@ -1,0 +1,261 @@
+<?php
+declare(strict_types=1);
+
+namespace MageOS\ClaudeConsumerAgent\Model\Agent\Presentation;
+
+use MageOS\ClaudeConsumerAgent\Api\Presentation\PresentationExtensionInterface;
+
+final class Registry
+{
+    private const TEMPLATE_PREFIX = 'MageOS_ClaudeConsumerAgent::cards/';
+
+    /** @var array<string, Component> */
+    private array $components;
+
+    /**
+     * @param PresentationExtensionInterface[] $extensions
+     */
+    public function __construct(
+        \MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Products $products,
+        \MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Comparison $comparison,
+        \MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\OrderStatus $orderStatus,
+        \MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Checkout $checkout,
+        \MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Suggestions $suggestions,
+        array $extensions = []
+    ) {
+        $this->components = [
+            'present_products' => new Component(
+                'present_products',
+                'products',
+                self::presentProductsSchema(),
+                $products,
+                self::TEMPLATE_PREFIX . 'products.phtml'
+            ),
+            'present_comparison' => new Component(
+                'present_comparison',
+                'comparison',
+                self::presentComparisonSchema(),
+                $comparison,
+                self::TEMPLATE_PREFIX . 'comparison.phtml'
+            ),
+            'present_order_status' => new Component(
+                'present_order_status',
+                'order_status',
+                self::presentOrderStatusSchema(),
+                $orderStatus,
+                self::TEMPLATE_PREFIX . 'order-status.phtml'
+            ),
+            'checkout' => new Component(
+                'checkout',
+                'checkout',
+                self::checkoutSchema(),
+                $checkout,
+                self::TEMPLATE_PREFIX . 'checkout.phtml'
+            ),
+            'present_suggestions' => new Component(
+                'present_suggestions',
+                'suggestions',
+                self::presentSuggestionsSchema(),
+                $suggestions,
+                ''
+            ),
+        ];
+
+        foreach ($extensions as $extension) {
+            $name = $extension->getToolName();
+            if (isset($this->components[$name])) {
+                throw new \LogicException("Presentation component '{$name}' is already registered.");
+            }
+            $this->components[$name] = new Component(
+                $name,
+                $extension->getComponent(),
+                $extension->getInputSchema(),
+                static fn (array $input, EnrichmentContext $ctx): array => $extension->enrich($input, $ctx),
+                $extension->getTemplate()
+            );
+        }
+    }
+
+    /**
+     * @return array<string, Component>
+     */
+    public function components(): array
+    {
+        return $this->components;
+    }
+
+    public function templates(): array
+    {
+        $templates = [];
+        foreach ($this->components as $component) {
+            $templates[$component->template] = true;
+        }
+        return array_keys($templates);
+    }
+
+    public function has(string $name): bool
+    {
+        return isset($this->components[$name]);
+    }
+
+    private static function productIdSchema(string $description = 'product_id returned by a tool this session.'): array
+    {
+        return ['type' => 'string', 'description' => $description];
+    }
+
+    private static function titleSchema(string $what): array
+    {
+        return ['type' => 'string', 'maxLength' => 80, 'description' => "Short heading for the {$what}."];
+    }
+
+    public static function presentProductsSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'properties' => [
+                'title' => self::titleSchema('set of cards'),
+                'layout' => [
+                    'type' => 'string',
+                    'enum' => ['carousel', 'grid', 'list'],
+                    'description' => 'Card layout; carousel when omitted.',
+                ],
+                'picks' => [
+                    'type' => 'array',
+                    'minItems' => 1,
+                    'maxItems' => 12,
+                    'description' => 'Products to show, recommended pick first.',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'product_id' => self::productIdSchema(),
+                            'reason' => [
+                                'type' => 'string',
+                                'maxLength' => 140,
+                                'description' => 'One clause tying the pick to a stated need.',
+                            ],
+                        ],
+                        'required' => ['product_id'],
+                        'additionalProperties' => false,
+                    ],
+                ],
+            ],
+            'required' => ['picks'],
+            'additionalProperties' => false,
+        ];
+    }
+
+    public static function presentComparisonSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'properties' => [
+                'title' => self::titleSchema('comparison'),
+                'entries' => [
+                    'type' => 'array',
+                    'minItems' => 2,
+                    'maxItems' => 4,
+                    'description' => 'The finalists being compared.',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'product_id' => self::productIdSchema(),
+                            'pros' => [
+                                'type' => 'array',
+                                'items' => ['type' => 'string'],
+                                'maxItems' => 4,
+                                'description' => 'Short advantages, from tool results.',
+                            ],
+                            'cons' => [
+                                'type' => 'array',
+                                'items' => ['type' => 'string'],
+                                'maxItems' => 3,
+                                'description' => 'Short drawbacks, from tool results.',
+                            ],
+                            'best_for' => [
+                                'type' => 'string',
+                                'maxLength' => 80,
+                                'description' => 'Who or what this option suits best.',
+                            ],
+                        ],
+                        'required' => ['product_id'],
+                        'additionalProperties' => false,
+                    ],
+                ],
+                'dimensions' => [
+                    'type' => 'array',
+                    'items' => ['type' => 'string'],
+                    'maxItems' => 6,
+                    'description' => 'The dimensions the customer is weighing.',
+                ],
+                'recommended_product_id' => self::productIdSchema('The entry you recommend.'),
+            ],
+            'required' => ['entries'],
+            'additionalProperties' => false,
+        ];
+    }
+
+    public static function presentOrderStatusSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'properties' => [
+                'order_id' => [
+                    'type' => 'string',
+                    'description' => 'Order id from get_orders or get_order_status.',
+                ],
+                'summary' => [
+                    'type' => 'string',
+                    'maxLength' => 300,
+                    'description' => 'Current state and expected date, in a sentence.',
+                ],
+                'next_step' => [
+                    'type' => 'string',
+                    'maxLength' => 200,
+                    'description' => 'The one concrete thing the customer can do next.',
+                ],
+            ],
+            'required' => ['order_id', 'summary'],
+            'additionalProperties' => false,
+        ];
+    }
+
+    public static function checkoutSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'properties' => [
+                'note' => [
+                    'type' => 'string',
+                    'maxLength' => 300,
+                    'description' => 'Anything the customer should check before confirming.',
+                ],
+                'fulfillment_method' => [
+                    'type' => 'string',
+                    'enum' => ['delivery', 'pickup', 'shipping'],
+                    'description' => 'Method the customer chose, when they chose one.',
+                ],
+            ],
+            'additionalProperties' => false,
+        ];
+    }
+
+    public static function presentSuggestionsSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'properties' => [
+                'suggestions' => [
+                    'type' => 'array',
+                    'items' => ['type' => 'string'],
+                    'minItems' => 1,
+                    'maxItems' => 4,
+                    'description' => '1-4 chips, each a brief imperative and each a '
+                        . 'different kind of step; leave out anything this turn already '
+                        . 'displayed.',
+                ],
+            ],
+            'required' => ['suggestions'],
+            'additionalProperties' => false,
+        ];
+    }
+}

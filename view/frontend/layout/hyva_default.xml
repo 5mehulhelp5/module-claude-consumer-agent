@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="cart-drawer.top">
+            <block name="aiagent.drawer"
+                   class="MageOS\ClaudeConsumerAgent\Block\Surface"
+                   template="MageOS_ClaudeConsumerAgent::surface/drawer.phtml"
+                   ifconfig="aiagent/general/enabled">
+                <arguments>
+                    <argument name="surface" xsi:type="string">side_cart</argument>
+                </arguments>
+                <block name="aiagent.drawer.cartstrip" as="cart_strip" template="MageOS_ClaudeConsumerAgent::surface/cart-strip.phtml"/>
+                <block name="aiagent.drawer.start" as="start" template="MageOS_ClaudeConsumerAgent::surface/start.phtml"/>
+                <block name="aiagent.drawer.transcript" as="transcript" template="MageOS_ClaudeConsumerAgent::surface/transcript.phtml"/>
+                <block name="aiagent.drawer.composer" as="composer" template="MageOS_ClaudeConsumerAgent::surface/composer.phtml"/>
+            </block>
+        </referenceContainer>
+        <referenceContainer name="before.body.end">
+            <block name="aiagent.store"
+                   class="Magento\Framework\View\Element\Template"
+                   template="MageOS_ClaudeConsumerAgent::js/store.phtml"
+                   ifconfig="aiagent/general/enabled">
+                <arguments>
+                    <argument name="view_model" xsi:type="object">MageOS\ClaudeConsumerAgent\ViewModel\Assistant</argument>
+                </arguments>
+            </block>
+            <block name="aiagent.overlay"
+                   class="MageOS\ClaudeConsumerAgent\Block\Surface"
+                   template="MageOS_ClaudeConsumerAgent::surface/overlay.phtml"
+                   ifconfig="aiagent/general/enabled">
+                <arguments>
+                    <argument name="surface" xsi:type="string">overlay</argument>
+                </arguments>
+                <block name="aiagent.overlay.cartline" as="cart_line" template="MageOS_ClaudeConsumerAgent::surface/cart-line.phtml"/>
+                <block name="aiagent.overlay.start" as="start" template="MageOS_ClaudeConsumerAgent::surface/start.phtml"/>
+                <block name="aiagent.overlay.transcript" as="transcript" template="MageOS_ClaudeConsumerAgent::surface/transcript.phtml"/>
+                <block name="aiagent.overlay.composer" as="composer" template="MageOS_ClaudeConsumerAgent::surface/composer.phtml"/>
+            </block>
+            <block name="aiagent.launcher"
+                   class="MageOS\ClaudeConsumerAgent\Block\Launcher"
+                   template="MageOS_ClaudeConsumerAgent::surface/launcher.phtml"
+                   ifconfig="aiagent/general/launcher_enabled"/>
+            <block name="aiagent.cards"
+                   class="MageOS\ClaudeConsumerAgent\Block\Cards"
+                   template="MageOS_ClaudeConsumerAgent::cards/container.phtml"
+                   ifconfig="aiagent/general/enabled">
+                <block name="aiagent.card.products" template="MageOS_ClaudeConsumerAgent::cards/products.phtml"/>
+                <block name="aiagent.card.comparison" template="MageOS_ClaudeConsumerAgent::cards/comparison.phtml"/>
+                <block name="aiagent.card.order_status" template="MageOS_ClaudeConsumerAgent::cards/order-status.phtml"/>
+                <block name="aiagent.card.checkout" template="MageOS_ClaudeConsumerAgent::cards/checkout.phtml"/>
+            </block>
+        </referenceContainer>
+    </body>
+</page>

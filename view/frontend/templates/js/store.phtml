@@ -1,0 +1,333 @@
+<?php
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\HyvaCsp;
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+use MageOS\ClaudeConsumerAgent\ViewModel\Assistant;
+
+/** @var Escaper $escaper */
+/** @var Template $block */
+/** @var HyvaCsp $hyvaCsp */
+/** @var ViewModelRegistry $viewModels */
+
+$hyvaCsp = $viewModels->require(HyvaCsp::class);
+/** @var Assistant $assistantViewModel */
+$assistantViewModel = $block->getViewModel();
+$config = $assistantViewModel->snapshot();
+$config['urls']['script'] = $block->getViewFileUrl('MageOS_ClaudeConsumerAgent::js/aiagent.js');
+$configJson = json_encode(
+    $config,
+    JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES
+);
+?>
+<script>
+    function loadAiAgentScript(url) {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = url;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+
+    function mountAiAgentShells() {
+        document.querySelectorAll('template[data-ai-agent-shell]').forEach((template) => {
+            const fragment = template.content.cloneNode(true);
+            const nodes = Array.from(fragment.children);
+            Alpine.mutateDom(() => {
+                template.after(fragment);
+                template.remove();
+            });
+            nodes.forEach((node) => Alpine.initTree(node));
+        });
+    }
+
+    window.addEventListener('alpine:init', () => {
+        const config = <?= /* @noEscape */ $configJson ?>;
+
+        function detectPageFromDom() {
+            const body = document.body;
+            const classList = body.classList;
+            const formInput = document.querySelector('#product_addtocart_form input[name="product"]');
+            const askEl = document.getElementById('ai-agent-ask');
+            const productId = (formInput && formInput.value) || (askEl && askEl.dataset.productId) || '';
+            if (productId || classList.contains('catalog-product-view')) {
+                return {type: 'product', productId: productId, productName: '', categoryId: '', categoryName: '', query: ''};
+            }
+            if (classList.contains('catalogsearch-result-index')) {
+                const params = new URLSearchParams(window.location.search);
+                return {type: 'search', productId: '', productName: '', categoryId: '', categoryName: '', query: params.get('q') || ''};
+            }
+            if (classList.contains('checkout-cart-index')) {
+                return {type: 'cart', productId: '', productName: '', categoryId: '', categoryName: '', query: ''};
+            }
+            if (Array.from(classList).some((className) => className.indexOf('sales-order-') === 0)) {
+                return {type: 'orders', productId: '', productName: '', categoryId: '', categoryName: '', query: ''};
+            }
+            if (classList.contains('cms-index-index')) {
+                return {type: 'home', productId: '', productName: '', categoryId: '', categoryName: '', query: ''};
+            }
+            return {type: 'other', productId: '', productName: '', categoryId: '', categoryName: '', query: ''};
+        }
+
+        function detectPage() {
+            const serverPage = config.page || {};
+            if (serverPage.page_type && serverPage.page_type !== 'other') {
+                return {
+                    type: serverPage.page_type,
+                    productId: serverPage.product_id || '',
+                    productName: serverPage.product_name || '',
+                    categoryId: serverPage.category_id || '',
+                    categoryName: serverPage.category_name || '',
+                    query: serverPage.query || ''
+                };
+            }
+            return detectPageFromDom();
+        }
+
+        function generateClientSessionId() {
+            if (window.crypto && window.crypto.randomUUID) {
+                return window.crypto.randomUUID();
+            }
+            return 'aiagent-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+        }
+
+        Alpine.store('aiAgent', {
+            config: config,
+            sessionId: null,
+            mode: 'stream',
+            transcript: [],
+            suggestions: [],
+            turn: {running: false, status: '', id: 0},
+            page: {type: '', productId: '', productName: '', categoryId: '', categoryName: '', query: ''},
+            cart: {count: 0, subtotal: ''},
+            surface: {mode: config.surface, resolved: config.surface, view: 'chat', open: false},
+            started: false,
+            ready: false,
+            mounting: null,
+            startPromise: null,
+            init() {
+                try {
+                    const storage = hyva.getBrowserStorage();
+                    this.sessionId = storage ? storage.getItem('aiagent_session') : null;
+                    this.mode = (storage && storage.getItem('aiagent_mode')) || 'stream';
+                } catch (e) {
+                    this.sessionId = null;
+                }
+                this.page = detectPage();
+                if (this.config.streaming === 'off') {
+                    this.mode = 'json';
+                }
+            },
+            pagePayload() {
+                return {
+                    page_type: this.page.type || 'other',
+                    product_id: this.page.productId || null,
+                    product_name: this.page.productName || null,
+                    category_id: this.page.categoryId || null,
+                    category_name: this.page.categoryName || null,
+                    query: this.page.query || null
+                };
+            },
+            mount() {
+                if (this.ready) {
+                    return Promise.resolve();
+                }
+                if (this.mounting) {
+                    return this.mounting;
+                }
+                this.mounting = loadAiAgentScript(this.config.urls.script).then(() => {
+                    mountAiAgentShells();
+                    this.ready = true;
+                }).catch((error) => {
+                    this.mounting = null;
+                    throw error;
+                });
+                return this.mounting;
+            },
+            start() {
+                if (this.startPromise) {
+                    return this.startPromise;
+                }
+                this.startPromise = (async () => {
+                    const hadStoredId = !!this.sessionId;
+                    const response = await fetch(this.config.urls.start, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'X-Form-Key': hyva.getFormKey()},
+                        body: JSON.stringify({session: this.sessionId, page: this.pagePayload()})
+                    });
+                    const data = await response.json();
+                    this.sessionId = data.session;
+                    this.persistSession();
+                    this.surface.resolved = data.surface;
+                    this.config.assistantName = data.assistant_name;
+                    this.config.greeting = data.greeting;
+                    this.config.starters = data.starters;
+                    this.config.showAiLabel = data.show_ai_label;
+                    this.config.contact = data.contact;
+                    if (data.streaming) {
+                        this.config.streaming = data.streaming;
+                    }
+                    if (data.first_byte_threshold) {
+                        this.config.firstByteThreshold = data.first_byte_threshold;
+                    }
+                    if (hadStoredId && !data.fresh) {
+                        await this.restore();
+                    }
+                    this.started = true;
+                })();
+                return this.startPromise;
+            },
+            async restore() {
+                const response = await fetch(
+                    this.config.urls.transcript + '?session=' + encodeURIComponent(this.sessionId)
+                );
+                const data = await response.json();
+                let suggestions = [];
+                this.transcript = data.messages.map((message) => {
+                    if (!Array.isArray(message.cards)) {
+                        return message;
+                    }
+                    const cards = message.cards.filter((card) => {
+                        if (card.component !== 'suggestions') {
+                            return true;
+                        }
+                        suggestions = (card.payload.suggestions || []).slice(0, 4);
+                        return false;
+                    });
+                    return Object.assign({}, message, {cards: cards});
+                });
+                this.suggestions = suggestions;
+            },
+            send(text) {
+                if (!this.ready) {
+                    return;
+                }
+                if (this.turn.running || !text) {
+                    return;
+                }
+                this.suggestions = [];
+                this.transcript.push({role: 'user', text: text});
+                this.turn.running = true;
+                this.turn.status = '';
+                this.turn.id++;
+                this.transcript.push({role: 'assistant', text: '', cards: [], streaming: true});
+                window.aiAgentReader.run(this, text);
+            },
+            apply(type, data) {
+                const last = this.transcript[this.transcript.length - 1];
+                switch (type) {
+                    case 'text_delta':
+                        last.text += data.text;
+                        break;
+                    case 'tool_call':
+                        this.turn.status = data.label || '';
+                        break;
+                    case 'tool_result':
+                        if (data.status !== 'ok') {
+                            this.turn.status = '';
+                        }
+                        break;
+                    case 'ui':
+                        if (data.component === 'suggestions') {
+                            this.suggestions = (data.payload.suggestions || []).slice(0, 4);
+                            break;
+                        }
+                        last.cards.push({component: data.component, payload: data.payload, id: data.stream_id});
+                        break;
+                    case 'cart_update':
+                        this.cart = {
+                            count: data.cart.item_count,
+                            subtotal: hyva.formatPrice(data.cart.subtotal)
+                        };
+                        window.dispatchEvent(new CustomEvent('reload-customer-section-data'));
+                        break;
+                    case 'progress':
+                        this.turn.status = data.message;
+                        break;
+                    case 'error':
+                        last.text = last.text || data.message;
+                        last.error = true;
+                        if (data.retry_after) {
+                            last.retryAfter = data.retry_after;
+                        }
+                        break;
+                    case 'turn_complete':
+                        last.streaming = false;
+                        this.turn.running = false;
+                        this.turn.status = '';
+                        if (typeof data.session === 'string' && data.session.length === 64 && data.session !== this.sessionId) {
+                            this.sessionId = data.session;
+                            this.persistSession();
+                        }
+                        window.dispatchEvent(new CustomEvent('ai-agent:turn-complete', {detail: {usage: data.usage}}));
+                        break;
+                    default:
+                        break;
+                }
+            },
+            setMode(mode) {
+                this.mode = mode;
+                try {
+                    const storage = hyva.getBrowserStorage();
+                    if (storage) {
+                        storage.setItem('aiagent_mode', mode);
+                    }
+                } catch (e) {
+                    return;
+                }
+            },
+            async reset() {
+                await fetch(this.config.urls.reset, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-Form-Key': hyva.getFormKey()},
+                    body: JSON.stringify({session: this.sessionId})
+                });
+                this.transcript = [];
+                this.suggestions = [];
+                this.sessionId = generateClientSessionId();
+                this.persistSession();
+            },
+            onSection(data) {
+                const cart = data.cart || {};
+                this.cart = {count: cart.summary_count || 0, subtotal: cart.subtotal || ''};
+            },
+            persistSession() {
+                try {
+                    const storage = hyva.getBrowserStorage();
+                    if (storage) {
+                        storage.setItem('aiagent_session', this.sessionId);
+                    }
+                } catch (e) {
+                    return;
+                }
+            }
+        });
+
+        window.addEventListener('ai-agent:open', (event) => {
+            const store = Alpine.store('aiAgent');
+            if (store.ready) {
+                return;
+            }
+            store.mount().then(() => {
+                window.dispatchEvent(new CustomEvent('ai-agent:open', {detail: event.detail}));
+            }).catch(() => {
+                return;
+            });
+        });
+        window.addEventListener('toggle-cart', (event) => {
+            const store = Alpine.store('aiAgent');
+            if (store.ready || !event.detail || event.detail.isOpen !== true) {
+                return;
+            }
+            if (!document.getElementById('ai-agent-drawer-shell')) {
+                return;
+            }
+            store.mount();
+        });
+    }, {once: true});
+</script>
+<?php $hyvaCsp->registerInlineScript() ?>

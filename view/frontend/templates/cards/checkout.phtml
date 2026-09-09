@@ -1,0 +1,38 @@
+<?php
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+
+/** @var Escaper $escaper */
+/** @var Template $block */
+?>
+<template id="ai-agent-card-checkout">
+    <div x-data="initAiAgentCardCheckout" class="ai-agent-card border border-container rounded-lg p-4 bg-surface">
+        <ul class="space-y-2">
+            <template x-for="line in card.payload.cart.items" :key="line.product_id">
+                <li class="flex items-center gap-3 text-sm">
+                    <template x-if="line.image_url">
+                        <img :src="line.image_url" :alt="line.title" class="w-10 h-10 rounded object-cover">
+                    </template>
+                    <span class="grow" x-text="line.title"></span>
+                    <span class="text-secondary" x-text="line.quantity"></span>
+                    <span class="font-semibold" x-text="lineTotalOf"></span>
+                </li>
+            </template>
+        </ul>
+        <dl class="flex justify-between items-center mt-3 pt-3 border-t border-container text-sm font-semibold">
+            <dt><?= $escaper->escapeHtml(__('Subtotal')) ?></dt>
+            <dd x-text="subtotalFormatted"></dd>
+        </dl>
+        <template x-if="card.payload.fulfillment_method">
+            <p class="text-xs text-secondary mt-2" x-text="fulfillmentLine"></p>
+        </template>
+        <template x-if="card.payload.note">
+            <p class="text-xs text-secondary mt-2" x-text="card.payload.note"></p>
+        </template>
+        <a :href="card.payload.checkout_url" class="btn btn-primary mt-4 w-full text-center">
+            <?= $escaper->escapeHtml(__('Go to checkout')) ?>
+        </a>
+    </div>
+</template>

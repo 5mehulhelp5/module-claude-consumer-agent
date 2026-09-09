@@ -1,0 +1,24 @@
+<?php
+declare(strict_types=1);
+?>
+<div
+    x-data="initAiAgentTranscript"
+    x-ref="scroller"
+    class="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3"
+    aria-live="polite"
+>
+    <template x-for="(m, i) in messages" :key="i">
+        <div :class="bubbleClasses">
+            <div x-data="initAiAgentBubble"></div>
+            <div x-data="initAiAgentTypingIndicator" x-show="isTyping" class="flex items-center gap-1 py-1" aria-hidden="true">
+                <span class="w-2 h-2 rounded-full bg-secondary animate-bounce"></span>
+                <span class="w-2 h-2 rounded-full bg-secondary animate-bounce [animation-delay:150ms]"></span>
+                <span class="w-2 h-2 rounded-full bg-secondary animate-bounce [animation-delay:300ms]"></span>
+            </div>
+            <template x-for="card in m.cards" :key="card.id">
+                <div x-data="initAiAgentCard"></div>
+            </template>
+        </div>
+    </template>
+    <p x-show="status" x-text="status" class="text-sm text-secondary"></p>
+</div>

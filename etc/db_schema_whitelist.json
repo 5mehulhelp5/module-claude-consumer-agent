@@ -1,0 +1,65 @@
+{
+    "aiagent_session": {
+        "column": {
+            "session_id": true,
+            "customer_id": true,
+            "quote_id": true,
+            "store_id": true,
+            "surface": true,
+            "state": true,
+            "version": true,
+            "turns": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "index": {
+            "AIAGENT_SESSION_CUSTOMER_ID": true,
+            "AIAGENT_SESSION_QUOTE_ID": true,
+            "AIAGENT_SESSION_UPDATED_AT": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    },
+    "aiagent_message": {
+        "column": {
+            "message_id": true,
+            "session_id": true,
+            "role": true,
+            "content": true,
+            "created_at": true
+        },
+        "index": {
+            "AIAGENT_MESSAGE_SESSION_ID_MESSAGE_ID": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "AIAGENT_MESSAGE_SESSION_ID_AIAGENT_SESSION_SESSION_ID": true
+        }
+    },
+    "aiagent_turn": {
+        "column": {
+            "turn_id": true,
+            "session_id": true,
+            "store_id": true,
+            "turn_no": true,
+            "model_id": true,
+            "rounds": true,
+            "input_tokens": true,
+            "output_tokens": true,
+            "cache_creation_input_tokens": true,
+            "cache_read_input_tokens": true,
+            "duration_ms": true,
+            "stop_reason": true,
+            "created_at": true
+        },
+        "index": {
+            "AIAGENT_TURN_SESSION_ID": true,
+            "AIAGENT_TURN_CREATED_AT": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "AIAGENT_TURN_SESSION_ID_AIAGENT_SESSION_SESSION_ID": true
+        }
+    }
+}

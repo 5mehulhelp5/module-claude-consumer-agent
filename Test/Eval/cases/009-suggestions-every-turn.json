@@ -1,0 +1,64 @@
+{
+  "id": "009-suggestions-every-turn",
+  "priority": "medium",
+  "difficulty": "medium",
+  "tags": ["suggestions", "multi-turn"],
+  "state": {
+    "seen_products": [],
+    "catalog": [
+      {
+        "product_id": "KL-1001",
+        "title": "Woven Throw Blanket",
+        "brand": "Kestrel",
+        "price": 45.0,
+        "currency": "USD",
+        "in_stock": true,
+        "short_description": "A cozy gift for anyone who loves a warm evening in."
+      },
+      {
+        "product_id": "KL-1002",
+        "title": "Ceramic Mug Set",
+        "brand": "Kestrel",
+        "price": 25.0,
+        "currency": "USD",
+        "in_stock": true,
+        "short_description": "A simple gift set of two ceramic mugs."
+      }
+    ]
+  },
+  "turns": [
+    "Show me something for a gift",
+    "Something cheaper"
+  ],
+  "rounds": [
+    [
+      {
+        "tools": [
+          { "name": "search_products", "input": { "query": "gift" } }
+        ]
+      },
+      {
+        "text": "The Woven Throw Blanket is a cozy gift for $45.",
+        "tools": [
+          { "name": "present_products", "input": { "picks": [{ "product_id": "KL-1001", "reason": "A cozy, well-reviewed gift." }] } },
+          { "name": "present_suggestions", "input": { "suggestions": ["Show something cheaper", "Add it to my cart"] } }
+        ]
+      }
+    ],
+    [
+      {
+        "text": "The Ceramic Mug Set is $25 and also makes a nice gift.",
+        "tools": [
+          { "name": "present_products", "input": { "picks": [{ "product_id": "KL-1002", "reason": "A cheaper gift option." }] } },
+          { "name": "present_suggestions", "input": { "suggestions": ["Add it to my cart", "Show something else"] } }
+        ]
+      }
+    ]
+  ],
+  "expected": {
+    "calls_tool": ["search_products", "present_suggestions"],
+    "ui_components": ["products", "suggestions"],
+    "max_tool_calls": 5
+  },
+  "notes": "Every turn in this case ends its last round with present_suggestions, by construction of the scripted rounds; the grader checks that suggestions were rendered at all, since it has no per-turn key."
+}

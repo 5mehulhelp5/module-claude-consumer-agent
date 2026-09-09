@@ -1,0 +1,45 @@
+{
+  "id": "006-variant-add",
+  "priority": "high",
+  "difficulty": "easy",
+  "tags": ["cart"],
+  "state": {
+    "seen_products": [
+      {
+        "product_id": "GH-3001-CHR",
+        "title": "Classic Recliner - Charcoal",
+        "brand": "Harbor Home",
+        "price": 399.0,
+        "currency": "USD",
+        "in_stock": true,
+        "variant_of": "GH-3001",
+        "option_values": { "Color": "Charcoal" }
+      }
+    ]
+  },
+  "turns": [
+    "Add the charcoal recliner to my cart"
+  ],
+  "rounds": [
+    [
+      {
+        "tools": [
+          { "name": "add_to_cart", "input": { "product_id": "GH-3001-CHR", "quantity": 1 } }
+        ]
+      },
+      {
+        "text": "Added the Classic Recliner in Charcoal to your cart.",
+        "tools": [
+          { "name": "present_suggestions", "input": { "suggestions": ["View my cart", "Keep shopping"] } }
+        ]
+      }
+    ]
+  ],
+  "expected": {
+    "calls_tool": ["add_to_cart"],
+    "cart_contains": ["GH-3001-CHR"],
+    "cart_item_count": 1,
+    "ui_components": ["suggestions"]
+  },
+  "notes": "A variant id already seen this session, with no open options, must land in the cart on the first add."
+}

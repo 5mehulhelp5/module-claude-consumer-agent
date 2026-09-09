@@ -1,0 +1,218 @@
+<?php
+declare(strict_types=1);
+
+namespace MageOS\ClaudeConsumerAgent\Test\Unit\Console;
+
+use Magento\Framework\App\CacheInterface;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\App\State;
+use Magento\Framework\Component\ComponentRegistrarInterface;
+use Magento\Framework\DB\Adapter\AdapterInterface;
+use Magento\Framework\Filesystem\Driver\File;
+use Magento\Framework\Lock\LockManagerInterface;
+use Magento\Framework\ObjectManagerInterface;
+use Magento\Framework\Serialize\Serializer\Json;
+use Magento\Quote\Api\CartManagementInterface;
+use Magento\Store\Api\Data\StoreInterface;
+use Magento\Store\Model\App\Emulation;
+use Magento\Store\Model\StoreManagerInterface;
+use MageOS\ClaudeConsumerAgent\Api\Backend\CatalogMapProviderInterface;
+use MageOS\ClaudeConsumerAgent\Api\Backend\StoreFactTitleResolverInterface;
+use MageOS\ClaudeConsumerAgent\Api\Client\MessagesClientInterface;
+use MageOS\ClaudeConsumerAgent\Api\StorefrontBackendInterface;
+use MageOS\ClaudeConsumerAgent\Console\Command\EvalRun;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Fence;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Sanitizer;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Gate\Options;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Gate\Provenance;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Grounding\Rules;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Lexicon;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Checkout;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Comparison;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\OrderStatus;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Products;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Suggestions;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Registry as PresentationRegistry;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\Assembly;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\CatalogMap;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\CoreFacts;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\DynamicContext;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\StaticSystem;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\StoreFactsBlock;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Schema\Validator;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Serializer;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Skill\FrontMatter;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Skill\Loader;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Skill\Registry as SkillRegistry;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Turn\StreamedRoundFactory;
+use MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\Console\Tester\CommandTester;
+
+class EvalRunTest extends TestCase
+{
+    public function testAllShippedCasesPassInFixtureMode(): void
+    {
+        $tester = new CommandTester($this->buildCommand());
+
+        $exitCode = $tester->execute(['--cases' => $this->casesDir()]);
+        $display = $tester->getDisplay();
+
+        $this->assertSame(0, $exitCode, $display);
+        foreach ($this->caseIds() as $id) {
+            $this->assertMatchesRegularExpression('/' . preg_quote($id, '/') . '\s*\|[^|]*\|\s*PASS/', $display);
+        }
+        $this->assertStringNotContainsString('FAIL', $display);
+    }
+
+    public function testJsonOutputReportsEveryCaseAsAnObject(): void
+    {
+        $tester = new CommandTester($this->buildCommand());
+
+        $tester->execute(['--cases' => $this->casesDir(), '--json' => true]);
+        $decoded = json_decode($tester->getDisplay(), true);
+
+        $this->assertIsArray($decoded);
+        $this->assertCount(count($this->caseIds()), $decoded);
+        foreach ($decoded as $row) {
+            $this->assertTrue($row['pass'], $row['id'] . ' failed: ' . implode(', ', $row['failed']));
+        }
+    }
+
+    public function testFilterOptionNarrowsToMatchingCaseId(): void
+    {
+        $tester = new CommandTester($this->buildCommand());
+
+        $tester->execute(['--cases' => $this->casesDir(), '--filter' => '001-*', '--json' => true]);
+        $decoded = json_decode($tester->getDisplay(), true);
+
+        $this->assertCount(1, $decoded);
+        $this->assertSame('001-policy-grounding', $decoded[0]['id']);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function caseIds(): array
+    {
+        $files = glob($this->casesDir() . '/*.json');
+        $files = $files !== false ? $files : [];
+        sort($files);
+        return array_map(static fn (string $file): string => basename($file, '.json'), $files);
+    }
+
+    private function casesDir(): string
+    {
+        return dirname(__DIR__, 2) . '/Eval/cases';
+    }
+
+    private function passthroughTitleResolver(): StoreFactTitleResolverInterface
+    {
+        $resolver = $this->createMock(StoreFactTitleResolverInterface::class);
+        $resolver->method('resolve')->willReturnArgument(1);
+        return $resolver;
+    }
+
+    private function buildCommand(): EvalRun
+    {
+        $objectManager = $this->createMock(ObjectManagerInterface::class);
+        $objectManager->method('create')->willReturnCallback(
+            static fn (string $type, array $arguments = []) => new $type(...$arguments)
+        );
+
+        $store = $this->createMock(StoreInterface::class);
+        $store->method('getId')->willReturn(1);
+        $store->method('getName')->willReturn('');
+        $storeManager = $this->createMock(StoreManagerInterface::class);
+        $storeManager->method('getStore')->willReturn($store);
+
+        $scopeConfig = $this->createMock(ScopeConfigInterface::class);
+        $scopeConfig->method('getValue')->willReturn(null);
+        $scopeConfig->method('isSetFlag')->willReturn(false);
+        $storeConfig = new StoreConfig($scopeConfig, $storeManager);
+
+        $sanitizer = new Sanitizer();
+        $fence = new Fence($sanitizer);
+        $serializer = new Serializer($fence);
+        $validator = new Validator();
+        $provenance = new Provenance();
+        $options = new Options($sanitizer);
+
+        $cache = $this->createMock(CacheInterface::class);
+        $cache->method('load')->willReturn(false);
+        $skillLoader = new Loader(
+            [],
+            $this->createMock(ComponentRegistrarInterface::class),
+            $this->createMock(File::class),
+            new FrontMatter()
+        );
+        $skillRegistry = new SkillRegistry($skillLoader);
+        $staticSystem = new StaticSystem(
+            $storeConfig,
+            $skillRegistry,
+            $cache,
+            new Json(),
+            $fence,
+            $this->createMock(CatalogMapProviderInterface::class),
+            new CatalogMap(),
+            new CoreFacts([]),
+            new StoreFactsBlock(),
+            $this->passthroughTitleResolver()
+        );
+        $dynamicContext = new DynamicContext($fence);
+        $assembly = new Assembly();
+        $rules = new Rules(new Lexicon($storeConfig));
+        $streamedRoundFactory = new StreamedRoundFactory();
+
+        $presentationRegistry = new PresentationRegistry(
+            new Products($this->createMock(LoggerInterface::class)),
+            new Comparison(),
+            new OrderStatus($serializer),
+            new Checkout($serializer),
+            new Suggestions($sanitizer)
+        );
+
+        $lockManager = $this->createMock(LockManagerInterface::class);
+        $lockManager->method('lock')->willReturn(true);
+
+        $adapter = $this->createMock(AdapterInterface::class);
+        $resourceConnection = $this->createMock(ResourceConnection::class);
+        $resourceConnection->method('getConnection')->willReturn($adapter);
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $liveClient = $this->createMock(MessagesClientInterface::class);
+        $liveBackend = $this->createMock(StorefrontBackendInterface::class);
+        $cartManagement = $this->createMock(CartManagementInterface::class);
+        $appState = $this->createMock(State::class);
+        $appEmulation = $this->createMock(Emulation::class);
+
+        return new EvalRun(
+            $objectManager,
+            $storeManager,
+            $storeConfig,
+            $staticSystem,
+            $dynamicContext,
+            $assembly,
+            $rules,
+            $streamedRoundFactory,
+            $validator,
+            $provenance,
+            $options,
+            $sanitizer,
+            $fence,
+            $serializer,
+            $skillRegistry,
+            $presentationRegistry,
+            $lockManager,
+            $resourceConnection,
+            $logger,
+            $liveClient,
+            $liveBackend,
+            $cartManagement,
+            $appState,
+            $appEmulation
+        );
+    }
+}

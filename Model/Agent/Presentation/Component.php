@@ -1,0 +1,17 @@
+<?php
+declare(strict_types=1);
+
+namespace MageOS\ClaudeConsumerAgent\Model\Agent\Presentation;
+
+final class Component
+{
+    public function __construct(
+        public readonly string $name,
+        public readonly string $component,
+        public readonly array $schema,
+        /** @var callable(array, EnrichmentContext): array */
+        public readonly mixed $enricher,
+        public readonly string $template
+    ) {
+    }
+}

@@ -1,0 +1,21 @@
+<?php
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Magento\Framework\Escaper;
+use MageOS\ClaudeConsumerAgent\ViewModel\CartSection;
+
+/** @var Escaper $escaper */
+/** @var ViewModelRegistry $viewModels */
+
+/** @var CartSection $cartSection */
+$cartSection = $viewModels->require(CartSection::class);
+?>
+<div
+    x-data="initAiAgentCartLine"
+    x-bind="listeners"
+    class="flex items-center justify-between text-sm border-b border-container px-4 py-2"
+>
+    <span x-text="label"></span>
+    <a href="<?= $escaper->escapeUrl($cartSection->cartUrl()) ?>" class="underline"><?= $escaper->escapeHtml(__('View cart')) ?></a>
+</div>

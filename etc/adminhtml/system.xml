@@ -1,0 +1,387 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="aiagent" translate="label" type="text" sortOrder="500" showInDefault="1" showInWebsite="1"
+                 showInStore="1">
+            <tab>sales</tab>
+            <label>Shopping Assistant</label>
+            <resource>MageOS_ClaudeConsumerAgent::config</resource>
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>General</label>
+                <field id="enabled" translate="label comment" type="select" sortOrder="10" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Turns the assistant on for this store view.</comment>
+                </field>
+                <field id="surface_mode" translate="label comment" type="select" sortOrder="20" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Surface Mode</label>
+                    <source_model>MageOS\ClaudeConsumerAgent\Model\Config\Source\SurfaceMode</source_model>
+                    <comment>Auto uses the cart drawer when it is enabled, else the overlay.</comment>
+                </field>
+                <field id="launcher_enabled" translate="label comment" type="select" sortOrder="30"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Launcher</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Round button bottom right on every page.</comment>
+                </field>
+                <field id="product_block_enabled" translate="label comment" type="select" sortOrder="40"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Product Page Block</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>"Ask about this product" on the product page.</comment>
+                </field>
+                <field id="header_icon_view" translate="label comment" type="select" sortOrder="50"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Header Icon View</label>
+                    <source_model>MageOS\ClaudeConsumerAgent\Model\Config\Source\HeaderIconView</source_model>
+                    <comment>What the drawer shows when opened from the header icon (side cart mode).</comment>
+                </field>
+                <field id="use_bundled_css" translate="label comment" type="select" sortOrder="60"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Use Bundled CSS</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Loads the module's precompiled CSS. Switch off after rebuilding the theme's
+                        Tailwind.
+                    </comment>
+                </field>
+            </group>
+            <group id="model" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>Model</label>
+                <field id="api_key" translate="label comment" type="obscure" sortOrder="10" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>API Key</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <comment>Anthropic API key. Stored encrypted; never sent to the browser.</comment>
+                </field>
+                <field id="model_id" translate="label comment" type="text" sortOrder="20" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Model</label>
+                    <comment>Model id. Changing it resets the prompt cache.</comment>
+                </field>
+                <field id="max_tokens" translate="label comment" type="text" sortOrder="30" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Max Tokens</label>
+                    <validate>validate-digits</validate>
+                    <comment>Bounds thinking and reply together.</comment>
+                </field>
+                <field id="thinking_effort" translate="label comment" type="select" sortOrder="40"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Thinking Effort</label>
+                    <source_model>MageOS\ClaudeConsumerAgent\Model\Config\Source\ThinkingEffort</source_model>
+                    <comment>Adaptive thinking effort; Off sends thinking disabled.</comment>
+                </field>
+                <field id="request_timeout" translate="label comment" type="text" sortOrder="50" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Request Timeout</label>
+                    <validate>validate-digits</validate>
+                    <comment>Seconds per model call.</comment>
+                </field>
+                <field id="connect_timeout" translate="label comment" type="text" sortOrder="60" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Connect Timeout</label>
+                    <validate>validate-digits</validate>
+                    <comment>Connection seconds.</comment>
+                </field>
+            </group>
+            <group id="voice" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>Voice</label>
+                <field id="brand_name" translate="label comment" type="text" sortOrder="10" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Brand Name</label>
+                    <comment>How the assistant names the store.</comment>
+                </field>
+                <field id="assistant_name" translate="label comment" type="text" sortOrder="20" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Assistant Name</label>
+                    <comment>Shown in the header of the panel and used in the prompt.</comment>
+                </field>
+                <field id="brand_voice" translate="label comment" type="text" sortOrder="30" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Brand Voice</label>
+                    <comment>One sentence.</comment>
+                </field>
+                <field id="greeting" translate="label comment" type="textarea" sortOrder="40" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Greeting</label>
+                    <comment>First line in the panel.</comment>
+                </field>
+                <field id="starters" translate="label comment" type="textarea" sortOrder="50" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Starter Prompts</label>
+                    <backend_model>MageOS\ClaudeConsumerAgent\Model\Config\Backend\Lines</backend_model>
+                    <comment>One starter prompt per line; the first five are shown.</comment>
+                </field>
+                <field id="domain_search_notes" translate="label comment" type="textarea" sortOrder="60"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Domain Search Notes</label>
+                    <comment>One extra search rule for this catalog, added to the prompt.</comment>
+                </field>
+            </group>
+            <group id="content" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>Content</label>
+                <field id="policy_pages" translate="label comment" type="multiselect" sortOrder="10"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Policy Pages</label>
+                    <source_model>MageOS\ClaudeConsumerAgent\Model\Config\Source\CmsPages</source_model>
+                    <can_be_empty>1</can_be_empty>
+                    <comment>CMS pages the assistant may quote for terms and policies. Empty turns the policy
+                        tool off.
+                    </comment>
+                </field>
+                <field id="allowed_categories" translate="label comment" type="multiselect" sortOrder="20"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Allowed Categories</label>
+                    <source_model>MageOS\ClaudeConsumerAgent\Model\Config\Source\CategoryTree</source_model>
+                    <comment>When set, search and product details are limited to these categories.</comment>
+                </field>
+                <field id="catalog_map_depth" translate="label comment" type="select" sortOrder="21"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Catalog Map Depth</label>
+                    <source_model>MageOS\ClaudeConsumerAgent\Model\Config\Source\CatalogMapDepth</source_model>
+                    <comment>Levels printed below each root in the prompt's catalog map. Off drops the
+                        section entirely.
+                    </comment>
+                </field>
+                <field id="catalog_map_roots" translate="label comment" type="multiselect" sortOrder="22"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Catalog Map Roots</label>
+                    <source_model>MageOS\ClaudeConsumerAgent\Model\Config\Source\CategoryTree</source_model>
+                    <can_be_empty>1</can_be_empty>
+                    <comment>Roots the catalog map is built from. Empty means every active,
+                        menu-visible category one level below the store root.
+                    </comment>
+                </field>
+                <field id="catalog_map_max_chars" translate="label comment" type="text" sortOrder="23"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Catalog Map Max Characters</label>
+                    <validate>validate-digits</validate>
+                    <comment>Hard cap on the catalog map text.</comment>
+                </field>
+                <field id="store_facts" translate="label comment" type="text" sortOrder="24"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Store Facts</label>
+                    <frontend_model>MageOS\ClaudeConsumerAgent\Block\Adminhtml\Form\Field\StoreFacts</frontend_model>
+                    <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                    <comment>Each row is a service or term the assistant may answer about. Anything not listed
+                        is treated as not offered. Long content belongs in a CMS page or block; keep text
+                        answers to two sentences.
+                    </comment>
+                </field>
+                <field id="include_core_facts" translate="label comment" type="select" sortOrder="25"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Include Core Facts</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Adds facts read from Magento itself: payment methods, carriers, gift messages,
+                        guest checkout, minimum order, store contact.
+                    </comment>
+                </field>
+                <field id="delivery_line" translate="label comment" type="text" sortOrder="30" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Delivery Line</label>
+                    <comment>One sentence each; shown as fulfillment facts.</comment>
+                </field>
+                <field id="pickup_line" translate="label comment" type="text" sortOrder="40" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Pickup Line</label>
+                    <comment>One sentence each; shown as fulfillment facts.</comment>
+                </field>
+            </group>
+            <group id="cards" translate="label" type="text" sortOrder="45" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>Product Cards</label>
+                <comment>Which parts of a product card the assistant renders.</comment>
+                <field id="products_image" translate="label" type="select" sortOrder="10" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Show image</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="products_price" translate="label" type="select" sortOrder="20" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Show price</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="products_description" translate="label" type="select" sortOrder="30" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Show short description</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="products_stock" translate="label" type="select" sortOrder="40" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Show stock status</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="products_add_to_cart" translate="label" type="select" sortOrder="50" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Show Add to cart button</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="products_reason" translate="label" type="select" sortOrder="60" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Show the assistant's reason</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+            </group>
+            <group id="limits" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>Limits</label>
+                <field id="concurrent_turns" translate="label comment" type="text" sortOrder="10"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Concurrent Turns</label>
+                    <validate>validate-digits</validate>
+                    <comment>Turns running at once per store view. Each turn holds one PHP worker.</comment>
+                </field>
+                <field id="turns_per_session" translate="label comment" type="text" sortOrder="20"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Turns Per Session</label>
+                    <validate>validate-digits</validate>
+                    <comment>Lifetime cap.</comment>
+                </field>
+                <field id="turns_per_session_window" translate="label comment" type="text" sortOrder="30"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Turns Per Session Window</label>
+                    <validate>validate-digits</validate>
+                    <comment>Cap per 10 minutes.</comment>
+                </field>
+                <field id="turns_per_ip_minute" translate="label comment" type="text" sortOrder="40"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Turns Per IP Per Minute</label>
+                    <validate>validate-digits</validate>
+                    <comment>Per client address.</comment>
+                </field>
+                <field id="max_tool_iterations" translate="label comment" type="text" sortOrder="50"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Max Tool Iterations</label>
+                    <validate>validate-digits</validate>
+                    <comment>Model rounds per turn; the last one is forced tool-less.</comment>
+                </field>
+                <field id="max_quantity_per_item" translate="label comment" type="text" sortOrder="60"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Max Quantity Per Item</label>
+                    <validate>validate-digits</validate>
+                    <comment>Cart caps enforced by the gates.</comment>
+                </field>
+                <field id="max_cart_lines" translate="label comment" type="text" sortOrder="70" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Max Cart Lines</label>
+                    <validate>validate-digits</validate>
+                    <comment>Cart caps enforced by the gates.</comment>
+                </field>
+                <field id="max_message_length" translate="label comment" type="text" sortOrder="80"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Max Message Length</label>
+                    <validate>validate-digits</validate>
+                    <comment>Characters per customer message.</comment>
+                </field>
+                <field id="turn_wall_clock" translate="label comment" type="text" sortOrder="90"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Turn Wall Clock</label>
+                    <validate>validate-digits</validate>
+                    <comment>Seconds after which no new round starts.</comment>
+                </field>
+                <field id="max_search_results" translate="label comment" type="text" sortOrder="100"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Max Search Results</label>
+                    <validate>validate-digits</validate>
+                    <comment>Result ceiling.</comment>
+                </field>
+                <field id="max_fenced_chars" translate="label comment" type="text" sortOrder="110"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Max Fenced Characters</label>
+                    <validate>validate-digits</validate>
+                    <comment>Characters per fenced tool result.</comment>
+                </field>
+                <field id="compact_above_tokens" translate="label comment" type="text" sortOrder="120"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Compact Above Tokens</label>
+                    <validate>validate-digits</validate>
+                    <comment>Prompt size that triggers compaction.</comment>
+                </field>
+            </group>
+            <group id="runtime" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>Runtime</label>
+                <field id="streaming" translate="label comment" type="select" sortOrder="10" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Streaming</label>
+                    <source_model>MageOS\ClaudeConsumerAgent\Model\Config\Source\Streaming</source_model>
+                    <comment>Off forces JSON turns (for a buffering proxy or CDN).</comment>
+                </field>
+                <field id="first_byte_threshold" translate="label comment" type="text" sortOrder="20"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>First Byte Threshold</label>
+                    <validate>validate-digits</validate>
+                    <comment>Seconds before the widget treats the path as buffered.</comment>
+                </field>
+                <field id="heartbeat_seconds" translate="label comment" type="text" sortOrder="30"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Heartbeat Seconds</label>
+                    <validate>validate-digits</validate>
+                    <comment>Comment heartbeat while a model call runs.</comment>
+                </field>
+            </group>
+            <group id="lexicon" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>Lexicon</label>
+                <field id="product_id_patterns" translate="label comment" type="textarea" sortOrder="10"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Product ID Patterns</label>
+                    <backend_model>MageOS\ClaudeConsumerAgent\Model\Config\Backend\Lines</backend_model>
+                    <comment>One regular expression per line; a match forces a product read.</comment>
+                </field>
+                <field id="policy_intent_terms" translate="label comment" type="textarea" sortOrder="20"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Policy Intent Terms</label>
+                    <backend_model>MageOS\ClaudeConsumerAgent\Model\Config\Backend\Lines</backend_model>
+                    <comment>One term per line.</comment>
+                </field>
+                <field id="order_intent_terms" translate="label comment" type="textarea" sortOrder="30"
+                       showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Order Intent Terms</label>
+                    <backend_model>MageOS\ClaudeConsumerAgent\Model\Config\Backend\Lines</backend_model>
+                    <comment>One term per line.</comment>
+                </field>
+            </group>
+            <group id="privacy" translate="label" type="text" sortOrder="80" showInDefault="1" showInWebsite="1"
+                   showInStore="1">
+                <label>Privacy</label>
+                <field id="retention_days" translate="label comment" type="text" sortOrder="10" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Retention Days</label>
+                    <validate>validate-digits</validate>
+                    <comment>Sessions and transcripts older than this are deleted nightly.</comment>
+                </field>
+                <field id="show_ai_label" translate="label comment" type="select" sortOrder="20" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Show AI Label</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Shows "AI assistant" under the composer.</comment>
+                </field>
+                <field id="contact_url" translate="label comment" type="text" sortOrder="30" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Contact URL</label>
+                    <comment>Link to a person.</comment>
+                </field>
+                <field id="contact_label" translate="label comment" type="text" sortOrder="40" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Contact Label</label>
+                    <comment>Link to a person.</comment>
+                </field>
+                <field id="debug_log" translate="label comment" type="select" sortOrder="50" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Debug Log</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Logs request and response bodies. They contain the cart and the profile; keep off
+                        in production.
+                    </comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

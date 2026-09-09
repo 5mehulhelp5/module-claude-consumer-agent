@@ -1,0 +1,194 @@
+<?php
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+
+/** @var Escaper $escaper */
+/** @var Template $block */
+?>
+<template id="ai-agent-card-products">
+    <div
+        x-data="initAiAgentCardProducts"
+        :class="layoutClasses"
+        class="ai-agent-card border border-container rounded-lg p-4 bg-surface"
+    >
+        <p class="text-sm font-semibold mb-3" x-text="title"></p>
+        <template x-if="isTilesLayout">
+            <ul :class="itemsLayoutClasses">
+                <template x-for="item in card.payload.items" :key="item.product.product_id">
+                    <li class="flex flex-col gap-2 border border-container rounded p-3">
+                        <template x-if="showImage">
+                            <a :href="item.product.url" class="block">
+                                <img
+                                    :src="item.product.image_url"
+                                    :alt="item.product.title"
+                                    class="w-full aspect-square object-cover rounded"
+                                >
+                            </a>
+                        </template>
+                        <a :href="item.product.url" class="text-sm font-medium hover:underline" x-text="item.product.title"></a>
+                        <template x-if="hasCustomOptionLines">
+                            <ul class="text-xs text-secondary">
+                                <template x-for="(line, lineIndex) in customOptionLines" :key="lineIndex">
+                                    <li x-text="line"></li>
+                                </template>
+                            </ul>
+                        </template>
+                        <template x-if="optionValuesText">
+                            <p class="text-xs text-secondary" x-text="optionValuesText"></p>
+                        </template>
+                        <template x-if="showPrice">
+                            <p class="text-sm font-semibold" x-text="priceOf"></p>
+                        </template>
+                        <template x-if="hasDescription">
+                            <p class="text-xs text-secondary line-clamp-3" x-text="item.product.short_description"></p>
+                        </template>
+                        <template x-if="reasonVisible">
+                            <p class="text-xs text-secondary" x-text="item.reason"></p>
+                        </template>
+                        <template x-if="inStockVisible">
+                            <span class="inline-flex w-max items-center text-xxs uppercase rounded px-1.5 py-0.5 bg-status-successlight text-status-success">
+                                <?= $escaper->escapeHtml(__('In stock')) ?>
+                            </span>
+                        </template>
+                        <template x-if="outOfStockVisible">
+                            <span class="inline-flex w-max items-center text-xxs uppercase rounded px-1.5 py-0.5 bg-status-errorlight text-status-error">
+                                <?= $escaper->escapeHtml(__('Out of stock')) ?>
+                            </span>
+                        </template>
+                        <template x-if="showViewProductLink">
+                            <a
+                                :href="item.product.url"
+                                class="btn btn-secondary btn-size-sm mt-auto text-center"
+                            >
+                                <?= $escaper->escapeHtml(__('View product')) ?>
+                            </a>
+                        </template>
+                        <template x-if="showAskCustomOptionsButton">
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-size-sm mt-auto"
+                                :data-product-id="item.product.product_id"
+                                @click="askCustomOptions"
+                            >
+                                <?= $escaper->escapeHtml(__('Choose options')) ?>
+                            </button>
+                        </template>
+                        <template x-if="showChooseOptionsButton">
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-size-sm mt-auto"
+                                :data-product-id="item.product.product_id"
+                                @click="chooseOptions"
+                            >
+                                <?= $escaper->escapeHtml(__('Choose options')) ?>
+                            </button>
+                        </template>
+                        <template x-if="showAddToCartButton">
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-size-sm mt-auto"
+                                :data-product-id="item.product.product_id"
+                                @click="add"
+                            >
+                                <?= $escaper->escapeHtml(__('Add to cart')) ?>
+                            </button>
+                        </template>
+                    </li>
+                </template>
+            </ul>
+        </template>
+        <template x-if="isListLayout">
+            <ul class="flex flex-col">
+                <template x-for="item in card.payload.items" :key="item.product.product_id">
+                    <li class="flex items-center gap-3 border-b border-container py-3">
+                        <template x-if="showImage">
+                            <a :href="item.product.url" class="block shrink-0">
+                                <img
+                                    :src="item.product.image_url"
+                                    :alt="item.product.title"
+                                    class="w-16 h-16 object-cover rounded"
+                                >
+                            </a>
+                        </template>
+                        <div class="flex flex-col gap-1 min-w-0 flex-1">
+                            <a :href="item.product.url" class="text-sm font-medium hover:underline" x-text="item.product.title"></a>
+                            <template x-if="optionValuesText">
+                                <p class="text-xs text-secondary" x-text="optionValuesText"></p>
+                            </template>
+                            <template x-if="hasCustomOptionLines">
+                                <ul class="text-xs text-secondary">
+                                    <template x-for="(line, lineIndex) in customOptionLines" :key="lineIndex">
+                                        <li x-text="line"></li>
+                                    </template>
+                                </ul>
+                            </template>
+                            <template x-if="hasDescription">
+                                <p class="text-xs text-secondary line-clamp-2" x-text="item.product.short_description"></p>
+                            </template>
+                            <template x-if="reasonVisible">
+                                <p class="text-xs text-secondary" x-text="item.reason"></p>
+                            </template>
+                            <div class="flex items-center gap-2">
+                                <template x-if="showPrice">
+                                    <p class="text-sm font-semibold" x-text="priceOf"></p>
+                                </template>
+                                <template x-if="inStockVisible">
+                                    <span class="inline-flex w-max items-center text-xxs uppercase rounded px-1.5 py-0.5 bg-status-successlight text-status-success">
+                                        <?= $escaper->escapeHtml(__('In stock')) ?>
+                                    </span>
+                                </template>
+                                <template x-if="outOfStockVisible">
+                                    <span class="inline-flex w-max items-center text-xxs uppercase rounded px-1.5 py-0.5 bg-status-errorlight text-status-error">
+                                        <?= $escaper->escapeHtml(__('Out of stock')) ?>
+                                    </span>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="shrink-0">
+                            <template x-if="showViewProductLink">
+                                <a
+                                    :href="item.product.url"
+                                    class="btn btn-secondary btn-size-sm text-center"
+                                >
+                                    <?= $escaper->escapeHtml(__('View product')) ?>
+                                </a>
+                            </template>
+                            <template x-if="showAskCustomOptionsButton">
+                                <button
+                                    type="button"
+                                    class="btn btn-primary btn-size-sm"
+                                    :data-product-id="item.product.product_id"
+                                    @click="askCustomOptions"
+                                >
+                                    <?= $escaper->escapeHtml(__('Choose options')) ?>
+                                </button>
+                            </template>
+                            <template x-if="showChooseOptionsButton">
+                                <button
+                                    type="button"
+                                    class="btn btn-primary btn-size-sm"
+                                    :data-product-id="item.product.product_id"
+                                    @click="chooseOptions"
+                                >
+                                    <?= $escaper->escapeHtml(__('Choose options')) ?>
+                                </button>
+                            </template>
+                            <template x-if="showAddToCartButton">
+                                <button
+                                    type="button"
+                                    class="btn btn-primary btn-size-sm"
+                                    :data-product-id="item.product.product_id"
+                                    @click="add"
+                                >
+                                    <?= $escaper->escapeHtml(__('Add to cart')) ?>
+                                </button>
+                            </template>
+                        </div>
+                    </li>
+                </template>
+            </ul>
+        </template>
+    </div>
+</template>

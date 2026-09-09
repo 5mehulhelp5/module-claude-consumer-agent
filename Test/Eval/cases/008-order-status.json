@@ -1,0 +1,49 @@
+{
+  "id": "008-order-status",
+  "priority": "high",
+  "difficulty": "medium",
+  "tags": ["orders"],
+  "state": {
+    "seen_products": [],
+    "customer_id": 555,
+    "orders": [
+      {
+        "order_id": "1000000123",
+        "status": "shipped",
+        "placed_at": "2026-08-20T00:00:00+00:00",
+        "total": 89.0,
+        "currency": "USD",
+        "items": [
+          { "product_id": "IJ-9012", "title": "Trailhead Backpack", "quantity": 1, "price": 89.0 }
+        ],
+        "estimated_delivery": "2026-09-05",
+        "tracking_url": "https://example.test/track/1000000123"
+      }
+    ]
+  },
+  "turns": [
+    "Where is my order?"
+  ],
+  "rounds": [
+    [
+      {
+        "tools": [
+          { "name": "get_orders", "input": {} }
+        ]
+      },
+      {
+        "text": "Your order has shipped and is expected by September 5.",
+        "tools": [
+          { "name": "present_order_status", "input": { "order_id": "1000000123", "summary": "Order 1000000123 has shipped and is expected by September 5.", "next_step": "Track the package with the link on the card." } },
+          { "name": "present_suggestions", "input": { "suggestions": ["Track my package", "See my other orders"] } }
+        ]
+      }
+    ]
+  ],
+  "expected": {
+    "calls_tool": ["get_orders", "present_order_status"],
+    "ui_components": ["order_status", "suggestions"],
+    "reply_includes": ["shipped"]
+  },
+  "notes": "A signed-in customer's order question must resolve the order and render it as an order_status card, not answer in text alone."
+}

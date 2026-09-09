@@ -1,0 +1,62 @@
+<?php
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\HyvaCsp;
+use Hyva\Theme\ViewModel\LucideIcons;
+use Magento\Framework\Escaper;
+
+/** @var Escaper $escaper */
+/** @var HyvaCsp $hyvaCsp */
+/** @var ViewModelRegistry $viewModels */
+
+$hyvaCsp = $viewModels->require(HyvaCsp::class);
+/** @var LucideIcons $lucideIcons */
+$lucideIcons = $viewModels->require(LucideIcons::class);
+?>
+<script>
+    function initAiAgentLauncher() {
+        return {
+            open() {
+                const store = Alpine.store('aiAgent');
+                this.$dispatch('ai-agent:open', {view: 'chat', page: store.page});
+            },
+            label() {
+                return Alpine.store('aiAgent').config.assistantName;
+            },
+            isVisible() {
+                return !Alpine.store('aiAgent').surface.open;
+            },
+            listeners: {
+                ['@private-content-loaded.window'](event) {
+                    Alpine.store('aiAgent').onSection(event.detail.data);
+                },
+                ['@alpine:initialized.window']() {
+                    const store = Alpine.store('aiAgent');
+                    if (store.surface.resolved === 'side_cart' && !document.getElementById('ai-agent-drawer-shell')) {
+                        store.surface.resolved = 'overlay';
+                    }
+                }
+            }
+        };
+    }
+
+    window.addEventListener('alpine:init', () => {
+        Alpine.data('initAiAgentLauncher', initAiAgentLauncher);
+    }, {once: true});
+</script>
+<?php $hyvaCsp->registerInlineScript() ?>
+
+<button
+    type="button"
+    id="ai-agent-launcher"
+    x-data="initAiAgentLauncher"
+    x-bind="listeners"
+    x-show="isVisible"
+    x-cloak
+    @click="open"
+    :aria-label="label"
+    class="fixed bottom-4 right-4 z-20 btn btn-primary rounded-full w-14 h-14 shadow-lg"
+>
+    <?= $lucideIcons->sparklesHtml('mx-auto', 24, 24, ['aria-hidden' => 'true']) ?>
+</button>

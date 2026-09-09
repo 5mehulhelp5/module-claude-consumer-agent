@@ -1,0 +1,58 @@
+{
+  "id": "010-comparison",
+  "priority": "medium",
+  "difficulty": "medium",
+  "tags": ["comparison"],
+  "state": {
+    "seen_products": [
+      {
+        "product_id": "MN-2001",
+        "title": "Trailblazer Hiking Boot",
+        "brand": "Northline",
+        "price": 129.0,
+        "currency": "USD",
+        "in_stock": true,
+        "short_description": "A waterproof leather hiking boot."
+      },
+      {
+        "product_id": "MN-2002",
+        "title": "Ridgeline Hiking Boot",
+        "brand": "Northline",
+        "price": 99.0,
+        "currency": "USD",
+        "in_stock": true,
+        "short_description": "A lighter mesh hiking boot for warm trails."
+      }
+    ]
+  },
+  "turns": [
+    "Compare these two boots"
+  ],
+  "rounds": [
+    [
+      {
+        "text": "The Trailblazer is waterproof leather at $129; the Ridgeline is a lighter mesh boot at $99.",
+        "tools": [
+          {
+            "name": "present_comparison",
+            "input": {
+              "entries": [
+                { "product_id": "MN-2001", "pros": ["Waterproof leather"], "cons": ["Heavier"], "best_for": "Wet or cold trails" },
+                { "product_id": "MN-2002", "pros": ["Lighter, breathable mesh"], "cons": ["Not waterproof"], "best_for": "Warm, dry trails" }
+              ],
+              "dimensions": ["weather resistance", "weight"],
+              "recommended_product_id": "MN-2001"
+            }
+          },
+          { "name": "present_suggestions", "input": { "suggestions": ["Add the Trailblazer", "Add the Ridgeline"] } }
+        ]
+      }
+    ]
+  ],
+  "expected": {
+    "calls_tool": ["present_comparison"],
+    "ui_components": ["comparison", "suggestions"],
+    "never_calls": ["search_products", "get_product_details"]
+  },
+  "notes": "Two products already seen this session can go straight to present_comparison without another catalog read."
+}

@@ -1,0 +1,75 @@
+<?php
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\HyvaCsp;
+use Magento\Framework\Escaper;
+
+/** @var Escaper $escaper */
+/** @var HyvaCsp $hyvaCsp */
+/** @var ViewModelRegistry $viewModels */
+
+$hyvaCsp = $viewModels->require(HyvaCsp::class);
+?>
+<script>
+    function initAiAgentCartAsk() {
+        return {
+            text: '',
+            setText() {
+                this.text = this.$event.target.value;
+            },
+            onEnter() {
+                this.$event.preventDefault();
+                this.ask();
+            },
+            ask() {
+                const text = this.text.trim();
+                this.$dispatch('ai-agent:open', {view: 'chat', page: {type: 'cart'}});
+                this.text = '';
+                if (!text) {
+                    return;
+                }
+                Alpine.store('aiAgent').mount().then(() => {
+                    this.deliver(text);
+                }).catch(() => {
+                    return;
+                });
+            },
+            deliver(text) {
+                const store = Alpine.store('aiAgent');
+                if (!store.started) {
+                    store.start().then(() => {
+                        store.send(text);
+                    });
+                    return;
+                }
+                store.send(text);
+            }
+        };
+    }
+
+    window.addEventListener('alpine:init', () => {
+        Alpine.data('initAiAgentCartAsk', initAiAgentCartAsk);
+    }, {once: true});
+</script>
+<?php $hyvaCsp->registerInlineScript() ?>
+
+<div id="ai-agent-cart-ask" class="clear-both border border-container rounded-lg p-3 mt-4 mb-3">
+    <label for="ai-agent-cart-ask-input" class="block text-sm font-medium mb-2">
+        <?= $escaper->escapeHtml(__('Ask the assistant about this cart')) ?>
+    </label>
+    <form x-data="initAiAgentCartAsk" @submit.prevent="ask" class="flex gap-2">
+        <input
+            type="text"
+            id="ai-agent-cart-ask-input"
+            :value="text"
+            @input="setText"
+            @keydown.enter="onEnter"
+            placeholder="<?= $escaper->escapeHtmlAttr(__('Ask about your cart, delivery or a product')) ?>"
+            class="form-input w-full"
+        />
+        <button type="submit" class="btn btn-primary shrink-0">
+            <?= $escaper->escapeHtml(__('Ask')) ?>
+        </button>
+    </form>
+</div>

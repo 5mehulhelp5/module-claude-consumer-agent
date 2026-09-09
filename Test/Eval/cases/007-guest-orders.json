@@ -1,0 +1,34 @@
+{
+  "id": "007-guest-orders",
+  "priority": "high",
+  "difficulty": "easy",
+  "tags": ["orders", "sign-in"],
+  "state": {
+    "seen_products": []
+  },
+  "turns": [
+    "Where is my order?"
+  ],
+  "rounds": [
+    [
+      {
+        "tools": [
+          { "name": "get_orders", "input": {} }
+        ]
+      },
+      {
+        "text": "I can't look up orders without you being signed in. Please sign in and I can check your order status.",
+        "tools": [
+          { "name": "present_suggestions", "input": { "suggestions": ["Sign in", "Browse products instead"] } }
+        ]
+      }
+    ]
+  ],
+  "expected": {
+    "calls_tool": ["get_orders"],
+    "never_calls": ["get_order_status", "present_order_status"],
+    "reply_includes": ["sign in"],
+    "ui_components": ["suggestions"]
+  },
+  "notes": "A guest session has no customer id, so an order question must ask the customer to sign in rather than render an order card."
+}

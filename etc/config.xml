@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <aiagent>
+            <general>
+                <enabled>0</enabled>
+                <surface_mode>overlay</surface_mode>
+                <launcher_enabled>1</launcher_enabled>
+                <product_block_enabled>1</product_block_enabled>
+                <header_icon_view>cart</header_icon_view>
+                <use_bundled_css>1</use_bundled_css>
+            </general>
+            <model>
+                <api_key backend_model="Magento\Config\Model\Config\Backend\Encrypted"></api_key>
+                <model_id>claude-sonnet-5</model_id>
+                <max_tokens>2048</max_tokens>
+                <thinking_effort>low</thinking_effort>
+                <request_timeout>120</request_timeout>
+                <connect_timeout>10</connect_timeout>
+            </model>
+            <voice>
+                <brand_name></brand_name>
+                <assistant_name>the shopping assistant</assistant_name>
+                <brand_voice>warm, concise, and plain about trade-offs</brand_voice>
+                <greeting>Hi. Tell me what you are looking for and I will find it.</greeting>
+                <starters>Find something for a gift
+Compare two products
+What is your return policy?
+Where is my order?
+Show me what is new</starters>
+                <domain_search_notes></domain_search_notes>
+            </voice>
+            <content>
+                <policy_pages></policy_pages>
+                <allowed_categories></allowed_categories>
+                <catalog_map_depth>2</catalog_map_depth>
+                <catalog_map_roots></catalog_map_roots>
+                <catalog_map_max_chars>6000</catalog_map_max_chars>
+                <store_facts></store_facts>
+                <include_core_facts>1</include_core_facts>
+                <delivery_line></delivery_line>
+                <pickup_line></pickup_line>
+            </content>
+            <cards>
+                <products_image>1</products_image>
+                <products_price>1</products_price>
+                <products_description>1</products_description>
+                <products_stock>1</products_stock>
+                <products_add_to_cart>1</products_add_to_cart>
+                <products_reason>1</products_reason>
+            </cards>
+            <limits>
+                <concurrent_turns>4</concurrent_turns>
+                <turns_per_session>40</turns_per_session>
+                <turns_per_session_window>12</turns_per_session_window>
+                <turns_per_ip_minute>10</turns_per_ip_minute>
+                <max_tool_iterations>8</max_tool_iterations>
+                <max_quantity_per_item>24</max_quantity_per_item>
+                <max_cart_lines>100</max_cart_lines>
+                <max_message_length>2000</max_message_length>
+                <turn_wall_clock>90</turn_wall_clock>
+                <max_search_results>8</max_search_results>
+                <max_fenced_chars>12000</max_fenced_chars>
+                <compact_above_tokens>100000</compact_above_tokens>
+            </limits>
+            <runtime>
+                <streaming>auto</streaming>
+                <first_byte_threshold>4</first_byte_threshold>
+                <heartbeat_seconds>10</heartbeat_seconds>
+            </runtime>
+            <lexicon>
+                <product_id_patterns>\b[A-Z]{2,4}-\d{3,4}\b</product_id_patterns>
+                <policy_intent_terms>return
+returns
+refund
+refunds
+exchange
+exchanges
+warranty
+guarantee
+cancel
+cancellation
+restocking
+fee
+fees
+shipping cost
+shipping costs
+delivery cost
+price match
+price lock
+membership
+subscription
+contract
+policy
+policies
+terms</policy_intent_terms>
+                <order_intent_terms>order
+orders
+delivery
+delivery address
+package
+parcel
+shipment
+tracking
+tracking number</order_intent_terms>
+            </lexicon>
+            <privacy>
+                <retention_days>30</retention_days>
+                <show_ai_label>1</show_ai_label>
+                <contact_url></contact_url>
+                <contact_label>Contact us</contact_label>
+                <debug_log>0</debug_log>
+            </privacy>
+        </aiagent>
+    </default>
+</config>

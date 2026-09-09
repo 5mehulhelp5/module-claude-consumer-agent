@@ -1,0 +1,42 @@
+/*
+ * Generic Hyva default theme tokens for the bundled aiagent.css fallback (not the local
+ * store theme). The @theme block below is copied verbatim from
+ * vendor/hyva-themes/magento2-default-theme/web/tailwind/tailwind-source.css.
+ * Primary/secondary/on-primary/on-secondary come from the @hyva-themes/hyva-modules
+ * package import in input.css (the same "Default theme variables for Hyva Themes" every
+ * Hyva theme, including this default theme, imports first).
+ * Container tokens are copied from
+ * vendor/hyva-themes/magento2-default-theme/web/tailwind/utilities/fallback.css.
+ * Status colors and --text-xxs are not shipped by any Hyva package; generic values (plain
+ * Tailwind red/green) are declared here because the module's card templates use them.
+ */
+@theme {
+    --color-ink: var(--color-slate-950);
+    --color-ink-muted: var(--color-slate-600);
+    --color-fg: var(--color-ink);
+    --color-fg-secondary: var(--color-ink-muted);
+    --color-bg: var(--color-slate-50);
+    --color-surface: var(--color-white);
+
+    --color-container-lighter: var(--color-white);
+    --color-container: var(--color-gray-50);
+    --color-container-darker: var(--color-gray-100);
+
+    --text-xxs: 0.75rem;
+    --text-xxs--line-height: 1rem;
+
+    --color-status-success: var(--color-green-600);
+    --color-status-successlight: var(--color-green-100);
+    --color-status-error: var(--color-red-600);
+    --color-status-errorlight: var(--color-red-100);
+}
+
+/*
+ * Sibling templates outside this task's scope still use the store's old btn-sm class name.
+ * Reuse the same plain Tailwind utilities Hyva's own .btn-size-sm applies (see
+ * vendor/hyva-themes/magento2-default-theme/web/tailwind/components/button.css) instead of
+ * hand-writing padding and font-size values again.
+ */
+@utility btn-sm {
+    @apply px-2 py-2 text-sm;
+}

@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="aiagent_session" resource="default" engine="innodb" comment="AI Agent Session">
+        <column xsi:type="varchar" name="session_id" nullable="false" length="64" comment="Session ID"/>
+        <column xsi:type="int" name="customer_id" unsigned="true" nullable="true" identity="false" comment="Customer ID"/>
+        <column xsi:type="int" name="quote_id" unsigned="true" nullable="true" identity="false" comment="Quote ID"/>
+        <column xsi:type="smallint" name="store_id" unsigned="true" nullable="false" identity="false" comment="Store ID"/>
+        <column xsi:type="varchar" name="surface" nullable="false" length="16" default="overlay" comment="Surface"/>
+        <column xsi:type="mediumtext" name="state" nullable="false" comment="Session State JSON"/>
+        <column xsi:type="int" name="version" unsigned="true" nullable="false" identity="false" default="0" comment="Version"/>
+        <column xsi:type="int" name="turns" unsigned="true" nullable="false" identity="false" default="0" comment="Turns"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP" comment="Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="session_id"/>
+        </constraint>
+        <index referenceId="AIAGENT_SESSION_CUSTOMER_ID" indexType="btree">
+            <column name="customer_id"/>
+        </index>
+        <index referenceId="AIAGENT_SESSION_QUOTE_ID" indexType="btree">
+            <column name="quote_id"/>
+        </index>
+        <index referenceId="AIAGENT_SESSION_UPDATED_AT" indexType="btree">
+            <column name="updated_at"/>
+        </index>
+    </table>
+    <table name="aiagent_message" resource="default" engine="innodb" comment="AI Agent Message">
+        <column xsi:type="bigint" name="message_id" unsigned="true" nullable="false" identity="true" comment="Message ID"/>
+        <column xsi:type="varchar" name="session_id" nullable="false" length="64" comment="Session ID"/>
+        <column xsi:type="varchar" name="role" nullable="false" length="16" comment="Role"/>
+        <column xsi:type="mediumtext" name="content" nullable="false" comment="Content JSON"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="message_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="AIAGENT_MESSAGE_SESSION_ID_AIAGENT_SESSION_SESSION_ID"
+                    table="aiagent_message" column="session_id" referenceTable="aiagent_session"
+                    referenceColumn="session_id" onDelete="CASCADE"/>
+        <index referenceId="AIAGENT_MESSAGE_SESSION_ID_MESSAGE_ID" indexType="btree">
+            <column name="session_id"/>
+            <column name="message_id"/>
+        </index>
+    </table>
+    <table name="aiagent_turn" resource="default" engine="innodb" comment="AI Agent Turn">
+        <column xsi:type="int" name="turn_id" unsigned="true" nullable="false" identity="true" comment="Turn ID"/>
+        <column xsi:type="varchar" name="session_id" nullable="false" length="64" comment="Session ID"/>
+        <column xsi:type="smallint" name="store_id" unsigned="true" nullable="false" identity="false" comment="Store ID"/>
+        <column xsi:type="int" name="turn_no" unsigned="true" nullable="false" identity="false" comment="Turn Number"/>
+        <column xsi:type="varchar" name="model_id" nullable="false" length="64" comment="Model ID"/>
+        <column xsi:type="smallint" name="rounds" unsigned="true" nullable="false" identity="false" comment="Rounds"/>
+        <column xsi:type="int" name="input_tokens" unsigned="true" nullable="false" identity="false" default="0" comment="Input Tokens"/>
+        <column xsi:type="int" name="output_tokens" unsigned="true" nullable="false" identity="false" default="0" comment="Output Tokens"/>
+        <column xsi:type="int" name="cache_creation_input_tokens" unsigned="true" nullable="false" identity="false" default="0" comment="Cache Creation Input Tokens"/>
+        <column xsi:type="int" name="cache_read_input_tokens" unsigned="true" nullable="false" identity="false" default="0" comment="Cache Read Input Tokens"/>
+        <column xsi:type="int" name="duration_ms" unsigned="true" nullable="false" identity="false" default="0" comment="Duration Milliseconds"/>
+        <column xsi:type="varchar" name="stop_reason" nullable="true" length="32" comment="Stop Reason"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="turn_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="AIAGENT_TURN_SESSION_ID_AIAGENT_SESSION_SESSION_ID"
+                    table="aiagent_turn" column="session_id" referenceTable="aiagent_session"
+                    referenceColumn="session_id" onDelete="CASCADE"/>
+        <index referenceId="AIAGENT_TURN_SESSION_ID" indexType="btree">
+            <column name="session_id"/>
+        </index>
+        <index referenceId="AIAGENT_TURN_CREATED_AT" indexType="btree">
+            <column name="created_at"/>
+        </index>
+    </table>
+</schema>

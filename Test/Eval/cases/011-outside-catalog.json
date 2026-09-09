@@ -1,0 +1,70 @@
+{
+  "id": "011-outside-catalog",
+  "priority": "medium",
+  "difficulty": "medium",
+  "tags": ["catalog-grounding", "search_categories"],
+  "state": {
+    "seen_products": [],
+    "catalog": [
+      {
+        "product_id": "FR-2001",
+        "title": "Eames Style Lounge Chair",
+        "brand": "Kestrel",
+        "price": 649.0,
+        "currency": "USD",
+        "in_stock": true,
+        "short_description": "A leather lounge chair with a matching ottoman."
+      },
+      {
+        "product_id": "FR-2002",
+        "title": "Wool Area Rug",
+        "brand": "Kestrel",
+        "price": 220.0,
+        "currency": "USD",
+        "in_stock": true,
+        "short_description": "A hand-knotted wool rug for the living room."
+      }
+    ],
+    "categories": [
+      {
+        "category_id": 1235,
+        "name": "Lounge Chairs",
+        "path": ["Seating", "Lounge Chairs"],
+        "product_count": 8,
+        "level": 3
+      },
+      {
+        "category_id": 1250,
+        "name": "Rugs",
+        "path": ["Rugs"],
+        "product_count": 14,
+        "level": 2
+      }
+    ]
+  },
+  "turns": [
+    "Board or card games"
+  ],
+  "rounds": [
+    [
+      {
+        "tools": [
+          { "name": "search_products", "input": { "query": "board game" } },
+          { "name": "search_categories", "input": { "keywords": "board game" } }
+        ]
+      },
+      {
+        "text": "The store does not carry games.",
+        "tools": [
+          { "name": "present_suggestions", "input": { "suggestions": ["Browse lounge chairs", "Browse rugs"] } }
+        ]
+      }
+    ]
+  ],
+  "expected": {
+    "calls_tool": ["search_categories", "present_suggestions"],
+    "ui_components": ["suggestions"],
+    "max_tool_calls": 5
+  },
+  "notes": "Both search_products and search_categories come back empty for 'board game'; the model says the store does not carry games and offers catalog map entries from search_categories fixtures that fit the stated purpose of gift/leisure shopping."
+}

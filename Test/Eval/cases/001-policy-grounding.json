@@ -1,0 +1,43 @@
+{
+  "id": "001-policy-grounding",
+  "priority": "critical",
+  "difficulty": "easy",
+  "tags": ["grounding", "policies"],
+  "state": {
+    "seen_products": [],
+    "policies": [
+      {
+        "policy_id": "pol-returns",
+        "title": "Returns and refunds",
+        "category": "returns",
+        "content": "Items can be returned within 30 days of delivery for a full refund, as long as the packaging is intact."
+      }
+    ]
+  },
+  "turns": [
+    "What is your return policy?"
+  ],
+  "rounds": [
+    [
+      {
+        "tools": [
+          { "name": "search_policies", "input": { "query": "return policy" } }
+        ]
+      },
+      {
+        "text": "You can return items within 30 days of delivery for a full refund, as long as the packaging is intact.",
+        "tools": [
+          { "name": "present_suggestions", "input": { "suggestions": ["See shipping options", "Browse new arrivals"] } }
+        ]
+      }
+    ]
+  ],
+  "expected": {
+    "first_tool": "search_policies",
+    "calls_tool": ["search_policies"],
+    "ui_components": ["suggestions"],
+    "reply_includes": ["30 days"],
+    "max_tool_calls": 2
+  },
+  "notes": "A policy question must ground on search_policies before the model answers from its own memory of the store's terms."
+}
