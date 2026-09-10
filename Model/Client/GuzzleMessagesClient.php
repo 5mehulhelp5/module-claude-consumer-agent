@@ -58,7 +58,8 @@ final class GuzzleMessagesClient implements MessagesClientInterface
 
         $lineReader = new SseLineReader();
         $lastEventType = null;
-        foreach ($lineReader->read($this->readChunks($response->getBody(), $onWaiting)) as $rawEvent) {
+        $chunks = $this->readChunks($response->getBody(), $onWaiting, $agentConfig->requestTimeout);
+        foreach ($lineReader->read($chunks) as $rawEvent) {
             if ($agentConfig->debugLog) {
                 $this->logger->debug('aiagent frame', ['type' => $rawEvent->type, 'data' => $rawEvent->data]);
             }
@@ -122,7 +123,7 @@ final class GuzzleMessagesClient implements MessagesClientInterface
         }
     }
 
-    private function readChunks(StreamInterface $stream, ?callable $onWaiting): \Generator
+    private function readChunks(StreamInterface $stream, ?callable $onWaiting, int $requestTimeout): \Generator
     {
         $resource = $stream->detach();
         if (!is_resource($resource)) {
@@ -139,31 +140,31 @@ final class GuzzleMessagesClient implements MessagesClientInterface
         }
 
         try {
-            yield from $this->readChunksFromResource($resource, $onWaiting);
+            yield from $this->readChunksFromResource($resource, $onWaiting, $requestTimeout);
         } finally {
             fclose($resource);
         }
     }
 
-    private function readChunksFromResource($resource, ?callable $onWaiting): \Generator
+    private function readChunksFromResource($resource, ?callable $onWaiting, int $requestTimeout): \Generator
     {
+        stream_set_timeout($resource, self::HEARTBEAT_SLICE_SECONDS);
+        $lastData = time();
         while (!feof($resource)) {
             if ($onWaiting !== null) {
                 $onWaiting();
-            }
-            $read = [$resource];
-            $write = null;
-            $except = null;
-            $ready = @stream_select($read, $write, $except, self::HEARTBEAT_SLICE_SECONDS);
-            if ($ready === false || $ready === 0) {
-                continue;
             }
             $chunk = fread($resource, self::READ_CHUNK_BYTES);
             if ($chunk === false) {
                 return;
             }
             if ($chunk !== '') {
+                $lastData = time();
                 yield $chunk;
+                continue;
+            }
+            if (time() - $lastData >= $requestTimeout) {
+                throw new Exception\Transport('The model stream went silent for ' . $requestTimeout . ' seconds.');
             }
         }
     }
