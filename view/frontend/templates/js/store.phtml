@@ -318,6 +318,9 @@ $configJson = json_encode(
             }
         });
 
+        window.addEventListener('private-content-loaded', (event) => {
+            Alpine.store('aiAgent').onSection(event.detail.data);
+        });
         window.addEventListener('ai-agent:open', (event) => {
             const store = Alpine.store('aiAgent');
             if (store.ready) {

@@ -28,9 +28,6 @@ $lucideIcons = $viewModels->require(LucideIcons::class);
                 return !Alpine.store('aiAgent').surface.open;
             },
             listeners: {
-                ['@private-content-loaded.window'](event) {
-                    Alpine.store('aiAgent').onSection(event.detail.data);
-                },
                 ['@alpine:initialized.window']() {
                     const store = Alpine.store('aiAgent');
                     if (store.surface.resolved === 'side_cart' && !document.getElementById('ai-agent-drawer-shell')) {
