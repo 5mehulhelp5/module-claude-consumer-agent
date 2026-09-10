@@ -787,6 +787,25 @@ final class MagentoStorefrontTest extends TestCase
         $this->assertNotNull($storefront->getProductDetails($this->context(), '702'));
     }
 
+    public function testGetProductDetailsLoadsBySkuWhenTheIdIsNotNumeric(): void
+    {
+        $productRepository = $this->createMock(ProductRepositoryInterface::class);
+        $productRepository->expects($this->never())->method('getById');
+        $productRepository->method('get')
+            ->with('24-MB01', false, $this->context()->storeId)
+            ->willReturn($this->detailedProduct(703, [55]));
+
+        $storefront = $this->buildStorefront([
+            'productRepository' => $productRepository,
+            'allowedCategories' => $this->allowedCategories([], []),
+        ]);
+
+        $details = $storefront->getProductDetails($this->context(), '24-MB01');
+
+        $this->assertNotNull($details);
+        $this->assertSame('703', $details->getProductId());
+    }
+
     public function testGetOrdersThrowsSignInRequiredForGuest(): void
     {
         $storefront = $this->buildStorefront();

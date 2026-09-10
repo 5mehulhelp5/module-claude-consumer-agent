@@ -151,9 +151,8 @@ final class MagentoStorefront implements StorefrontBackendInterface
 
     public function getProductDetails(SessionContext $ctx, string $productId): ?ProductDetailsInterface
     {
-        try {
-            $product = $this->productRepository->getById((int)$productId, false, $ctx->storeId);
-        } catch (NoSuchEntityException $exception) {
+        $product = $this->loadByIdOrSku($productId, $ctx->storeId);
+        if ($product === null) {
             return null;
         }
 
@@ -260,6 +259,18 @@ final class MagentoStorefront implements StorefrontBackendInterface
             }
         }
         return null;
+    }
+
+    private function loadByIdOrSku(string $productId, int $storeId): ?MagentoProductInterface
+    {
+        try {
+            if (ctype_digit($productId)) {
+                return $this->productRepository->getById((int)$productId, false, $storeId);
+            }
+            return $this->productRepository->get($productId, false, $storeId);
+        } catch (NoSuchEntityException $exception) {
+            return null;
+        }
     }
 
     private function specs(MagentoProductInterface $product): array

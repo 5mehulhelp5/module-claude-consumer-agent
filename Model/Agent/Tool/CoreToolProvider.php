@@ -135,7 +135,7 @@ final class CoreToolProvider implements ToolProviderInterface
                 [
                     'type' => 'object',
                     'properties' => [
-                        'product_id' => $this->productId('Catalog product_id to look up.'),
+                        'product_id' => $this->productId('Catalog product_id to look up, or a SKU the customer typed.'),
                     ],
                     'required' => ['product_id'],
                     'additionalProperties' => false,
