@@ -352,6 +352,32 @@ final class FulltextSearchTest extends TestCase
         $this->assertSame([['field' => 'relevance', 'direction' => 'DESC']], $this->sortOrderCalls);
     }
 
+    public function testKeywordQueryWithPriceAscSortMapsToThePriceField(): void
+    {
+        $search = $this->createMock(SearchInterface::class);
+        $search->method('search')->willReturn($this->searchResult([]));
+
+        [$provider] = $this->build(['search' => $search]);
+
+        $filters = SearchFilters::fromArray(['sort' => 'price_asc']);
+        $provider->search($this->context(), 'widget', $filters, 10);
+
+        $this->assertSame([['field' => 'price', 'direction' => 'ASC']], $this->sortOrderCalls);
+    }
+
+    public function testKeywordQueryWithPriceDescSortMapsToThePriceField(): void
+    {
+        $search = $this->createMock(SearchInterface::class);
+        $search->method('search')->willReturn($this->searchResult([]));
+
+        [$provider] = $this->build(['search' => $search]);
+
+        $filters = SearchFilters::fromArray(['sort' => 'price_desc']);
+        $provider->search($this->context(), 'widget', $filters, 10);
+
+        $this->assertSame([['field' => 'price', 'direction' => 'DESC']], $this->sortOrderCalls);
+    }
+
     public function testEmptyQueryWithCategoryIdUsesCatalogViewContainerRequestName(): void
     {
         $search = $this->createMock(SearchInterface::class);

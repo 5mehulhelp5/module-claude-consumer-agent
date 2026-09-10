@@ -75,7 +75,8 @@ final class FulltextSearch implements SearchProviderInterface
             );
         }
 
-        $criteria->addSortOrder('relevance', SortOrder::SORT_DESC);
+        [$sortField, $sortDirection] = $this->searchByTermSortOrder($filters);
+        $criteria->addSortOrder($sortField, $sortDirection);
         $criteria->setPageSize($limit);
 
         $searchCriteria = $criteria->create();
@@ -135,6 +136,15 @@ final class FulltextSearch implements SearchProviderInterface
             'price_desc' => ['price', SortOrder::SORT_DESC],
             default => ['position', SortOrder::SORT_ASC],
         };
+    }
+
+    private function searchByTermSortOrder(?SearchFiltersInterface $filters): array
+    {
+        $sort = $filters !== null ? $filters->getSort() : '';
+        if ($sort === 'price_asc' || $sort === 'price_desc') {
+            return $this->listSortOrder($sort);
+        }
+        return ['relevance', SortOrder::SORT_DESC];
     }
 
     private function runSearch(SessionContext $ctx, SearchCriteria $searchCriteria): array

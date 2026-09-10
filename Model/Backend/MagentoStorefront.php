@@ -121,19 +121,6 @@ final class MagentoStorefront implements StorefrontBackendInterface
             return $records;
         }
 
-        $sort = $filters->getSort();
-        if ($sort === 'price_asc') {
-            usort(
-                $records,
-                static fn (DataProductInterface $a, DataProductInterface $b): int => $a->getPrice() <=> $b->getPrice()
-            );
-        } elseif ($sort === 'price_desc') {
-            usort(
-                $records,
-                static fn (DataProductInterface $a, DataProductInterface $b): int => $b->getPrice() <=> $a->getPrice()
-            );
-        }
-
         return $records;
     }
 
