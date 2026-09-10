@@ -1,3 +1,5 @@
+const AI_AGENT_TURN_TIMEOUT_MS = 180000;
+
 window.aiAgentReader = {
     async run(store, text) {
         const body = {
@@ -10,12 +12,25 @@ window.aiAgentReader = {
         store.turn.controller = controller;
         let firstByte = false;
         let firstByteMs = 0;
+        let completed = false;
+        let intentionalAbort = false;
+        let timedOut = false;
         const startedAt = Date.now();
+        const applyEvent = (type, data) => {
+            if (type === 'turn_complete') {
+                completed = true;
+            }
+            store.apply(type, data);
+        };
         const watchdog = setTimeout(() => {
             if (!firstByte) {
                 store.turn.status = store.config.i18n.stillWorking;
             }
         }, store.config.firstByteThreshold * 1000);
+        const abortTimer = setTimeout(() => {
+            timedOut = true;
+            controller.abort();
+        }, AI_AGENT_TURN_TIMEOUT_MS);
         try {
             const response = await fetch(store.config.urls.turn, {
                 method: 'POST',
@@ -28,14 +43,18 @@ window.aiAgentReader = {
                 signal: controller.signal
             });
             if (response.status === 403) {
-                store.apply('error', {message: store.config.i18n.reloadPage});
+                applyEvent('error', {message: store.config.i18n.reloadPage});
                 return;
             }
             const contentType = response.headers.get('content-type') || '';
             if (store.mode === 'json' || contentType.includes('application/json')) {
                 const payload = await response.json();
                 const events = payload.events || [];
-                events.forEach((event) => store.apply(event.type, event.data));
+                events.forEach((event) => applyEvent(event.type, event.data));
+                return;
+            }
+            if (!contentType.includes('text/event-stream')) {
+                applyEvent('error', {message: store.config.i18n.interrupted});
                 return;
             }
             const reader = response.body.getReader();
@@ -62,7 +81,7 @@ window.aiAgentReader = {
                         const typeMatch = frame.match(/^event: (.+)$/m);
                         const dataMatch = frame.match(/^data: (.+)$/m);
                         if (typeMatch && dataMatch) {
-                            store.apply(typeMatch[1], JSON.parse(dataMatch[1]));
+                            applyEvent(typeMatch[1], JSON.parse(dataMatch[1]));
                         }
                     }
                     frameEnd = buffer.indexOf('\n\n');
@@ -74,15 +93,19 @@ window.aiAgentReader = {
                 store.setMode('json');
             }
         } catch (e) {
-            if (controller.signal.aborted) {
+            if (controller.signal.aborted && !timedOut) {
+                intentionalAbort = true;
                 store.turn.running = false;
                 store.turn.status = '';
                 return;
             }
-            store.apply('error', {message: store.config.i18n.interrupted});
-            store.apply('turn_complete', {usage: null});
+            applyEvent('error', {message: timedOut ? store.config.i18n.timedOut : store.config.i18n.interrupted});
         } finally {
             clearTimeout(watchdog);
+            clearTimeout(abortTimer);
+            if (!completed && !intentionalAbort) {
+                store.apply('turn_complete', {usage: null});
+            }
             if (store.turn.controller === controller) {
                 store.turn.controller = null;
             }

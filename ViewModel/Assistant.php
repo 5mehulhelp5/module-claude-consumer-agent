@@ -54,6 +54,7 @@ final class Assistant implements ArgumentInterface
                 'stillWorking' => (string)__('Still working...'),
                 'reloadPage' => (string)__('Please reload the page and try again.'),
                 'interrupted' => (string)__('The connection was interrupted. Please try again.'),
+                'timedOut' => (string)__('This is taking longer than expected. Please try again.'),
                 'cartItems' => (string)__('%1 item(s), %2'),
                 'cartCount' => (string)__('%1 item(s)'),
                 'cartEmpty' => (string)__('Your cart is empty'),
