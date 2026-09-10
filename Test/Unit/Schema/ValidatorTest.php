@@ -146,6 +146,25 @@ final class ValidatorTest extends TestCase
         $this->assertSame(['picks[0].product_id is required'], $errors);
     }
 
+    public function testAdditionalPropertiesSchemaValidatesUnknownKeys(): void
+    {
+        $schema = [
+            'type' => 'object',
+            'properties' => [
+                'options' => [
+                    'type' => 'object',
+                    'additionalProperties' => ['type' => 'string'],
+                ],
+            ],
+        ];
+        $data = ['options' => ['color' => 'blue', 'size' => ['m', 'l']]];
+        $errors = $this->validator->validate($schema, $data);
+        $this->assertSame(['options.size must be of type string'], $errors);
+
+        $data2 = ['options' => ['color' => 'blue']];
+        $this->assertSame([], $this->validator->validate($schema, $data2));
+    }
+
     public function testBooleanAndNumberTypesAreChecked(): void
     {
         $schema = [

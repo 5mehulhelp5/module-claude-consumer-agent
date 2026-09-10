@@ -55,7 +55,9 @@ final class Validator
                 $errors[] = $this->childPath($path, (string)$key) . ' is required';
             }
         }
-        $additionalAllowed = ($schema['additionalProperties'] ?? true) !== false;
+        $additionalProperties = $schema['additionalProperties'] ?? true;
+        $additionalAllowed = $additionalProperties !== false;
+        $additionalSchema = is_array($additionalProperties) ? $additionalProperties : null;
         foreach ($value as $key => $item) {
             $propertySchema = $properties[$key] ?? null;
             if (!is_array($propertySchema)) {
@@ -65,8 +67,12 @@ final class Validator
                     } else {
                         $errors[] = $this->childPath($path, (string)$key) . ' is not an allowed property';
                     }
+                    continue;
                 }
-                continue;
+                if ($additionalSchema === null) {
+                    continue;
+                }
+                $propertySchema = $additionalSchema;
             }
             $child = $item;
             $this->check($propertySchema, $child, $this->childPath($path, (string)$key), $dropUnknownKeys, $errors);
