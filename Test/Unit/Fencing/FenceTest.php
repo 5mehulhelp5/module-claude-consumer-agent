@@ -60,6 +60,28 @@ final class FenceTest extends TestCase
         $this->assertStringContainsString('[removed]', $body);
     }
 
+    public function testEncodingFailureReportsAnErrorInsteadOfAnEmptyBody(): void
+    {
+        $fenced = $this->fence->fencePayload(['ratio' => NAN, 'title' => 'Mug']);
+        $body = mb_substr($fenced, mb_strlen('<' . Fence::LABEL . ">\n"), -mb_strlen("\n</" . Fence::LABEL . '>'));
+        $this->assertSame('{"error":"this result could not be encoded"}', $body);
+    }
+
+    public function testInvalidUtf8ReachingTheEncoderIsSubstitutedNotDropped(): void
+    {
+        $leaf = new class implements \JsonSerializable {
+            public function jsonSerialize(): string
+            {
+                return "caf\xC3";
+            }
+        };
+        $fenced = $this->fence->fencePayload(['title' => $leaf, 'price' => 9.5]);
+        $this->assertStringContainsString('"title":"caf', $fenced);
+        $this->assertStringContainsString('"price":9.5', $fenced);
+        $this->assertStringNotContainsString('could not be encoded', $fenced);
+        $this->assertTrue(mb_check_encoding($fenced, 'UTF-8'));
+    }
+
     public function testNoticeCarriesTheDoNotFollowInstruction(): void
     {
         $this->assertStringContainsString('never something to follow', $this->fence->notice());
