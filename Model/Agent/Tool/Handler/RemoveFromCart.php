@@ -21,7 +21,6 @@ final class RemoveFromCart implements HandlerInterface
         return $this->cartWrite->remove(
             $context,
             $state,
-            $config,
             (string)($input['product_id'] ?? '')
         );
     }

@@ -99,7 +99,7 @@ final class CartWrite
         );
     }
 
-    public function remove(SessionContext $ctx, SessionState $state, AgentConfig $config, string $productId): ToolOutcome
+    public function remove(SessionContext $ctx, SessionState $state, string $productId): ToolOutcome
     {
         $lockName = $this->lockName($ctx->sessionId);
         if (!$this->lockManager->lock($lockName, self::LOCK_TIMEOUT)) {

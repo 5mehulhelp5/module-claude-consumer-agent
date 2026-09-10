@@ -226,7 +226,7 @@ final class CartWriteTest extends TestCase
         $lockManager = $this->createMock(LockManagerInterface::class);
         $lockManager->method('lock')->willReturn(false);
         $gate = $this->buildGate($this->createMock(StorefrontBackendInterface::class), $lockManager);
-        $result = $gate->remove($this->buildContext(), $this->seenState('p-1'), new AgentConfig(), 'p-1');
+        $result = $gate->remove($this->buildContext(), $this->seenState('p-1'), 'p-1');
         $this->assertTrue($result->isError);
         $this->assertSame('The cart is busy; try again in a moment.', $result->resultText);
     }
@@ -239,7 +239,7 @@ final class CartWriteTest extends TestCase
         $lockManager = $this->createMock(LockManagerInterface::class);
         $lockManager->method('lock')->willReturn(true);
         $gate = $this->buildGate($backend, $lockManager);
-        $result = $gate->remove($this->buildContext(), $this->seenState('p-1'), new AgentConfig(), 'p-1');
+        $result = $gate->remove($this->buildContext(), $this->seenState('p-1'), 'p-1');
         $this->assertFalse($result->isError);
         $this->assertStringStartsWith('Removed.', $result->resultText);
         $this->assertSame('cart_update', $result->events[0]->type);
