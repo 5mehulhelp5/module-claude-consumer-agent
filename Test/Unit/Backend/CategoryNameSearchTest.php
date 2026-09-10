@@ -132,4 +132,48 @@ final class CategoryNameSearchTest extends TestCase
             static fn (array $call): bool => str_contains($call[0], 'store_id') && $call[1] === 1
         ));
     }
+
+    public function testAncestorNamesCollectionIsScopedToTheStore(): void
+    {
+        $root = $this->category(2, 'Default Category', '1/2');
+        $chairs = $this->category(30, 'Chairs', '1/2/10/30');
+        $seatingAncestor = $this->category(10, 'Seating', '1/2/10');
+
+        $ancestorCollection = $this->createMock(CategoryCollection::class);
+        $ancestorCollection->expects($this->once())->method('setStoreId')->with(7);
+        $ancestorCollection->method('addAttributeToSelect')->willReturnSelf();
+        $ancestorCollection->method('addIdFilter')->willReturnSelf();
+        $ancestorCollection->method('getIterator')->willReturn(new \ArrayIterator([$seatingAncestor]));
+
+        $collectionFactory = $this->createMock(CategoryCollectionFactory::class);
+        $collectionFactory->method('create')->willReturnOnConsecutiveCalls(
+            $this->rootCollection($root),
+            $this->searchCollection([$chairs]),
+            $ancestorCollection
+        );
+
+        $select = $this->createMock(Select::class);
+        $select->method('from')->willReturnSelf();
+        $select->method('where')->willReturnSelf();
+        $select->method('group')->willReturnSelf();
+        $adapter = $this->createMock(AdapterInterface::class);
+        $adapter->method('select')->willReturn($select);
+        $adapter->method('fetchPairs')->willReturn([]);
+        $resourceConnection = $this->createMock(ResourceConnection::class);
+        $resourceConnection->method('getConnection')->willReturn($adapter);
+
+        $tableMaintainer = $this->createMock(TableMaintainer::class);
+        $tableMaintainer->method('getMainTable')->willReturn('catalog_category_product_index_store7');
+
+        $search = new CategoryNameSearch(
+            $collectionFactory,
+            $this->storeManager(2),
+            $resourceConnection,
+            $tableMaintainer
+        );
+
+        $matches = $search->search($this->context(7), 'chairs', 5);
+
+        $this->assertSame(['Seating'], $matches[0]->getPath());
+    }
 }

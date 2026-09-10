@@ -63,7 +63,7 @@ final class CategoryNameSearch implements CategorySearchProviderInterface
         $top = array_slice($candidates, 0, max(1, $limit), true);
 
         $counts = $this->productCounts(array_keys($top), $ctx->storeId);
-        $ancestorNames = $this->ancestorNames($top, $storeRootId);
+        $ancestorNames = $this->ancestorNames($top, $storeRootId, $ctx->storeId);
 
         $matches = [];
         foreach ($top as $categoryId => $row) {
@@ -148,7 +148,7 @@ final class CategoryNameSearch implements CategorySearchProviderInterface
         return array_map('intval', $rows);
     }
 
-    private function ancestorNames(array $rows, int $storeRootId): array
+    private function ancestorNames(array $rows, int $storeRootId, int $storeId): array
     {
         $ids = [];
         foreach ($rows as $row) {
@@ -162,6 +162,7 @@ final class CategoryNameSearch implements CategorySearchProviderInterface
         }
 
         $collection = $this->collectionFactory->create();
+        $collection->setStoreId($storeId);
         $collection->addAttributeToSelect(['name']);
         $collection->addIdFilter($ids);
 
