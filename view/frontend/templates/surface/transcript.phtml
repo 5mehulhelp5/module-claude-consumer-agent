@@ -5,10 +5,9 @@ declare(strict_types=1);
     x-data="initAiAgentTranscript"
     x-ref="scroller"
     class="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3"
-    aria-live="polite"
 >
     <template x-for="(m, i) in messages" :key="i">
-        <div :class="bubbleClasses">
+        <div :class="bubbleClasses" :aria-busy="m.streaming">
             <div x-data="initAiAgentBubble"></div>
             <div x-data="initAiAgentTypingIndicator" x-show="isTyping" class="flex items-center gap-1 py-1" aria-hidden="true">
                 <span class="w-2 h-2 rounded-full bg-secondary animate-bounce"></span>
@@ -22,3 +21,4 @@ declare(strict_types=1);
     </template>
     <p x-show="status" x-text="status" class="text-sm text-secondary"></p>
 </div>
+<div class="sr-only" aria-live="polite" aria-atomic="true" x-text="$store.aiAgent.announcement"></div>

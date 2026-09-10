@@ -101,6 +101,7 @@ $configJson = json_encode(
             mode: 'stream',
             transcript: [],
             suggestions: [],
+            announcement: '',
             turn: {running: false, status: '', id: 0, controller: null},
             page: {type: '', productId: '', productName: '', categoryId: '', categoryName: '', query: ''},
             cart: {count: 0, subtotal: ''},
@@ -265,6 +266,7 @@ $configJson = json_encode(
                         last.streaming = false;
                         this.turn.running = false;
                         this.turn.status = '';
+                        this.announcement = last.text;
                         if (typeof data.session === 'string' && data.session.length === 64 && data.session !== this.sessionId) {
                             this.sessionId = data.session;
                             this.persistSession();
