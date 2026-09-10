@@ -32,7 +32,13 @@ class Message
             $connection->insert($this->getTable(), [
                 'session_id' => $sessionId,
                 'role' => (string)$message['role'],
-                'content' => json_encode($message['content'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                'content' => json_encode(
+                    $message['content'],
+                    JSON_UNESCAPED_UNICODE
+                        | JSON_UNESCAPED_SLASHES
+                        | JSON_INVALID_UTF8_SUBSTITUTE
+                        | JSON_THROW_ON_ERROR
+                ),
             ]);
         }
     }
