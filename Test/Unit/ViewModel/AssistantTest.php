@@ -128,6 +128,7 @@ final class AssistantTest extends TestCase
                 'stillWorking',
                 'reloadPage',
                 'interrupted',
+                'timedOut',
                 'cartItems',
                 'cartCount',
                 'cartEmpty',
