@@ -333,6 +333,21 @@ final class CoreToolProviderTest extends TestCase
         $this->fail('search_products definition not found');
     }
 
+    public function testSearchProductsFiltersSchemaHasNoRatingOptions(): void
+    {
+        $definitions = $this->buildProvider()->getTools($this->config());
+        foreach ($definitions as $definition) {
+            if ($definition->getName() !== 'search_products') {
+                continue;
+            }
+            $filtersSchema = $definition->getInputSchema()['properties']['filters']['properties'];
+            $this->assertArrayNotHasKey('min_rating', $filtersSchema);
+            $this->assertNotContains('rating', $filtersSchema['sort']['enum']);
+            return;
+        }
+        $this->fail('search_products definition not found');
+    }
+
     public function testLoadSkillEnumListsInstalledSkillNamesSorted(): void
     {
         $definitions = $this->buildProvider()->getTools($this->config());

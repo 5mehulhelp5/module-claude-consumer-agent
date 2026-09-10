@@ -121,15 +121,6 @@ final class MagentoStorefront implements StorefrontBackendInterface
             return $records;
         }
 
-        $minRating = $filters->getMinRating();
-        if ($minRating !== null) {
-            $records = array_values(array_filter(
-                $records,
-                static fn (DataProductInterface $product): bool =>
-                    $product->getRating() === null || $product->getRating() >= $minRating
-            ));
-        }
-
         $sort = $filters->getSort();
         if ($sort === 'price_asc') {
             usort(
@@ -140,12 +131,6 @@ final class MagentoStorefront implements StorefrontBackendInterface
             usort(
                 $records,
                 static fn (DataProductInterface $a, DataProductInterface $b): int => $b->getPrice() <=> $a->getPrice()
-            );
-        } elseif ($sort === 'rating') {
-            usort(
-                $records,
-                static fn (DataProductInterface $a, DataProductInterface $b): int =>
-                    ($b->getRating() ?? 0.0) <=> ($a->getRating() ?? 0.0)
             );
         }
 

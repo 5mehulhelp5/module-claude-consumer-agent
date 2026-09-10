@@ -449,7 +449,6 @@ final class CoreToolProvider implements ToolProviderInterface
                 ],
                 'min_price' => ['type' => 'number', 'description' => 'Lowest acceptable price.'],
                 'max_price' => ['type' => 'number', 'description' => 'Price ceiling the customer stated.'],
-                'min_rating' => ['type' => 'number', 'description' => 'Lowest acceptable average rating.'],
                 'attributes' => [
                     'type' => 'object',
                     'description' => 'Attribute or option filters as key/value pairs, e.g. '
@@ -458,7 +457,7 @@ final class CoreToolProvider implements ToolProviderInterface
                 ],
                 'sort' => [
                     'type' => 'string',
-                    'enum' => ['relevance', 'price_asc', 'price_desc', 'rating', 'best_sellers'],
+                    'enum' => ['relevance', 'price_asc', 'price_desc', 'best_sellers'],
                     'description' => 'Result order; relevance unless the customer asked otherwise. '
                         . 'best_sellers ranks by units sold in the store over the last two years.',
                 ],
