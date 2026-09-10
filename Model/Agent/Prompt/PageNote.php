@@ -10,6 +10,17 @@ final class PageNote
 {
     public const PREFIX = '[Page: ';
 
+    private const ID_MAX_LENGTH = 20;
+
+    private const NAME_MAX_LENGTH = 120;
+
+    private const QUERY_MAX_LENGTH = 200;
+
+    public function __construct(
+        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Sanitizer $sanitizer
+    ) {
+    }
+
     public function text(PageContextInterface $current, array $previous): ?string
     {
         $currentType = $current->getPageType();
@@ -66,11 +77,11 @@ final class PageNote
 
     private function describeProduct(PageContextInterface $page): string
     {
-        $id = $page->getProductId();
+        $id = $this->label($page->getProductId(), self::ID_MAX_LENGTH);
         if ($id === null) {
             return 'the product page';
         }
-        $name = $page->getProductName();
+        $name = $this->label($page->getProductName(), self::NAME_MAX_LENGTH);
         if ($name === null) {
             return 'the product page for product_id ' . $id;
         }
@@ -79,11 +90,11 @@ final class PageNote
 
     private function describeCategory(PageContextInterface $page): string
     {
-        $id = $page->getCategoryId();
+        $id = $this->label($page->getCategoryId(), self::ID_MAX_LENGTH);
         if ($id === null) {
             return 'the category page';
         }
-        $name = $page->getCategoryName();
+        $name = $this->label($page->getCategoryName(), self::NAME_MAX_LENGTH);
         if ($name === null) {
             return 'the category page for category_id ' . $id;
         }
@@ -92,10 +103,19 @@ final class PageNote
 
     private function describeSearch(PageContextInterface $page): string
     {
-        $query = $page->getQuery();
+        $query = $this->label($page->getQuery(), self::QUERY_MAX_LENGTH);
         if ($query === null) {
             return 'the search results page';
         }
         return 'the search results for "' . $query . '"';
+    }
+
+    private function label(?string $value, int $maxChars): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        $label = $this->sanitizer->label($value, $maxChars);
+        return $label !== '' ? $label : null;
     }
 }

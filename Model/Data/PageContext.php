@@ -7,9 +7,9 @@ use MageOS\ClaudeConsumerAgent\Api\Data\PageContextInterface;
 
 final class PageContext implements PageContextInterface
 {
-    private const CATEGORY_NAME_MAX_LENGTH = 255;
+    private const QUERY_MAX_LENGTH = 200;
 
-    private const PRODUCT_NAME_MAX_LENGTH = 255;
+    private const NAME_MAX_LENGTH = 120;
 
     public function __construct(
         private readonly string $pageType = self::PAGE_TYPE_HOME,
@@ -31,10 +31,10 @@ final class PageContext implements PageContextInterface
         return new self(
             pageType: $pageType,
             productId: isset($data['product_id']) ? (string)$data['product_id'] : null,
-            query: isset($data['query']) ? (string)$data['query'] : null,
+            query: self::readText($data['query'] ?? null, self::QUERY_MAX_LENGTH),
             categoryId: self::readCategoryId($data['category_id'] ?? null),
-            categoryName: self::readCategoryName($data['category_name'] ?? null),
-            productName: self::readProductName($data['product_name'] ?? null)
+            categoryName: self::readText($data['category_name'] ?? null, self::NAME_MAX_LENGTH),
+            productName: self::readText($data['product_name'] ?? null, self::NAME_MAX_LENGTH)
         );
     }
 
@@ -88,7 +88,7 @@ final class PageContext implements PageContextInterface
         return (string)$value;
     }
 
-    private static function readCategoryName(mixed $value): ?string
+    private static function readText(mixed $value, int $maxLength): ?string
     {
         if (!is_string($value)) {
             return null;
@@ -97,18 +97,6 @@ final class PageContext implements PageContextInterface
         if ($trimmed === '') {
             return null;
         }
-        return mb_substr($trimmed, 0, self::CATEGORY_NAME_MAX_LENGTH);
-    }
-
-    private static function readProductName(mixed $value): ?string
-    {
-        if (!is_string($value)) {
-            return null;
-        }
-        $trimmed = trim($value);
-        if ($trimmed === '') {
-            return null;
-        }
-        return mb_substr($trimmed, 0, self::PRODUCT_NAME_MAX_LENGTH);
+        return mb_substr($trimmed, 0, $maxLength);
     }
 }

@@ -323,7 +323,7 @@ class EvalRun extends Command
             'staticSystem' => $this->staticSystem,
             'dynamicContext' => $this->dynamicContext,
             'assembly' => $this->assembly,
-            'pageNote' => new PageNote(),
+            'pageNote' => new PageNote($this->sanitizer),
             'toolRegistry' => $toolRegistry,
             'executorFactory' => $executorFactory,
             'rules' => $this->rules,

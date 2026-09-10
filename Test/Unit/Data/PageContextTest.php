@@ -102,11 +102,25 @@ class PageContextTest extends TestCase
         $this->assertNull($pageContext->getCategoryId());
     }
 
-    public function testFromArrayCategoryNameIsTrimmedAndCappedAt255Chars(): void
+    public function testFromArrayCategoryNameIsTrimmedAndCappedAt120Chars(): void
     {
         $pageContext = PageContext::fromArray(['category_name' => '  ' . str_repeat('a', 300) . '  ']);
 
-        $this->assertSame(str_repeat('a', 255), $pageContext->getCategoryName());
+        $this->assertSame(str_repeat('a', 120), $pageContext->getCategoryName());
+    }
+
+    public function testFromArrayQueryIsTrimmedAndCappedAt200Chars(): void
+    {
+        $pageContext = PageContext::fromArray(['page_type' => 'search', 'query' => '  ' . str_repeat('q', 300) . '  ']);
+
+        $this->assertSame(str_repeat('q', 200), $pageContext->getQuery());
+    }
+
+    public function testFromArrayQueryIsNullWhenBlankOrNotAString(): void
+    {
+        $this->assertNull(PageContext::fromArray(['query' => '   '])->getQuery());
+        $this->assertNull(PageContext::fromArray(['query' => ['lamp']])->getQuery());
+        $this->assertNull(PageContext::fromArray(['query' => 42])->getQuery());
     }
 
     public function testFromArrayCategoryNameIsNullWhenBlankAfterTrim(): void
@@ -156,11 +170,11 @@ class PageContextTest extends TestCase
         $this->assertSame('The Interior Design Handbook', $pageContext->getProductName());
     }
 
-    public function testFromArrayProductNameIsTrimmedAndCappedAt255Chars(): void
+    public function testFromArrayProductNameIsTrimmedAndCappedAt120Chars(): void
     {
         $pageContext = PageContext::fromArray(['product_name' => '  ' . str_repeat('a', 300) . '  ']);
 
-        $this->assertSame(str_repeat('a', 255), $pageContext->getProductName());
+        $this->assertSame(str_repeat('a', 120), $pageContext->getProductName());
     }
 
     public function testFromArrayProductNameIsNullWhenBlankAfterTrim(): void

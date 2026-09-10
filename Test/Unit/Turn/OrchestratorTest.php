@@ -631,7 +631,7 @@ final class OrchestratorTest extends TestCase
             $staticSystem,
             $dynamicContext,
             $assembly,
-            new PageNote(),
+            new PageNote($sanitizer),
             $toolRegistry,
             $executorFactory,
             $rules,
