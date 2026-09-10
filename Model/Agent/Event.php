@@ -93,11 +93,14 @@ final class Event
         return new self(self::TYPE_TURN_COMPLETE, $data);
     }
 
-    public static function error(string $message, ?int $retryAfter = null): self
+    public static function error(string $message, ?int $retryAfter = null, ?string $kind = null): self
     {
         $data = ['message' => $message];
         if ($retryAfter !== null) {
             $data['retry_after'] = $retryAfter;
+        }
+        if ($kind !== null) {
+            $data['kind'] = $kind;
         }
         return new self(self::TYPE_ERROR, $data);
     }

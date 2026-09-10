@@ -9,6 +9,7 @@ use Magento\Framework\App\Request\InvalidRequestException;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\ResultInterface;
 use MageOS\ClaudeConsumerAgent\Controller\Request\TurnRequest;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Event;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Config\Source\Streaming;
 use MageOS\ClaudeConsumerAgent\Model\Data\PageContext;
@@ -18,7 +19,6 @@ use MageOS\ClaudeConsumerAgent\Model\Session\Binding;
 class Index implements HttpPostActionInterface, CsrfAwareActionInterface
 {
     private const SLOT_RETRY_AFTER = 5;
-    private const SESSION_CAP_RETRY_AFTER = 60;
 
     public function __construct(
         private readonly \MageOS\ClaudeConsumerAgent\Controller\Request\BodyReader $bodyReader,
@@ -81,9 +81,11 @@ class Index implements HttpPostActionInterface, CsrfAwareActionInterface
         $this->sessionManager->writeClose();
         if ($slot === null || $retryAfter !== null || $overSessionCap) {
             $slot?->release();
-            $busyRetryAfter = $retryAfter
-                ?? ($overSessionCap ? self::SESSION_CAP_RETRY_AFTER : self::SLOT_RETRY_AFTER);
-            return $this->busyResult($body, $busyRetryAfter);
+            if ($overSessionCap) {
+                return $this->busyResult($body, $this->busyEvent->sessionCap());
+            }
+            $busyRetryAfter = $retryAfter ?? self::SLOT_RETRY_AFTER;
+            return $this->busyResult($body, $this->busyEvent->event($busyRetryAfter));
         }
         if ($body->wantsStream && $agentConfig->streaming !== Streaming::OFF) {
             return $this->eventStreamFactory->create()->setTurn($binding, $body->message, $context, $slot);
@@ -106,9 +108,8 @@ class Index implements HttpPostActionInterface, CsrfAwareActionInterface
         return new InvalidRequestException($result);
     }
 
-    private function busyResult(TurnRequest $body, int $retryAfter): ResultInterface
+    private function busyResult(TurnRequest $body, Event $event): ResultInterface
     {
-        $event = $this->busyEvent->event($retryAfter);
         if ($body->wantsStream) {
             return $this->eventStreamFactory->create()->setBusy($event);
         }

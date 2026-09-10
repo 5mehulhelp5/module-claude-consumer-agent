@@ -111,7 +111,10 @@ final class IndexTest extends TestCase
     {
         $cache = $this->createMock(CacheInterface::class);
         $cache->method('load')->willReturn($exceeded ? '999' : '0');
-        return new Counters($cache, $this->createMock(LoggerInterface::class));
+        $lockManager = $this->createMock(LockManagerInterface::class);
+        $lockManager->method('lock')->willReturn(true);
+        $lockManager->method('unlock')->willReturn(true);
+        return new Counters($cache, $lockManager, $this->createMock(LoggerInterface::class));
     }
 
     private function formKeyGuard(bool $valid): FormKeyGuard
@@ -275,7 +278,7 @@ final class IndexTest extends TestCase
         $this->assertSame($eventStreamResult, $result);
     }
 
-    public function testBusyResultWhenBindingRowIsAtTheSessionCap(): void
+    public function testBusyResultWhenBindingRowIsAtTheSessionCapEmitsADistinctSessionCapEvent(): void
     {
         $sessionId = str_repeat('a', 64);
         $row = [
@@ -288,10 +291,14 @@ final class IndexTest extends TestCase
             'version' => 0,
             'turns' => 40,
         ];
+        $capturedEvent = null;
         $eventStreamResult = $this->eventStreamResult();
         $eventStreamResult->expects($this->once())
             ->method('setBusy')
-            ->with($this->isInstanceOf(Event::class))
+            ->with($this->callback(function (Event $event) use (&$capturedEvent): bool {
+                $capturedEvent = $event;
+                return true;
+            }))
             ->willReturnSelf();
         $eventStreamResult->expects($this->never())->method('setTurn');
 
@@ -303,6 +310,8 @@ final class IndexTest extends TestCase
 
         $result = $index->execute();
         $this->assertSame($eventStreamResult, $result);
+        $this->assertSame('session_cap', $capturedEvent->data['kind'] ?? null);
+        $this->assertArrayNotHasKey('retry_after', $capturedEvent->data);
     }
 
     public function testWindowCounterIsAnchoredOnThePhpSessionWhenTheClientOmitsTheSessionId(): void
@@ -318,7 +327,10 @@ final class IndexTest extends TestCase
                 return true;
             }
         );
-        $counters = new Counters($cache, $this->createMock(LoggerInterface::class));
+        $lockManager = $this->createMock(LockManagerInterface::class);
+        $lockManager->method('lock')->willReturn(true);
+        $lockManager->method('unlock')->willReturn(true);
+        $counters = new Counters($cache, $lockManager, $this->createMock(LoggerInterface::class));
 
         $index = $this->buildIndex([
             'sessionManager' => $sessionManager,

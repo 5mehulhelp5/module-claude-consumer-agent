@@ -14,4 +14,13 @@ final class BusyEvent
             $retryAfter
         );
     }
+
+    public function sessionCap(): Event
+    {
+        return Event::error(
+            'This conversation has reached its length limit. Start a new conversation to keep going.',
+            null,
+            'session_cap'
+        );
+    }
 }

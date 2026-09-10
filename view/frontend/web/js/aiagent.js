@@ -428,6 +428,12 @@ function initAiAgentTranscript() {
         isStreaming() {
             return this.m.streaming === true;
         },
+        isSessionCap() {
+            return this.m.sessionCap === true;
+        },
+        newConversation() {
+            Alpine.store('aiAgent').reset();
+        },
         init() {
             this.$watch(
                 () => Alpine.store('aiAgent').transcript.length,

@@ -1,5 +1,9 @@
 <?php
 declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+
+/** @var Escaper $escaper */
 ?>
 <div
     x-data="initAiAgentTranscript"
@@ -17,6 +21,14 @@ declare(strict_types=1);
             <template x-for="card in m.cards" :key="card.id">
                 <div x-data="initAiAgentCard"></div>
             </template>
+            <button
+                type="button"
+                x-show="isSessionCap"
+                class="mt-2 btn btn-secondary btn-size-sm"
+                @click="newConversation"
+            >
+                <?= $escaper->escapeHtml(__('Start a new conversation')) ?>
+            </button>
         </div>
     </template>
     <p x-show="status" x-text="status" class="text-sm text-fg-secondary"></p>

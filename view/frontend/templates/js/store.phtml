@@ -258,6 +258,7 @@ $configJson = json_encode(
                         if (data.retry_after) {
                             last.retryAfter = data.retry_after;
                         }
+                        last.sessionCap = data.kind === 'session_cap';
                         last.streaming = false;
                         this.turn.running = false;
                         this.turn.status = '';
