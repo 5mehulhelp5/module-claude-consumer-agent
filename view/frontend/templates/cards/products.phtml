@@ -102,13 +102,13 @@ use Magento\Framework\View\Element\Template;
         <template x-if="isListLayout">
             <ul class="flex flex-col">
                 <template x-for="item in card.payload.items" :key="item.product.product_id">
-                    <li class="flex items-center gap-3 border-b border-container py-3">
+                    <li class="flex flex-wrap items-center gap-3 border-b border-container py-3">
                         <template x-if="showImage">
                             <a :href="item.product.url" class="block shrink-0">
                                 <img
                                     :src="item.product.image_url"
                                     :alt="item.product.title"
-                                    class="w-16 h-16 object-cover rounded"
+                                    class="w-24 h-24 sm:w-16 sm:h-16 object-cover rounded"
                                 >
                             </a>
                         </template>
@@ -146,11 +146,11 @@ use Magento\Framework\View\Element\Template;
                                 </template>
                             </div>
                         </div>
-                        <div class="shrink-0">
+                        <div class="w-full sm:w-auto shrink-0">
                             <template x-if="showViewProductLink">
                                 <a
                                     :href="item.product.url"
-                                    class="btn btn-secondary btn-size-sm text-center"
+                                    class="btn btn-secondary btn-size-sm text-center w-full sm:w-auto"
                                 >
                                     <?= $escaper->escapeHtml(__('View product')) ?>
                                 </a>
@@ -158,7 +158,7 @@ use Magento\Framework\View\Element\Template;
                             <template x-if="showAskCustomOptionsButton">
                                 <button
                                     type="button"
-                                    class="btn btn-primary btn-size-sm"
+                                    class="btn btn-primary btn-size-sm w-full sm:w-auto"
                                     :data-product-id="item.product.product_id"
                                     @click="askCustomOptions"
                                 >
@@ -168,7 +168,7 @@ use Magento\Framework\View\Element\Template;
                             <template x-if="showChooseOptionsButton">
                                 <button
                                     type="button"
-                                    class="btn btn-primary btn-size-sm"
+                                    class="btn btn-primary btn-size-sm w-full sm:w-auto"
                                     :data-product-id="item.product.product_id"
                                     @click="chooseOptions"
                                 >
@@ -178,7 +178,7 @@ use Magento\Framework\View\Element\Template;
                             <template x-if="showAddToCartButton">
                                 <button
                                     type="button"
-                                    class="btn btn-primary btn-size-sm"
+                                    class="btn btn-primary btn-size-sm w-full sm:w-auto"
                                     :data-product-id="item.product.product_id"
                                     @click="add"
                                 >
