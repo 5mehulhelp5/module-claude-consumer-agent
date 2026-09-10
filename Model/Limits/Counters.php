@@ -20,9 +20,10 @@ final class Counters
     ) {
     }
 
-    public function bump(string $sessionId, string $ip, AgentConfig $config): void
+    public function bump(string $sessionId, string $browserSessionId, string $ip, AgentConfig $config): void
     {
-        $sessionKey = 'aiagent_cnt_s_' . substr(sha1($sessionId), 0, 24);
+        $windowAnchor = $browserSessionId !== '' ? $browserSessionId : $sessionId;
+        $sessionKey = 'aiagent_cnt_s_' . substr(sha1($windowAnchor), 0, 24);
         $ipKey = 'aiagent_cnt_ip_' . substr(sha1($ip), 0, 24);
         $sessionCount = $this->increment($sessionKey, self::SESSION_TTL);
         $ipCount = $this->increment($ipKey, self::IP_TTL);

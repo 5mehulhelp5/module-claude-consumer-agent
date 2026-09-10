@@ -26,7 +26,7 @@ final class CountersTest extends TestCase
         $config = new AgentConfig(turnsPerSessionWindow: 1, turnsPerIpMinute: 100);
 
         try {
-            $counters->bump('session-1', '10.0.0.1', $config);
+            $counters->bump('session-1', 'php-1', '10.0.0.1', $config);
             $this->fail('Expected LimitExceeded was not thrown.');
         } catch (LimitExceeded $exception) {
             $this->assertSame(60, $exception->getRetryAfter());
@@ -47,7 +47,7 @@ final class CountersTest extends TestCase
         $config = new AgentConfig(turnsPerSessionWindow: 100, turnsPerIpMinute: 1);
 
         try {
-            $counters->bump('session-2', '10.0.0.2', $config);
+            $counters->bump('session-2', 'php-2', '10.0.0.2', $config);
             $this->fail('Expected LimitExceeded was not thrown.');
         } catch (LimitExceeded $exception) {
             $this->assertSame(20, $exception->getRetryAfter());
@@ -63,8 +63,51 @@ final class CountersTest extends TestCase
         $counters = new Counters($cache, $logger);
         $config = new AgentConfig();
 
-        $counters->bump('session-3', '10.0.0.3', $config);
+        $counters->bump('session-3', 'php-3', '10.0.0.3', $config);
 
         $this->addToAssertionCount(1);
+    }
+
+    public function testAgentSessionsUnderOneBrowserSessionShareTheWindowCounter(): void
+    {
+        $cache = $this->createMock(CacheInterface::class);
+        $cache->method('load')->willReturn('0');
+        $savedKeys = [];
+        $cache->method('save')->willReturnCallback(
+            static function (string $data, string $key) use (&$savedKeys): bool {
+                $savedKeys[] = $key;
+                return true;
+            }
+        );
+        $counters = new Counters($cache, $this->createMock(LoggerInterface::class));
+        $config = new AgentConfig();
+
+        $counters->bump('agent-a', 'php-shared', '10.0.0.4', $config);
+        $counters->bump('agent-b', 'php-shared', '10.0.0.4', $config);
+
+        $windowKeys = array_values(array_filter(
+            $savedKeys,
+            static fn (string $key): bool => str_starts_with($key, 'aiagent_cnt_s_')
+        ));
+        $this->assertCount(2, $windowKeys);
+        $this->assertSame($windowKeys[0], $windowKeys[1]);
+    }
+
+    public function testEmptyBrowserSessionFallsBackToTheAgentSessionKey(): void
+    {
+        $cache = $this->createMock(CacheInterface::class);
+        $cache->method('load')->willReturn('0');
+        $savedKeys = [];
+        $cache->method('save')->willReturnCallback(
+            static function (string $data, string $key) use (&$savedKeys): bool {
+                $savedKeys[] = $key;
+                return true;
+            }
+        );
+        $counters = new Counters($cache, $this->createMock(LoggerInterface::class));
+
+        $counters->bump('agent-c', '', '10.0.0.5', new AgentConfig());
+
+        $this->assertContains('aiagent_cnt_s_' . substr(sha1('agent-c'), 0, 24), $savedKeys);
     }
 }

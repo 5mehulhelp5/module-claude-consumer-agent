@@ -68,10 +68,11 @@ class Index implements HttpPostActionInterface, CsrfAwareActionInterface
         $binding = $this->sessionRepository->bind($body->sessionId, $preContext);
         $context = new SessionContext($binding->sessionId, $customerId, $quoteId, $storeId, $page, $now);
         $ip = (string)($this->remoteAddress->getRemoteAddress() ?: '');
+        $browserSessionId = (string)$this->sessionManager->getSessionId();
         $slot = $this->slotLock->acquire($storeId);
         $retryAfter = null;
         try {
-            $this->counters->bump($binding->sessionId, $ip, $agentConfig);
+            $this->counters->bump($binding->sessionId, $browserSessionId, $ip, $agentConfig);
         } catch (LimitExceeded $exception) {
             $retryAfter = $exception->getRetryAfter();
         }

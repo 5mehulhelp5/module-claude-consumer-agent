@@ -305,6 +305,31 @@ final class IndexTest extends TestCase
         $this->assertSame($eventStreamResult, $result);
     }
 
+    public function testWindowCounterIsAnchoredOnThePhpSessionWhenTheClientOmitsTheSessionId(): void
+    {
+        $sessionManager = $this->createMock(SessionManagerInterface::class);
+        $sessionManager->method('getSessionId')->willReturn('php-session-1');
+        $cache = $this->createMock(CacheInterface::class);
+        $cache->method('load')->willReturn('0');
+        $savedKeys = [];
+        $cache->method('save')->willReturnCallback(
+            static function (string $data, string $key) use (&$savedKeys): bool {
+                $savedKeys[] = $key;
+                return true;
+            }
+        );
+        $counters = new Counters($cache, $this->createMock(LoggerInterface::class));
+
+        $index = $this->buildIndex([
+            'sessionManager' => $sessionManager,
+            'counters' => $counters,
+            'request' => $this->requestWithBody(['message' => 'hello']),
+        ]);
+        $index->execute();
+
+        $this->assertContains('aiagent_cnt_s_' . substr(sha1('php-session-1'), 0, 24), $savedKeys);
+    }
+
     public function testWriteCloseIsCalledBeforeTheResultIsCreated(): void
     {
         $order = [];
