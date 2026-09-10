@@ -14,6 +14,7 @@ final class GuzzleMessagesClient implements MessagesClientInterface
     public const API_VERSION = '2023-06-01';
     public const MAX_RETRIES = 2;
     private const READ_CHUNK_BYTES = 256;
+    private const TIMEOUT_MARGIN_SECONDS = 5;
 
     private const RETRYABLE_STATUSES = [429, 500, 502, 503, 529];
     private const MAX_RETRY_AFTER_SECONDS = 30.0;
@@ -45,6 +46,11 @@ final class GuzzleMessagesClient implements MessagesClientInterface
             $this->logger->debug('aiagent request body', ['body' => $encodedBody]);
         }
 
+        if (!filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN)) {
+            throw new Exception\Transport(
+                'The model call streams over the PHP stream handler, which needs allow_url_fopen enabled in php.ini.'
+            );
+        }
         $response = $this->send($encodedBody, $agentConfig->connectTimeout, $agentConfig->requestTimeout, $apiKey);
 
         $lineReader = new SseLineReader();
@@ -72,7 +78,7 @@ final class GuzzleMessagesClient implements MessagesClientInterface
                     'stream' => true,
                     'connect_timeout' => $connectTimeout,
                     'read_timeout' => $requestTimeout,
-                    'timeout' => 0,
+                    'timeout' => $requestTimeout + self::TIMEOUT_MARGIN_SECONDS,
                     'http_errors' => false,
                 ]);
             } catch (ConnectException $exception) {

@@ -127,7 +127,13 @@
         </arguments>
     </type>
 
-    <virtualType name="MageOS\ClaudeConsumerAgent\Model\Client\GuzzleHttpClient" type="GuzzleHttp\Client"/>
+    <virtualType name="MageOS\ClaudeConsumerAgent\Model\Client\GuzzleHttpClient" type="GuzzleHttp\Client">
+        <arguments>
+            <argument name="config" xsi:type="array">
+                <item name="handler" xsi:type="object">GuzzleHttp\Handler\StreamHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
 
     <type name="MageOS\ClaudeConsumerAgent\Model\Client\GuzzleMessagesClient">
         <arguments>

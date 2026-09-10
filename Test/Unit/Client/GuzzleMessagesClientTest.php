@@ -102,6 +102,24 @@ final class GuzzleMessagesClientTest extends TestCase
         $this->assertSame('hi', $events[2]->data['delta']['text']);
     }
 
+    public function testRequestCarriesAReadTimeoutAndATotalTimeoutAboveIt(): void
+    {
+        $history = [];
+        $mockHandler = new MockHandler([new Response(200, [], self::SSE_TEXT)]);
+        $http = $this->buildClientWithHandler($mockHandler, $history);
+        $logger = $this->createMock(LoggerInterface::class);
+        $sleeper = $this->createMock(Sleeper::class);
+
+        $client = new GuzzleMessagesClient($http, $this->buildStoreConfig(), $logger, $sleeper);
+        iterator_to_array($client->stream(['messages' => []]), false);
+
+        $options = $history[0]['options'];
+        $this->assertSame(10, $options['connect_timeout']);
+        $this->assertSame(120, $options['read_timeout']);
+        $this->assertSame(125, $options['timeout']);
+        $this->assertTrue($options['stream']);
+    }
+
     public function testRetryAfterOn429ThenSucceeds(): void
     {
         $history = [];
