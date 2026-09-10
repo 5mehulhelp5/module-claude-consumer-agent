@@ -41,8 +41,8 @@ part without touching the base module.
 ## Requirements
 
 - PHP 8.1 to 8.5
-- Magento 2.4 or Mage-OS 3.x with a Hyvä theme (theme module 1.3 or later).
-  The module has no Luma templates.
+- Magento 2.4 or Mage-OS 3.x with a Hyvä theme on Tailwind 4 (Hyvä default
+  theme 1.5 or later). The module has no Luma templates.
 - ext-intl, ext-json, guzzlehttp/guzzle 7.5 or later
 - An Anthropic API key with access to the configured model
 
