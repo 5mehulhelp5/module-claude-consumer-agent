@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Console\Command;
 
+use Magento\Framework\Console\Cli;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Event;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
@@ -120,18 +121,18 @@ class SpikeStream extends Command
             foreach ($orchestrator->streamTurn($binding, $message, $context) as $event) {
                 if ($event->type === Event::TYPE_ERROR) {
                     $output->writeln('<error>error: ' . $event->data['message'] . '</error>');
-                    return 1;
+                    return Cli::RETURN_FAILURE;
                 }
                 $this->printOrchestratorEvent($output, $event);
             }
         } catch (\Throwable $exception) {
             $output->writeln('<error>' . $exception->getMessage() . '</error>');
-            return 1;
+            return Cli::RETURN_FAILURE;
         } finally {
             $this->appEmulation->stopEnvironmentEmulation();
         }
 
-        return 0;
+        return Cli::RETURN_SUCCESS;
     }
 
     private function printOrchestratorEvent(OutputInterface $output, Event $event): void
@@ -236,12 +237,12 @@ class SpikeStream extends Command
                 }
                 if ($rawEvent->type === 'error') {
                     $output->writeln('<error>error: ' . ($rawEvent->data['error']['message'] ?? 'unknown') . '</error>');
-                    return 1;
+                    return Cli::RETURN_FAILURE;
                 }
             }
         } catch (\Throwable $exception) {
             $output->writeln('<error>' . $exception->getMessage() . '</error>');
-            return 1;
+            return Cli::RETURN_FAILURE;
         }
 
         $output->writeln('');
@@ -256,7 +257,7 @@ class SpikeStream extends Command
             $this->recordFixture((string)$record, $rawFrames, $output);
         }
 
-        return 0;
+        return Cli::RETURN_SUCCESS;
     }
 
     private function buildRequest(int $storeId, string $userText): array

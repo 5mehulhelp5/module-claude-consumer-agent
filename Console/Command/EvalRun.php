@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Console\Command;
 
+use Magento\Framework\Console\Cli;
 use MageOS\ClaudeConsumerAgent\Api\Backend\SkuMatcherInterface;
 use MageOS\ClaudeConsumerAgent\Api\Client\MessagesClientInterface;
 use MageOS\ClaudeConsumerAgent\Api\Data\CartInterface;
@@ -161,7 +162,7 @@ class EvalRun extends Command
             $this->printTable($output, $results);
         }
 
-        return $hardFailure ? 1 : 0;
+        return $hardFailure ? Cli::RETURN_FAILURE : Cli::RETURN_SUCCESS;
     }
 
     private function runCase(array $case, string $id, int $storeId, bool $live): array
