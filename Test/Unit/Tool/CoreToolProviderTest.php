@@ -13,6 +13,12 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Sanitizer;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Gate\CartWrite;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Gate\Options;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Gate\Provenance;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Checkout;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Comparison;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\OrderStatus;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Products;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Suggestions;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Registry as PresentationRegistry;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Serializer;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Skill\FrontMatter;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Skill\Loader;
@@ -65,6 +71,13 @@ final class CoreToolProviderTest extends TestCase
             $logger
         );
         $skills = $this->realSkillRegistry();
+        $presentation = new PresentationRegistry(
+            new Products($logger, new Sanitizer()),
+            new Comparison(),
+            new OrderStatus($serializer),
+            new Checkout($serializer),
+            new Suggestions(new Sanitizer())
+        );
 
         return new CoreToolProvider(
             new LoadSkill($skills),
@@ -81,7 +94,8 @@ final class CoreToolProviderTest extends TestCase
             new SearchPolicies($backend, $serializer, $fence),
             new GetFulfillmentOptions($backend, $serializer, $fence),
             new MemoryOff(),
-            $skills
+            $skills,
+            $presentation
         );
     }
 

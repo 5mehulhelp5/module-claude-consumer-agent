@@ -28,7 +28,8 @@ final class CoreToolProvider implements ToolProviderInterface
         private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\SearchPolicies $searchPolicies,
         private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\GetFulfillmentOptions $getFulfillmentOptions,
         private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\MemoryOff $memoryOff,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Skill\Registry $skills
+        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Skill\Registry $skills,
+        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Registry $presentation
     ) {
     }
 
@@ -37,7 +38,7 @@ final class CoreToolProvider implements ToolProviderInterface
      */
     public function getTools(AgentConfig $config): array
     {
-        return [
+        $tools = [
             new Definition(
                 'load_skill',
                 'Load the rules of the flow whose entry in the skill index the request '
@@ -389,201 +390,39 @@ final class CoreToolProvider implements ToolProviderInterface
                 true,
                 15
             ),
-            new Definition(
-                'present_products',
-                "Show products from this session's results as cards; the UI fills in title, "
-                    . 'price, and image. Layout: carousel by default, grid to scan many '
-                    . "options, list when order matters. Each pick's reason is the one "
-                    . 'judgment of yours on the card.',
-                [
-                    'type' => 'object',
-                    'properties' => [
-                        'title' => $this->title('set of cards'),
-                        'layout' => [
-                            'type' => 'string',
-                            'enum' => ['carousel', 'grid', 'list'],
-                            'description' => 'Card layout; carousel when omitted.',
-                        ],
-                        'picks' => [
-                            'type' => 'array',
-                            'minItems' => 1,
-                            'maxItems' => 12,
-                            'description' => 'Products to show, recommended pick first.',
-                            'items' => [
-                                'type' => 'object',
-                                'properties' => [
-                                    'product_id' => $this->productId(),
-                                    'reason' => [
-                                        'type' => 'string',
-                                        'maxLength' => 140,
-                                        'description' => 'One clause tying the pick to a stated need.',
-                                    ],
-                                ],
-                                'required' => ['product_id'],
-                                'additionalProperties' => false,
-                            ],
-                        ],
-                    ],
-                    'required' => ['picks'],
-                    'additionalProperties' => false,
-                ],
-                'presentation',
-                null,
-                [],
-                false,
-                false,
-                16
-            ),
-            new Definition(
-                'present_comparison',
-                'Compare 2-4 finalists side by side, with pros, cons, and what each is best '
-                    . 'for. Use it once the customer has narrowed to them or asks how they '
-                    . 'differ; a fresh shortlist goes through present_products. The UI adds the '
-                    . 'price delta; your text says what the extra money buys.',
-                [
-                    'type' => 'object',
-                    'properties' => [
-                        'title' => $this->title('comparison'),
-                        'entries' => [
-                            'type' => 'array',
-                            'minItems' => 2,
-                            'maxItems' => 4,
-                            'description' => 'The finalists being compared.',
-                            'items' => [
-                                'type' => 'object',
-                                'properties' => [
-                                    'product_id' => $this->productId(),
-                                    'pros' => [
-                                        'type' => 'array',
-                                        'items' => ['type' => 'string'],
-                                        'maxItems' => 4,
-                                        'description' => 'Short advantages, from tool results.',
-                                    ],
-                                    'cons' => [
-                                        'type' => 'array',
-                                        'items' => ['type' => 'string'],
-                                        'maxItems' => 3,
-                                        'description' => 'Short drawbacks, from tool results.',
-                                    ],
-                                    'best_for' => [
-                                        'type' => 'string',
-                                        'maxLength' => 80,
-                                        'description' => 'Who or what this option suits best.',
-                                    ],
-                                ],
-                                'required' => ['product_id'],
-                                'additionalProperties' => false,
-                            ],
-                        ],
-                        'dimensions' => [
-                            'type' => 'array',
-                            'items' => ['type' => 'string'],
-                            'maxItems' => 6,
-                            'description' => 'The dimensions the customer is weighing.',
-                        ],
-                        'recommended_product_id' => $this->productId('The entry you recommend.'),
-                    ],
-                    'required' => ['entries'],
-                    'additionalProperties' => false,
-                ],
-                'presentation',
-                null,
-                [],
-                false,
-                false,
-                17
-            ),
-            new Definition(
-                'present_order_status',
-                'Show the status card for one order; the UI fills in the order data. Every '
-                    . 'answer about where an order stands goes through it. When several orders '
-                    . 'are in flight, send one card per order in the same round.',
-                [
-                    'type' => 'object',
-                    'properties' => [
-                        'order_id' => [
-                            'type' => 'string',
-                            'description' => 'Order id from get_orders or get_order_status.',
-                        ],
-                        'summary' => [
-                            'type' => 'string',
-                            'maxLength' => 300,
-                            'description' => 'Current state and expected date, in a sentence.',
-                        ],
-                        'next_step' => [
-                            'type' => 'string',
-                            'maxLength' => 200,
-                            'description' => 'The one concrete thing the customer can do next.',
-                        ],
-                    ],
-                    'required' => ['order_id', 'summary'],
-                    'additionalProperties' => false,
-                ],
-                'presentation',
-                null,
-                [],
-                false,
-                false,
-                18
-            ),
-            new Definition(
-                'checkout',
-                'Stage the current cart as an order summary the customer confirms in the '
-                    . 'app; it places no order and charges nothing. Use only when the customer '
-                    . 'asks to check out.',
-                [
-                    'type' => 'object',
-                    'properties' => [
-                        'note' => [
-                            'type' => 'string',
-                            'maxLength' => 300,
-                            'description' => 'Anything the customer should check before confirming.',
-                        ],
-                        'fulfillment_method' => [
-                            'type' => 'string',
-                            'enum' => ['delivery', 'pickup', 'shipping'],
-                            'description' => 'Method the customer chose, when they chose one.',
-                        ],
-                    ],
-                    'additionalProperties' => false,
-                ],
-                'presentation',
-                null,
-                [],
-                false,
-                false,
-                19
-            ),
-            new Definition(
-                'present_suggestions',
-                "Give the turn its 1-4 chips; it ends the reply. Call it in the same round "
-                    . "as the turn's last component, without waiting for that component's "
-                    . 'result. Alone, after the text, only on a turn with no component (a '
-                    . 'terms answer, a clarifying question, a confirmed add or save).',
-                [
-                    'type' => 'object',
-                    'properties' => [
-                        'suggestions' => [
-                            'type' => 'array',
-                            'items' => ['type' => 'string'],
-                            'minItems' => 1,
-                            'maxItems' => 4,
-                            'description' => '1-4 chips, each a brief imperative and each a '
-                                . 'different kind of step; leave out anything this turn already '
-                                . 'displayed.',
-                        ],
-                    ],
-                    'required' => ['suggestions'],
-                    'additionalProperties' => false,
-                ],
-                'presentation',
-                null,
-                [],
-                false,
-                false,
-                20
-            ),
         ];
+        return array_merge($tools, $this->presentationDefinitions());
+    }
+
+    /**
+     * @return \MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Definition[]
+     */
+    private function presentationDefinitions(): array
+    {
+        $sortOrders = [
+            'present_products' => 16,
+            'present_comparison' => 17,
+            'present_order_status' => 18,
+            'checkout' => 19,
+            'present_suggestions' => 20,
+        ];
+        $components = $this->presentation->components();
+        $definitions = [];
+        foreach ($sortOrders as $name => $sortOrder) {
+            $component = $components[$name];
+            $definitions[] = new Definition(
+                $component->name,
+                $component->description,
+                $component->schema,
+                'presentation',
+                null,
+                [],
+                false,
+                false,
+                $sortOrder
+            );
+        }
+        return $definitions;
     }
 
     private function sortedSkillNames(): array
@@ -594,11 +433,6 @@ final class CoreToolProvider implements ToolProviderInterface
     private function productId(string $description = 'product_id returned by a tool this session.'): array
     {
         return ['type' => 'string', 'description' => $description];
-    }
-
-    private function title(string $what): array
-    {
-        return ['type' => 'string', 'maxLength' => 80, 'description' => "Short heading for the $what."];
     }
 
     private function filtersSchema(): array

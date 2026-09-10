@@ -28,6 +28,7 @@ final class Registry
                 'present_products',
                 'products',
                 self::presentProductsSchema(),
+                self::presentProductsDescription(),
                 $products,
                 self::TEMPLATE_PREFIX . 'products.phtml'
             ),
@@ -35,6 +36,7 @@ final class Registry
                 'present_comparison',
                 'comparison',
                 self::presentComparisonSchema(),
+                self::presentComparisonDescription(),
                 $comparison,
                 self::TEMPLATE_PREFIX . 'comparison.phtml'
             ),
@@ -42,6 +44,7 @@ final class Registry
                 'present_order_status',
                 'order_status',
                 self::presentOrderStatusSchema(),
+                self::presentOrderStatusDescription(),
                 $orderStatus,
                 self::TEMPLATE_PREFIX . 'order-status.phtml'
             ),
@@ -49,6 +52,7 @@ final class Registry
                 'checkout',
                 'checkout',
                 self::checkoutSchema(),
+                self::checkoutDescription(),
                 $checkout,
                 self::TEMPLATE_PREFIX . 'checkout.phtml'
             ),
@@ -56,6 +60,7 @@ final class Registry
                 'present_suggestions',
                 'suggestions',
                 self::presentSuggestionsSchema(),
+                self::presentSuggestionsDescription(),
                 $suggestions,
                 ''
             ),
@@ -70,6 +75,7 @@ final class Registry
                 $name,
                 $extension->getComponent(),
                 $extension->getInputSchema(),
+                $extension->getDescription(),
                 static fn (array $input, EnrichmentContext $ctx): array => $extension->enrich($input, $ctx),
                 $extension->getTemplate()
             );
@@ -106,6 +112,44 @@ final class Registry
     private static function titleSchema(string $what): array
     {
         return ['type' => 'string', 'maxLength' => 80, 'description' => "Short heading for the {$what}."];
+    }
+
+    public static function presentProductsDescription(): string
+    {
+        return "Show products from this session's results as cards; the UI fills in title, "
+            . 'price, and image. Layout: carousel by default, grid to scan many '
+            . "options, list when order matters. Each pick's reason is the one "
+            . 'judgment of yours on the card.';
+    }
+
+    public static function presentComparisonDescription(): string
+    {
+        return 'Compare 2-4 finalists side by side, with pros, cons, and what each is best '
+            . 'for. Use it once the customer has narrowed to them or asks how they '
+            . 'differ; a fresh shortlist goes through present_products. The UI adds the '
+            . 'price delta; your text says what the extra money buys.';
+    }
+
+    public static function presentOrderStatusDescription(): string
+    {
+        return 'Show the status card for one order; the UI fills in the order data. Every '
+            . 'answer about where an order stands goes through it. When several orders '
+            . 'are in flight, send one card per order in the same round.';
+    }
+
+    public static function checkoutDescription(): string
+    {
+        return 'Stage the current cart as an order summary the customer confirms in the '
+            . 'app; it places no order and charges nothing. Use only when the customer '
+            . 'asks to check out.';
+    }
+
+    public static function presentSuggestionsDescription(): string
+    {
+        return "Give the turn its 1-4 chips; it ends the reply. Call it in the same round "
+            . "as the turn's last component, without waiting for that component's "
+            . 'result. Alone, after the text, only on a turn with no component (a '
+            . 'terms answer, a clarifying question, a confirmed add or save).';
     }
 
     public static function presentProductsSchema(): array

@@ -311,7 +311,8 @@ class EvalRun extends Command
             $handlers['search_policies'],
             $handlers['get_fulfillment_options'],
             $handlers['memory_off'],
-            $this->skillRegistry
+            $this->skillRegistry,
+            $this->presentationRegistry
         );
         $toolRegistry = new ToolRegistry([$coreToolProvider], $storeConfig);
         $presentationRunner = new PresentationRunner($this->presentationRegistry, $this->validator, $backend, $storeConfig);
