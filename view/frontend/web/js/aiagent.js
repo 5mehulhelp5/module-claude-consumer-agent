@@ -114,9 +114,7 @@ window.aiAgentReader = {
 };
 
 function stripAiAgentTags(html) {
-    const container = document.createElement('div');
-    container.innerHTML = html || '';
-    return container.textContent || container.innerText || '';
+    return new DOMParser().parseFromString(html || '', 'text/html').body.textContent || '';
 }
 
 function initAiAgentCartLine() {
