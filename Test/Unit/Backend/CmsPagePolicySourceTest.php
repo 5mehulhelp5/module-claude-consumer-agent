@@ -134,6 +134,37 @@ final class CmsPagePolicySourceTest extends TestCase
         $this->assertContains('Return Policy / Exchanges', $titles);
     }
 
+    public function testStripsScriptStyleAndWidgetDirectivesBeforeStrippingTags(): void
+    {
+        $content = '<p>Please review our return policy before shipping items back.</p>'
+            . '<script>var trackingArtifact = "leak";</script>'
+            . '<style>.hidden-class-should-vanish{color:red;}</style>'
+            . '<p>{{widget type="Magento\\Cms\\Block\\Widget\\Block" template="widget_code_should_vanish"}}</p>'
+            . '<p>Contact support for more return help.</p>';
+        $page = $this->page('returns', 'Return Policy', $content);
+
+        $cache = $this->createMock(CacheInterface::class);
+        $cache->method('load')->willReturn(false);
+
+        $source = new CmsPagePolicySource(
+            $this->pageRepository([$page]),
+            $this->searchCriteriaBuilder(),
+            $cache,
+            new Json(),
+            $this->storeConfig(['returns']),
+            $this->blockRepository([])
+        );
+
+        $results = $source->search($this->context(), 'return');
+
+        $this->assertNotEmpty($results);
+        $combinedContent = implode(' ', array_map(static fn ($policy) => $policy->getContent(), $results));
+        $this->assertStringContainsString('return policy', $combinedContent);
+        $this->assertStringNotContainsString('trackingArtifact', $combinedContent);
+        $this->assertStringNotContainsString('hidden-class-should-vanish', $combinedContent);
+        $this->assertStringNotContainsString('widget_code_should_vanish', $combinedContent);
+    }
+
     public function testTermOverlapScoringWeightsTitleDouble(): void
     {
         $pageA = $this->page('general', 'General Info', '<p>details about shipping options for your order</p>');

@@ -217,7 +217,10 @@ final class CmsPagePolicySource implements PolicySourceInterface
 
     private function cleanText(string $html): string
     {
-        $decoded = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5);
+        $withoutScripts = preg_replace('#<script\b[^>]*>.*?</script>#is', ' ', $html) ?? $html;
+        $withoutStyles = preg_replace('#<style\b[^>]*>.*?</style>#is', ' ', $withoutScripts) ?? $withoutScripts;
+        $withoutDirectives = preg_replace('/\{\{.*?\}\}/s', ' ', $withoutStyles) ?? $withoutStyles;
+        $decoded = html_entity_decode(strip_tags($withoutDirectives), ENT_QUOTES | ENT_HTML5);
         $collapsed = preg_replace('/\s+/', ' ', $decoded) ?? '';
         return trim($collapsed);
     }
