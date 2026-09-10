@@ -410,9 +410,40 @@ final class MagentoStorefront implements StorefrontBackendInterface
         $quote->getBillingAddress();
         $quote->getShippingAddress()->setCollectShippingRates(true);
         $quote->collectTotals();
+        if ($quote->getHasError()) {
+            $message = $this->quoteErrorText($quote, $result);
+            $this->rollbackAdd($quote, $result);
+            throw new NotOffered($this->truncate($message));
+        }
+
         $this->cartRepository->save($quote);
 
         return $this->getCart($ctx);
+    }
+
+    private function rollbackAdd(Quote $quote, QuoteItem $item): void
+    {
+        if (!$item->getId()) {
+            $quote->deleteItem($item);
+            return;
+        }
+        $item->setQty((float)$item->getPreviousQty());
+    }
+
+    private function quoteErrorText(Quote $quote, QuoteItem $item): string
+    {
+        $texts = [];
+        foreach ((array)$item->getMessage(false) as $message) {
+            $texts[] = trim((string)$message);
+        }
+        if ($texts === []) {
+            foreach ($quote->getErrors() as $error) {
+                $texts[] = trim((string)$error->getText());
+            }
+        }
+
+        $texts = array_values(array_unique(array_filter($texts)));
+        return $texts !== [] ? implode(' ', $texts) : 'The cart could not be updated.';
     }
 
     private function resolveCustomOptions(MagentoProductInterface $product, array $options): array
@@ -588,10 +619,17 @@ final class MagentoStorefront implements StorefrontBackendInterface
             return $this->getCart($ctx);
         }
 
+        $previousQty = (float)$item->getQty();
         $item->setQty($quantity);
         $quote->getBillingAddress();
         $quote->getShippingAddress()->setCollectShippingRates(true);
         $quote->collectTotals();
+        if ($quote->getHasError()) {
+            $message = $this->quoteErrorText($quote, $item);
+            $item->setQty($previousQty);
+            throw new NotOffered($this->truncate($message));
+        }
+
         $this->cartRepository->save($quote);
 
         return $this->getCart($ctx);

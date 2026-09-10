@@ -27,6 +27,7 @@ use Magento\Framework\Api\SortOrder;
 use Magento\Framework\Api\SortOrderBuilder;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\DataObject;
+use Magento\Framework\Message\MessageInterface;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Framework\Pricing\Amount\AmountInterface;
 use Magento\Framework\Pricing\Price\PriceInterface;
@@ -613,6 +614,93 @@ final class MagentoStorefrontTest extends TestCase
         ]);
 
         $storefront->addToCart($this->context(), '302', 1, ['Engraving Text' => 'World\'s Best Dad']);
+    }
+
+    private function quoteReportingError(QuoteItem $item, string $errorText): Quote&MockObject
+    {
+        $error = $this->createMock(MessageInterface::class);
+        $error->method('getText')->willReturn($errorText);
+
+        $quote = $this->createMock(Quote::class);
+        $quote->method('addProduct')->willReturn($item);
+        $quote->method('getAllVisibleItems')->willReturn([$item]);
+        $quote->method('getBillingAddress')->willReturn($this->createMock(QuoteAddress::class));
+        $quote->method('getShippingAddress')->willReturn($this->createMock(QuoteAddress::class));
+        $quote->method('__call')->willReturnCallback(
+            static fn (string $method): mixed => $method === 'getHasError' ? true : null
+        );
+        $quote->method('getErrors')->willReturn([$error]);
+        return $quote;
+    }
+
+    public function testAddToCartThrowsNotOfferedAndSkipsSaveWhenTheQuoteReportsAnError(): void
+    {
+        $product = $this->magentoProduct(301, 'Solo Item', 12.0);
+        $product->method('getSku')->willReturn('SOLO-1');
+
+        $productRepository = $this->createMock(ProductRepositoryInterface::class);
+        $productRepository->method('getById')->willReturn($product);
+
+        $configurableResource = $this->createMock(ConfigurableResource::class);
+        $configurableResource->method('getParentIdsByChild')->willReturn([]);
+
+        $item = $this->createMock(QuoteItem::class);
+        $item->method('getId')->willReturn(null);
+        $item->method('getMessage')->willReturn(['The requested qty is not available']);
+
+        $quote = $this->quoteReportingError($item, 'Some of the products cannot be ordered in requested quantity.');
+        $quote->expects($this->once())->method('deleteItem')->with($item);
+
+        $cartRepository = $this->createMock(CartRepositoryInterface::class);
+        $cartRepository->method('get')->willReturn($quote);
+        $cartRepository->expects($this->never())->method('save');
+
+        $storefront = $this->buildStorefront([
+            'productRepository' => $productRepository,
+            'configurableResource' => $configurableResource,
+            'cartRepository' => $cartRepository,
+            'salability' => $this->salabilityBySku(['SOLO-1' => true]),
+        ]);
+
+        $this->expectException(NotOffered::class);
+        $this->expectExceptionMessage('The requested qty is not available');
+
+        $storefront->addToCart($this->context(), '301', 1);
+    }
+
+    public function testUpdateCartItemRestoresTheQuantityAndSkipsSaveWhenTheQuoteReportsAnError(): void
+    {
+        $product = $this->magentoProduct(301, 'Solo Item', 12.0);
+
+        $quantities = [];
+        $item = $this->createMock(QuoteItem::class);
+        $item->method('getProductType')->willReturn('simple');
+        $item->method('getProduct')->willReturn($product);
+        $item->method('getQty')->willReturn(2.0);
+        $item->method('getMessage')->willReturn([]);
+        $item->method('setQty')->willReturnCallback(
+            static function (float $qty) use ($item, &$quantities): QuoteItem {
+                $quantities[] = $qty;
+                return $item;
+            }
+        );
+
+        $quote = $this->quoteReportingError($item, 'Some of the products are out of stock.');
+
+        $cartRepository = $this->createMock(CartRepositoryInterface::class);
+        $cartRepository->method('get')->willReturn($quote);
+        $cartRepository->expects($this->never())->method('save');
+
+        $storefront = $this->buildStorefront(['cartRepository' => $cartRepository]);
+
+        try {
+            $storefront->updateCartItem($this->context(), '301', 5);
+            $this->fail('Expected NotOffered was not thrown.');
+        } catch (NotOffered $exception) {
+            $this->assertSame('Some of the products are out of stock.', $exception->getMessage());
+        }
+
+        $this->assertSame([5.0, 2.0], $quantities);
     }
 
     public function testGetProductDetailsSetsNoteWhenVariantsAreCapped(): void
