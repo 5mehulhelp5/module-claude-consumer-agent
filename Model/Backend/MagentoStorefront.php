@@ -85,10 +85,13 @@ final class MagentoStorefront implements StorefrontBackendInterface
             $byId[(int)$product->getId()] = $product;
         }
 
+        $this->productMapper->preloadRequestPaths($products, $ctx->storeId);
+        $salableMap = $this->salability->areSalable($products, $ctx);
+
         $records = [];
         foreach ($ids as $id) {
             if (isset($byId[$id])) {
-                $records[] = $this->productMapper->toProduct($byId[$id], $ctx);
+                $records[] = $this->productMapper->toProduct($byId[$id], $ctx, $salableMap[$id] ?? null);
             }
         }
 
@@ -193,12 +196,17 @@ final class MagentoStorefront implements StorefrontBackendInterface
         }
 
         $attributes = $typeInstance->getConfigurableAttributesAsArray($product);
+        $usedProducts = array_slice($typeInstance->getUsedProducts($product), 0, self::MAX_VARIANTS + 1);
+        $this->productMapper->preloadRequestPaths($usedProducts, $ctx->storeId);
+        $salableMap = $this->salability->areSalable($usedProducts, $ctx);
+
         $variants = [];
         $anyInStock = false;
         $lowestPrice = null;
 
-        foreach ($typeInstance->getUsedProducts($product) as $child) {
-            $variantProduct = $this->productMapper->toProduct($child, $ctx);
+        foreach ($usedProducts as $child) {
+            $childId = (int)$child->getId();
+            $variantProduct = $this->productMapper->toProduct($child, $ctx, $salableMap[$childId] ?? null);
             $variantData = $variantProduct->toArray();
             $variantData['option_values'] = $this->variantOptionValues($attributes, $child);
             $variantData['variant_of'] = $family->getProductId();

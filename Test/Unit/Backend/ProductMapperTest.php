@@ -8,6 +8,7 @@ use Magento\Catalog\Api\Data\ProductCustomOptionValuesInterface;
 use Magento\Catalog\Helper\Image as ImageHelper;
 use Magento\Catalog\Model\Product as MagentoProduct;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
+use Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Framework\Pricing\Amount\AmountInterface;
@@ -19,6 +20,8 @@ use Magento\InventorySalesApi\Api\StockResolverInterface;
 use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Model\Website;
+use Magento\UrlRewrite\Model\UrlFinderInterface;
+use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Backend\Provider\CoreOptions;
 use MageOS\ClaudeConsumerAgent\Model\Backend\ProductMapper;
@@ -96,6 +99,13 @@ final class ProductMapperTest extends TestCase
         return $this->createMock(MagentoProduct::class);
     }
 
+    private function urlFinder(array $rewrites = []): UrlFinderInterface&MockObject
+    {
+        $urlFinder = $this->createMock(UrlFinderInterface::class);
+        $urlFinder->method('findAllByData')->willReturn($rewrites);
+        return $urlFinder;
+    }
+
     public function testMapsSimpleProduct(): void
     {
         $product = $this->product();
@@ -108,7 +118,13 @@ final class ProductMapperTest extends TestCase
             static fn (string $key = ''): ?string => $key === 'short_description' ? '<p>Nice   and <b>tidy</b></p>' : null
         );
 
-        $mapper = new ProductMapper($this->storeManager(), $this->imageHelper(), $this->salability(true), new CoreOptions());
+        $mapper = new ProductMapper(
+            $this->storeManager(),
+            $this->imageHelper(),
+            $this->salability(true),
+            new CoreOptions(),
+            $this->urlFinder()
+        );
 
         $result = $mapper->toProduct($product, $this->context());
 
@@ -147,7 +163,13 @@ final class ProductMapperTest extends TestCase
         ]);
         $product->method('getTypeInstance')->willReturn($typeInstance);
 
-        $mapper = new ProductMapper($this->storeManager(), $this->imageHelper(), $this->salability(true), new CoreOptions());
+        $mapper = new ProductMapper(
+            $this->storeManager(),
+            $this->imageHelper(),
+            $this->salability(true),
+            new CoreOptions(),
+            $this->urlFinder()
+        );
 
         $result = $mapper->toProduct($product, $this->context());
 
@@ -169,7 +191,13 @@ final class ProductMapperTest extends TestCase
         $product->method('getProductUrl')->willReturn(null);
         $product->method('getOptions')->willReturn([$option]);
 
-        $mapper = new ProductMapper($this->storeManager(), $this->imageHelper(), $this->salability(true), new CoreOptions());
+        $mapper = new ProductMapper(
+            $this->storeManager(),
+            $this->imageHelper(),
+            $this->salability(true),
+            new CoreOptions(),
+            $this->urlFinder()
+        );
 
         $result = $mapper->toProduct($product, $this->context());
 
@@ -199,7 +227,13 @@ final class ProductMapperTest extends TestCase
         $product->method('getProductUrl')->willReturn(null);
         $product->method('getOptions')->willReturn([$requiredOption, $selectOption]);
 
-        $mapper = new ProductMapper($this->storeManager(), $this->imageHelper(), $this->salability(true), new CoreOptions());
+        $mapper = new ProductMapper(
+            $this->storeManager(),
+            $this->imageHelper(),
+            $this->salability(true),
+            new CoreOptions(),
+            $this->urlFinder()
+        );
 
         $result = $mapper->toProduct($product, $this->context());
 
@@ -239,7 +273,13 @@ final class ProductMapperTest extends TestCase
         $product->method('getProductUrl')->willReturn(null);
         $product->method('getOptions')->willReturn([$sizeOption]);
 
-        $mapper = new ProductMapper($this->storeManager(), $this->imageHelper(), $this->salability(true), new CoreOptions());
+        $mapper = new ProductMapper(
+            $this->storeManager(),
+            $this->imageHelper(),
+            $this->salability(true),
+            new CoreOptions(),
+            $this->urlFinder()
+        );
 
         $result = $mapper->toProduct($product, $this->context());
 
@@ -268,11 +308,77 @@ final class ProductMapperTest extends TestCase
         $product->method('getProductUrl')->willReturn(null);
         $product->method('getAttributeText')->willReturn('Acme Co');
 
-        $mapper = new ProductMapper($this->storeManager(), $this->imageHelper(), $this->salability(false), new CoreOptions());
+        $mapper = new ProductMapper(
+            $this->storeManager(),
+            $this->imageHelper(),
+            $this->salability(false),
+            new CoreOptions(),
+            $this->urlFinder()
+        );
 
         $result = $mapper->toProduct($product, $this->context());
 
         $this->assertSame('Acme Co', $result->getBrand());
+        $this->assertFalse($result->isInStock());
+    }
+
+    public function testPreloadRequestPathsFetchesAllRewritesInOneBulkCall(): void
+    {
+        $productOne = $this->product();
+        $productOne->method('getId')->willReturn(10);
+        $productTwo = $this->product();
+        $productTwo->method('getId')->willReturn(11);
+
+        $urlFinder = $this->createMock(UrlFinderInterface::class);
+        $urlFinder->expects($this->once())->method('findAllByData')->with([
+            UrlRewrite::ENTITY_TYPE => ProductUrlRewriteGenerator::ENTITY_TYPE,
+            UrlRewrite::ENTITY_ID => [10, 11],
+            UrlRewrite::STORE_ID => 1,
+            UrlRewrite::REDIRECT_TYPE => 0,
+        ])->willReturn([]);
+
+        $mapper = new ProductMapper(
+            $this->storeManager(),
+            $this->imageHelper(),
+            $this->salability(true),
+            new CoreOptions(),
+            $urlFinder
+        );
+
+        $mapper->preloadRequestPaths([$productOne, $productTwo], 1);
+    }
+
+    public function testToProductUsesThePrecomputedSalabilityMapWithoutCallingSalability(): void
+    {
+        $product = $this->product();
+        $product->method('getId')->willReturn(44);
+        $product->method('getName')->willReturn('Boots');
+        $product->method('getTypeId')->willReturn('simple');
+        $product->method('getPriceInfo')->willReturn($this->priceInfo(40.0));
+        $product->method('getProductUrl')->willReturn(null);
+
+        $isProductSalable = $this->createMock(IsProductSalableInterface::class);
+        $isProductSalable->expects($this->never())->method('execute');
+        $stockResolver = $this->createMock(StockResolverInterface::class);
+        $objectManager = $this->createMock(ObjectManagerInterface::class);
+        $objectManager->method('get')->willReturnMap([
+            [StockResolverInterface::class, $stockResolver],
+            [IsProductSalableInterface::class, $isProductSalable],
+        ]);
+        $stockRegistry = $this->createMock(StockRegistryInterface::class);
+        $stockRegistry->expects($this->never())->method('getStockStatus');
+        $salability = new Salability($objectManager, $stockRegistry, $this->storeManager());
+
+        $mapper = new ProductMapper(
+            $this->storeManager(),
+            $this->imageHelper(),
+            $salability,
+            new CoreOptions(),
+            $this->urlFinder()
+        );
+
+        $result = $mapper->toProduct($product, $this->context(), false);
+
         $this->assertFalse($result->isInStock());
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace MageOS\ClaudeConsumerAgent\Model\Backend;
 
 use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\CatalogInventory\Api\Data\StockStatusInterface;
+use Magento\InventorySalesApi\Api\AreProductsSalableInterface;
 use Magento\InventorySalesApi\Api\Data\SalesChannelInterface;
 use Magento\InventorySalesApi\Api\IsProductSalableInterface;
 use Magento\InventorySalesApi\Api\StockResolverInterface;
@@ -49,5 +51,74 @@ final class Salability
         } catch (\Throwable $exception) {
             return null;
         }
+    }
+
+    /**
+     * @param ProductInterface[] $products
+     * @return array<int, bool>
+     */
+    public function areSalable(array $products, SessionContext $ctx): array
+    {
+        if ($products === []) {
+            return [];
+        }
+
+        if (interface_exists(AreProductsSalableInterface::class) && interface_exists(StockResolverInterface::class)) {
+            $result = $this->areSalableByMsi($products, $ctx);
+            if ($result !== null) {
+                return $result;
+            }
+        }
+
+        return $this->areSalableByStockRegistry($products, $ctx);
+    }
+
+    private function areSalableByMsi(array $products, SessionContext $ctx): ?array
+    {
+        try {
+            $stockResolver = $this->objectManager->get(StockResolverInterface::class);
+            $areProductsSalable = $this->objectManager->get(AreProductsSalableInterface::class);
+            $websiteCode = $this->storeManager->getStore($ctx->storeId)->getWebsite()->getCode();
+            $stockId = $stockResolver->execute(SalesChannelInterface::TYPE_WEBSITE, $websiteCode)->getStockId();
+            if ($stockId === null) {
+                return null;
+            }
+
+            $skusByProductId = [];
+            foreach ($products as $product) {
+                $skusByProductId[(int)$product->getId()] = (string)$product->getSku();
+            }
+
+            $results = $areProductsSalable->execute(array_values($skusByProductId), $stockId);
+            $salableBySku = [];
+            foreach ($results as $result) {
+                $salableBySku[$result->getSku()] = $result->isSalable();
+            }
+
+            $map = [];
+            foreach ($skusByProductId as $productId => $sku) {
+                $map[$productId] = $salableBySku[$sku] ?? false;
+            }
+            return $map;
+        } catch (\Throwable $exception) {
+            return null;
+        }
+    }
+
+    /**
+     * @param ProductInterface[] $products
+     * @return array<int, bool>
+     */
+    private function areSalableByStockRegistry(array $products, SessionContext $ctx): array
+    {
+        $websiteId = (int)$this->storeManager->getStore($ctx->storeId)->getWebsiteId();
+
+        $map = [];
+        foreach ($products as $product) {
+            $productId = (int)$product->getId();
+            $stockStatus = (int)$this->stockRegistry->getStockStatus($productId, $websiteId)->getStockStatus();
+            $map[$productId] = $stockStatus === StockStatusInterface::STATUS_IN_STOCK;
+        }
+        return $map;
     }
 }

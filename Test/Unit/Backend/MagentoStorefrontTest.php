@@ -34,6 +34,8 @@ use Magento\Framework\Pricing\Price\PriceInterface;
 use Magento\Framework\Pricing\PriceInfoInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\InventoryApi\Api\Data\StockInterface;
+use Magento\InventorySalesApi\Api\AreProductsSalableInterface;
+use Magento\InventorySalesApi\Api\Data\IsProductSalableResultInterface;
 use Magento\InventorySalesApi\Api\IsProductSalableInterface;
 use Magento\InventorySalesApi\Api\StockResolverInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
@@ -49,6 +51,8 @@ use Magento\Shipping\Helper\Data as ShippingHelper;
 use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Model\Website;
+use Magento\UrlRewrite\Model\UrlFinderInterface;
+use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
 use MageOS\ClaudeConsumerAgent\Api\Backend\CategorySearchProviderInterface;
 use MageOS\ClaudeConsumerAgent\Api\Backend\FulfillmentProviderInterface;
 use MageOS\ClaudeConsumerAgent\Api\Backend\OrderStatusMapperInterface;
@@ -140,6 +144,20 @@ final class MagentoStorefrontTest extends TestCase
             static fn (string $sku, int $stockId): bool => $bySku[$sku] ?? $default
         );
 
+        $areProductsSalable = $this->createMock(AreProductsSalableInterface::class);
+        $areProductsSalable->method('execute')->willReturnCallback(
+            function (array $skus) use ($bySku, $default): array {
+                $results = [];
+                foreach ($skus as $sku) {
+                    $result = $this->createMock(IsProductSalableResultInterface::class);
+                    $result->method('getSku')->willReturn($sku);
+                    $result->method('isSalable')->willReturn($bySku[$sku] ?? $default);
+                    $results[] = $result;
+                }
+                return $results;
+            }
+        );
+
         $stock = $this->createMock(StockInterface::class);
         $stock->method('getStockId')->willReturn(1);
         $stockResolver = $this->createMock(StockResolverInterface::class);
@@ -149,6 +167,7 @@ final class MagentoStorefrontTest extends TestCase
         $objectManager->method('get')->willReturnMap([
             [StockResolverInterface::class, $stockResolver],
             [IsProductSalableInterface::class, $isProductSalable],
+            [AreProductsSalableInterface::class, $areProductsSalable],
         ]);
 
         $stockRegistry = $this->createMock(StockRegistryInterface::class);
@@ -158,7 +177,20 @@ final class MagentoStorefrontTest extends TestCase
 
     private function productMapper(): ProductMapper
     {
-        return new ProductMapper($this->storeManager(), $this->imageHelper(), $this->salability(true), new CoreOptions());
+        return new ProductMapper(
+            $this->storeManager(),
+            $this->imageHelper(),
+            $this->salability(true),
+            new CoreOptions(),
+            $this->urlFinder()
+        );
+    }
+
+    private function urlFinder(array $rewrites = []): UrlFinderInterface&MockObject
+    {
+        $urlFinder = $this->createMock(UrlFinderInterface::class);
+        $urlFinder->method('findAllByData')->willReturn($rewrites);
+        return $urlFinder;
     }
 
     private function searchCriteriaBuilder(): SearchCriteriaBuilder&MockObject
@@ -743,6 +775,77 @@ final class MagentoStorefrontTest extends TestCase
             'More variants exist; ask about a size or colour to narrow the list.',
             $details->getNote()
         );
+    }
+
+    public function testGetProductDetailsSlicesUsedProductsBeforeMappingAndBulkResolvesSalability(): void
+    {
+        $children = [];
+        for ($i = 1; $i <= 70; $i++) {
+            $children[] = $this->magentoProduct(2000 + $i, 'Variant ' . $i, (float)$i);
+        }
+
+        $typeInstance = $this->createMock(Configurable::class);
+        $typeInstance->method('getConfigurableAttributesAsArray')->willReturn([]);
+        $typeInstance->method('getUsedProducts')->willReturn($children);
+
+        $parent = $this->createMock(MagentoProduct::class);
+        $parent->method('getId')->willReturn(1900);
+        $parent->method('getName')->willReturn('Configurable Parent');
+        $parent->method('getTypeId')->willReturn(Configurable::TYPE_CODE);
+        $parent->method('getPriceInfo')->willReturn($this->priceInfo(1.0));
+        $parent->method('getProductUrl')->willReturn(null);
+        $parent->method('getOptions')->willReturn([]);
+        $parent->method('getAttributeText')->willReturn(false);
+        $parent->method('getTypeInstance')->willReturn($typeInstance);
+        $parent->method('getStatus')->willReturn(Status::STATUS_ENABLED);
+        $parent->method('getVisibility')->willReturn(Visibility::VISIBILITY_BOTH);
+        $parent->method('getAttributes')->willReturn([]);
+
+        $productRepository = $this->createMock(ProductRepositoryInterface::class);
+        $productRepository->method('getById')->willReturn($parent);
+
+        $urlFinder = $this->createMock(UrlFinderInterface::class);
+        $urlFinder->expects($this->once())->method('findAllByData')->with(
+            $this->callback(static fn (array $data): bool => count($data[UrlRewrite::ENTITY_ID]) === 61)
+        )->willReturn([]);
+
+        $productMapper = new ProductMapper(
+            $this->storeManager(),
+            $this->imageHelper(),
+            $this->salability(true),
+            new CoreOptions(),
+            $urlFinder
+        );
+
+        $areProductsSalable = $this->createMock(AreProductsSalableInterface::class);
+        $areProductsSalable->expects($this->once())->method('execute')->with(
+            $this->callback(static fn (array $skus): bool => count($skus) === 61)
+        )->willReturn([]);
+        $stock = $this->createMock(StockInterface::class);
+        $stock->method('getStockId')->willReturn(1);
+        $stockResolver = $this->createMock(StockResolverInterface::class);
+        $stockResolver->method('execute')->willReturn($stock);
+        $objectManager = $this->createMock(ObjectManagerInterface::class);
+        $objectManager->method('get')->willReturnMap([
+            [StockResolverInterface::class, $stockResolver],
+            [AreProductsSalableInterface::class, $areProductsSalable],
+        ]);
+        $salability = new Salability(
+            $objectManager,
+            $this->createMock(StockRegistryInterface::class),
+            $this->storeManager()
+        );
+
+        $storefront = $this->buildStorefront([
+            'productRepository' => $productRepository,
+            'productMapper' => $productMapper,
+            'salability' => $salability,
+        ]);
+
+        $details = $storefront->getProductDetails($this->context(), '1900');
+
+        $this->assertNotNull($details);
+        $this->assertCount(60, $details->getVariants());
     }
 
     public function testGetProductDetailsReturnsNullForAProductOutsideTheAllowlist(): void
