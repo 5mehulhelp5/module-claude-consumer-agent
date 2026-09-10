@@ -17,6 +17,11 @@ class SourceColumn extends \Magento\Framework\View\Element\Html\Select
         return $this->setName($value);
     }
 
+    public function setInputId(string $value): self
+    {
+        return $this->setId($value);
+    }
+
     protected function _toHtml(): string
     {
         if (!$this->getOptions()) {
