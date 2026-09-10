@@ -167,7 +167,7 @@ class EvalRunTest extends TestCase
         $streamedRoundFactory = new StreamedRoundFactory();
 
         $presentationRegistry = new PresentationRegistry(
-            new Products($this->createMock(LoggerInterface::class)),
+            new Products($this->createMock(LoggerInterface::class), $sanitizer),
             new Comparison(),
             new OrderStatus($serializer),
             new Checkout($serializer),

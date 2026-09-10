@@ -10,8 +10,11 @@ final class Products
 {
     private const MAX_ITEMS = 12;
 
+    private const NOTE_TITLE_MAX_CHARS = 80;
+
     public function __construct(
-        private readonly \Psr\Log\LoggerInterface $logger
+        private readonly \Psr\Log\LoggerInterface $logger,
+        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Sanitizer $sanitizer
     ) {
     }
 
@@ -113,7 +116,8 @@ final class Products
                 'variant_of' => $record['variant_of'] ?? null,
             ];
         }
-        $ctx->notes[] = 'Expanded ' . $product['title'] . ' into ' . count($items) . ' variants.';
+        $title = $this->sanitizer->text((string)($product['title'] ?? ''), self::NOTE_TITLE_MAX_CHARS);
+        $ctx->notes[] = 'Expanded ' . $title . ' into ' . count($items) . ' variants.';
         return $items;
     }
 }

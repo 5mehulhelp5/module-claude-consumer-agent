@@ -561,7 +561,7 @@ final class OrchestratorTest extends TestCase
         $sanitizer = new Sanitizer();
         $serializer = new Serializer(new Fence($sanitizer));
         $presentationRegistry = new PresentationRegistry(
-            new Products($this->createMock(LoggerInterface::class)),
+            new Products($this->createMock(LoggerInterface::class), $sanitizer),
             new Comparison(),
             new OrderStatus($serializer),
             new Checkout($serializer),

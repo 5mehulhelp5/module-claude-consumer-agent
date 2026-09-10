@@ -49,7 +49,7 @@ final class RegistryTest extends TestCase
         $fence = new $fenceClass($sanitizer);
         $serializer = new $serializerClass($fence);
         return [
-            new Products($this->createMock(LoggerInterface::class)),
+            new Products($this->createMock(LoggerInterface::class), $sanitizer),
             new Comparison(),
             new OrderStatus($serializer),
             new Checkout($serializer),

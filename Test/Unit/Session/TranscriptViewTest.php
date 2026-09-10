@@ -26,7 +26,7 @@ final class TranscriptViewTest extends TestCase
         $fence = new Fence($sanitizer);
         $serializer = new Serializer($fence);
         return new Registry(
-            new Products($this->createMock(LoggerInterface::class)),
+            new Products($this->createMock(LoggerInterface::class), $sanitizer),
             new Comparison(),
             new OrderStatus($serializer),
             new Checkout($serializer),

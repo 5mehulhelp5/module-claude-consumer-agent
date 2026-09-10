@@ -85,7 +85,7 @@ final class ExecutorTest extends TestCase
     {
         $serializer = new Serializer(new Fence(new Sanitizer()));
         $registry = new PresentationRegistry(
-            new Products($this->createMock(LoggerInterface::class)),
+            new Products($this->createMock(LoggerInterface::class), new Sanitizer()),
             new Comparison(),
             new OrderStatus($serializer),
             new Checkout($serializer),
