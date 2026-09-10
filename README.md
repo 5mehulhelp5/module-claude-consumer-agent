@@ -181,7 +181,6 @@ with `bin/magento config:set` when needed.
 |---|---|---|
 | `aiagent/runtime/first_byte_threshold` | 4 | Seconds the browser waits for the first streamed byte before it switches the session to JSON replies |
 | `aiagent/runtime/heartbeat_seconds` | 10 | Interval of `: ping` comments while a model call runs, keeps proxies from closing the idle connection |
-| `aiagent/lexicon/product_id_patterns` | one regex | Customer text that matches forces a product read |
 | `aiagent/lexicon/policy_intent_terms` | word list | Words that force the policy tool |
 | `aiagent/lexicon/order_intent_terms` | word list | Words that force the order lookup |
 
@@ -194,8 +193,9 @@ A store layer extends the lexicon lists through di.xml, see
    context to `POST /aiagent/turn/index` with the form key in the
    `X-Form-Key` header.
 2. Grounding rules run before the model: a store fact keyword answers from
-   the fact, a policy or order phrase forces that tool, a product id forces a
-   product read, and a first message on a product page reads that product.
+   the fact, a policy or order phrase forces that tool, a token in the
+   message that matches an existing SKU forces a product read, and a first
+   message on a product page reads that product.
 3. The orchestrator calls the model with the static system prompt (voice,
    catalog map, store facts, tool list) and the session context (cart,
    customer, page). Tool calls run against the store through

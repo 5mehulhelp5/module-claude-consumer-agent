@@ -56,7 +56,6 @@ final class StoreConfigTest extends TestCase
         $this->assertSame($defaults->retentionDays, $config->retentionDays);
         $this->assertSame($defaults->showAiLabel, $config->showAiLabel);
         $this->assertSame($defaults->enabled, $config->enabled);
-        $this->assertSame($defaults->productIdPatterns, $config->productIdPatterns);
         $this->assertSame($defaults->policyIntentTerms, $config->policyIntentTerms);
         $this->assertSame($defaults->orderIntentTerms, $config->orderIntentTerms);
         $this->assertSame($defaults->productCard, $config->productCard);

@@ -43,8 +43,7 @@ final class Lexicon
     public function __construct(
         private readonly \MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig $storeConfig,
         private readonly array $additionalPolicyTerms = [],
-        private readonly array $additionalOrderTerms = [],
-        private readonly array $additionalIdPatterns = []
+        private readonly array $additionalOrderTerms = []
     ) {
     }
 
@@ -56,11 +55,6 @@ final class Lexicon
     public function orderTerms(int $storeId): array
     {
         return $this->merge($this->storeConfig->agent($storeId)->orderIntentTerms, $this->additionalOrderTerms);
-    }
-
-    public function idPatterns(int $storeId): array
-    {
-        return $this->merge($this->storeConfig->agent($storeId)->productIdPatterns, $this->additionalIdPatterns);
     }
 
     public function policyCues(): array

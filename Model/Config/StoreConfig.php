@@ -58,7 +58,6 @@ final class StoreConfig
     private const PATH_RUNTIME_STREAMING = 'aiagent/runtime/streaming';
     private const PATH_RUNTIME_FIRST_BYTE_THRESHOLD = 'aiagent/runtime/first_byte_threshold';
     private const PATH_RUNTIME_HEARTBEAT_SECONDS = 'aiagent/runtime/heartbeat_seconds';
-    private const PATH_LEXICON_PRODUCT_ID_PATTERNS = 'aiagent/lexicon/product_id_patterns';
     private const PATH_LEXICON_POLICY_INTENT_TERMS = 'aiagent/lexicon/policy_intent_terms';
     private const PATH_LEXICON_ORDER_INTENT_TERMS = 'aiagent/lexicon/order_intent_terms';
     private const PATH_PRIVACY_RETENTION_DAYS = 'aiagent/privacy/retention_days';
@@ -214,11 +213,6 @@ final class StoreConfig
                 self::PATH_RUNTIME_HEARTBEAT_SECONDS,
                 $storeId,
                 $defaults->heartbeatSeconds
-            ),
-            productIdPatterns: $this->readLines(
-                self::PATH_LEXICON_PRODUCT_ID_PATTERNS,
-                $storeId,
-                $defaults->productIdPatterns
             ),
             policyIntentTerms: $this->readLines(
                 self::PATH_LEXICON_POLICY_INTENT_TERMS,

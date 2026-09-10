@@ -47,7 +47,6 @@ final class AgentConfig
         public readonly string $streaming = 'auto',
         public readonly int $firstByteThreshold = 4,
         public readonly int $heartbeatSeconds = 10,
-        public readonly array $productIdPatterns = ['\b[A-Z]{2,4}-\d{3,4}\b'],
         public readonly array $policyIntentTerms = [
             'return',
             'returns',

@@ -18,6 +18,7 @@ use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\App\Emulation;
 use Magento\Store\Model\StoreManagerInterface;
 use MageOS\ClaudeConsumerAgent\Api\Backend\CatalogMapProviderInterface;
+use MageOS\ClaudeConsumerAgent\Api\Backend\SkuMatcherInterface;
 use MageOS\ClaudeConsumerAgent\Api\Backend\StoreFactTitleResolverInterface;
 use MageOS\ClaudeConsumerAgent\Api\Client\MessagesClientInterface;
 use MageOS\ClaudeConsumerAgent\Api\StorefrontBackendInterface;
@@ -26,7 +27,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Fence;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Sanitizer;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Gate\Options;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Gate\Provenance;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Grounding\Rules;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Grounding\SkuCandidates;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Lexicon;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Checkout;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Comparison;
@@ -163,7 +164,7 @@ class EvalRunTest extends TestCase
         );
         $dynamicContext = new DynamicContext($fence);
         $assembly = new Assembly();
-        $rules = new Rules(new Lexicon($storeConfig));
+        $lexicon = new Lexicon($storeConfig);
         $streamedRoundFactory = new StreamedRoundFactory();
 
         $presentationRegistry = new PresentationRegistry(
@@ -195,7 +196,9 @@ class EvalRunTest extends TestCase
             $staticSystem,
             $dynamicContext,
             $assembly,
-            $rules,
+            $lexicon,
+            new SkuCandidates(),
+            $this->createMock(SkuMatcherInterface::class),
             $streamedRoundFactory,
             $validator,
             $provenance,

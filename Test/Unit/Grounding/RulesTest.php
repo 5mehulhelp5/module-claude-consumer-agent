@@ -6,8 +6,10 @@ namespace MageOS\ClaudeConsumerAgent\Test\Unit\Grounding;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use MageOS\ClaudeConsumerAgent\Api\Backend\SkuMatcherInterface;
 use MageOS\ClaudeConsumerAgent\Model\Agent\AgentConfig;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Grounding\Rules;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Grounding\SkuCandidates;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Lexicon;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 use MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig;
@@ -16,7 +18,8 @@ use PHPUnit\Framework\TestCase;
 
 final class RulesTest extends TestCase
 {
-    private Rules $rules;
+    private StoreConfig $storeConfig;
+    private array $receivedCandidates = [];
 
     protected function setUp(): void
     {
@@ -27,8 +30,7 @@ final class RulesTest extends TestCase
         $store->method('getName')->willReturn('');
         $storeManager = $this->createMock(StoreManagerInterface::class);
         $storeManager->method('getStore')->willReturn($store);
-        $storeConfig = new StoreConfig($scopeConfig, $storeManager);
-        $this->rules = new Rules(new Lexicon($storeConfig));
+        $this->storeConfig = new StoreConfig($scopeConfig, $storeManager);
     }
 
     private function defaultConfig(): AgentConfig
@@ -41,9 +43,11 @@ final class RulesTest extends TestCase
         ?AgentConfig $config = null,
         ?SessionState $state = null,
         ?PageContext $page = null,
-        bool $isFirstTurn = false
+        bool $isFirstTurn = false,
+        ?string $sku = null
     ): ?string {
-        return $this->rules->firstForcedTool(
+        $rules = new Rules(new Lexicon($this->storeConfig), new SkuCandidates(), $this->matcherReturning($sku));
+        return $rules->firstForcedTool(
             $config ?? $this->defaultConfig(),
             $text,
             $state ?? new SessionState(),
@@ -51,6 +55,26 @@ final class RulesTest extends TestCase
             $isFirstTurn,
             1
         );
+    }
+
+    private function matcherReturning(?string $sku): SkuMatcherInterface
+    {
+        $record = function (array $skus): void {
+            $this->receivedCandidates = $skus;
+        };
+        return new class ($sku, $record) implements SkuMatcherInterface {
+            public function __construct(
+                private readonly ?string $sku,
+                private readonly \Closure $record
+            ) {
+            }
+
+            public function firstExisting(array $skus, int $storeId): ?string
+            {
+                ($this->record)($skus);
+                return $this->sku;
+            }
+        };
     }
 
     public function testPolicyTermAndCueForceSearchPolicies(): void
@@ -65,10 +89,27 @@ final class RulesTest extends TestCase
         $this->assertSame('get_orders', $this->forced("Just cancel the dog bed order, I'm done waiting."));
     }
 
-    public function testUnseenProductIdForcesGetProductDetails(): void
+    public function testATokenMatchingAnExistingSkuForcesGetProductDetails(): void
     {
-        $this->assertSame('get_product_details', $this->forced('Add AR-1602 to my cart.'));
-        $this->assertSame('get_product_details', $this->forced('is AL-STAY-101 available in June'));
+        $this->assertSame('get_product_details', $this->forced('do you have 24-MB01?', sku: '24-MB01'));
+        $this->assertSame(['24-MB01'], $this->receivedCandidates);
+    }
+
+    public function testASkuTheSessionAlreadySawIsNotReRead(): void
+    {
+        $state = new SessionState();
+        $state->rememberProducts([['product_id' => '24-MB01', 'title' => 'Joust Duffle Bag', 'price' => 34.0]]);
+        $this->assertNull($this->forced('do you have 24-MB01?', null, $state, sku: '24-MB01'));
+        $this->assertNull($this->forced('do you have 24-mb01?', null, $state, sku: '24-mb01'));
+        $this->assertSame('get_product_details', $this->forced('do you have 24-MB02?', null, $state, sku: '24-MB02'));
+    }
+
+    public function testTextWithoutAnExistingSkuIsNotForced(): void
+    {
+        $this->assertNull($this->forced('I have 2 kids at home'));
+        $this->assertSame([], $this->receivedCandidates);
+        $this->assertNull($this->forced('Add AR-1602 to my cart.'));
+        $this->assertSame(['AR-1602'], $this->receivedCandidates);
     }
 
     public function testWholeWordMatchingIgnoresSubstringHits(): void
@@ -80,16 +121,8 @@ final class RulesTest extends TestCase
 
     public function testPrecedenceRunsPolicyThenOrdersThenCatalog(): void
     {
-        $this->assertSame('search_policies', $this->forced('Can I return my order?'));
-        $this->assertSame('get_orders', $this->forced("What's the status of my order for AR-1602?"));
-    }
-
-    public function testAnIdTheSessionAlreadySawIsNotReRead(): void
-    {
-        $state = new SessionState();
-        $state->rememberProducts([['product_id' => 'AR-1602', 'title' => 'Lantern', 'price' => 39.0]]);
-        $this->assertNull($this->forced('add ar-1602 to my cart', null, $state));
-        $this->assertSame('get_product_details', $this->forced('add AR-1603 to my cart', null, $state));
+        $this->assertSame('search_policies', $this->forced('Can I return my order?', sku: 'AR-1602'));
+        $this->assertSame('get_orders', $this->forced("What's the status of my order for AR-1602?", sku: 'AR-1602'));
     }
 
     public function testThePolicyRuleHasAConfigSwitch(): void

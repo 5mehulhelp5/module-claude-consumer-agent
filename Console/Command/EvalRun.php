@@ -3,11 +3,13 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Console\Command;
 
+use MageOS\ClaudeConsumerAgent\Api\Backend\SkuMatcherInterface;
 use MageOS\ClaudeConsumerAgent\Api\Client\MessagesClientInterface;
 use MageOS\ClaudeConsumerAgent\Api\Data\CartInterface;
 use MageOS\ClaudeConsumerAgent\Api\StorefrontBackendInterface;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Event;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Gate\CartWrite;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Grounding\Rules;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Runner as PresentationRunner;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
@@ -39,6 +41,7 @@ use MageOS\ClaudeConsumerAgent\Test\Eval\FakeBackend;
 use MageOS\ClaudeConsumerAgent\Test\Eval\FakeExecutorFactory;
 use MageOS\ClaudeConsumerAgent\Test\Eval\FakeScopeConfig;
 use MageOS\ClaudeConsumerAgent\Test\Eval\InMemorySessions;
+use MageOS\ClaudeConsumerAgent\Test\Eval\InMemorySkuMatcher;
 use MageOS\ClaudeConsumerAgent\Test\Eval\InMemoryTranscripts;
 use MageOS\ClaudeConsumerAgent\Test\Eval\InMemoryTurnLog;
 use Symfony\Component\Console\Command\Command;
@@ -74,7 +77,9 @@ class EvalRun extends Command
         private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\StaticSystem $staticSystem,
         private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\DynamicContext $dynamicContext,
         private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\Assembly $assembly,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Grounding\Rules $rules,
+        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Lexicon $lexicon,
+        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Grounding\SkuCandidates $skuCandidates,
+        private readonly \MageOS\ClaudeConsumerAgent\Api\Backend\SkuMatcherInterface $skuMatcher,
         private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Turn\StreamedRoundFactory $streamedRoundFactory,
         private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Schema\Validator $validator,
         private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Gate\Provenance $provenance,
@@ -196,6 +201,7 @@ class EvalRun extends Command
             is_array($state['categories'] ?? null) ? $state['categories'] : []
         );
         $client = $live ? $this->liveClient : new FakeClient();
+        $skuMatcher = $live ? $this->skuMatcher : new InMemorySkuMatcher(array_map('strval', array_keys($catalog)));
 
         if ($live) {
             foreach ((is_array($state['cart'] ?? null) ? $state['cart'] : []) as $line) {
@@ -204,7 +210,7 @@ class EvalRun extends Command
         }
 
         $storeConfig = $this->storeConfigForCase($case);
-        $orchestrator = $this->buildOrchestrator($backend, $client, $storeConfig);
+        $orchestrator = $this->buildOrchestrator($backend, $client, $storeConfig, $skuMatcher);
 
         $toolCalls = [];
         $uiComponents = [];
@@ -269,7 +275,8 @@ class EvalRun extends Command
     private function buildOrchestrator(
         StorefrontBackendInterface $backend,
         MessagesClientInterface $client,
-        \MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig $storeConfig
+        \MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig $storeConfig,
+        SkuMatcherInterface $skuMatcher
     ): Orchestrator {
         $cartWrite = new CartWrite($backend, $this->lockManager, $this->options, $this->provenance, $this->serializer, $this->logger);
         $handlers = [
@@ -316,6 +323,7 @@ class EvalRun extends Command
             $this->sanitizer,
             $this->logger
         );
+        $rules = new Rules($this->lexicon, $this->skuCandidates, $skuMatcher);
 
         return $this->objectManager->create(Orchestrator::class, [
             'client' => $client,
@@ -326,7 +334,7 @@ class EvalRun extends Command
             'pageNote' => new PageNote($this->sanitizer),
             'toolRegistry' => $toolRegistry,
             'executorFactory' => $executorFactory,
-            'rules' => $this->rules,
+            'rules' => $rules,
             'transcripts' => new TranscriptRepository(new InMemoryTranscripts(), $this->resourceConnection),
             'sessions' => new InMemorySessions(),
             'storeConfig' => $storeConfig,

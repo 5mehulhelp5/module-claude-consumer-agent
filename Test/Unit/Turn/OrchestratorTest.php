@@ -13,6 +13,7 @@ use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use MageOS\ClaudeConsumerAgent\Api\Backend\CatalogMapProviderInterface;
+use MageOS\ClaudeConsumerAgent\Api\Backend\SkuMatcherInterface;
 use MageOS\ClaudeConsumerAgent\Api\Backend\StoreFactTitleResolverInterface;
 use MageOS\ClaudeConsumerAgent\Api\Client\MessagesClientInterface;
 use MageOS\ClaudeConsumerAgent\Api\Data\PageContextInterface;
@@ -28,6 +29,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Fence;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Sanitizer;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Gate\Provenance;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Grounding\Rules;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Grounding\SkuCandidates;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Lexicon;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Checkout;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Comparison;
@@ -611,7 +613,11 @@ final class OrchestratorTest extends TestCase
         );
         $dynamicContext = new DynamicContext(new Fence($sanitizer));
         $assembly = new Assembly();
-        $rules = new Rules(new Lexicon($storeConfig));
+        $rules = new Rules(
+            new Lexicon($storeConfig),
+            new SkuCandidates(),
+            $this->createMock(SkuMatcherInterface::class)
+        );
 
         $messageResource = $this->createMock(MessageResource::class);
         $messageResource->method('loadBySession')->willReturn([]);

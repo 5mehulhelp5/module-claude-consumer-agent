@@ -10,6 +10,7 @@
     <preference for="MageOS\ClaudeConsumerAgent\Api\Backend\PolicySourceInterface" type="MageOS\ClaudeConsumerAgent\Model\Backend\Provider\CmsPagePolicySource"/>
     <preference for="MageOS\ClaudeConsumerAgent\Api\Backend\StoreFactTitleResolverInterface" type="MageOS\ClaudeConsumerAgent\Model\Backend\Provider\StoreFactTitleResolver"/>
     <preference for="MageOS\ClaudeConsumerAgent\Api\Backend\OrderStatusMapperInterface" type="MageOS\ClaudeConsumerAgent\Model\Backend\Provider\OrderStatusMapper"/>
+    <preference for="MageOS\ClaudeConsumerAgent\Api\Backend\SkuMatcherInterface" type="MageOS\ClaudeConsumerAgent\Model\Backend\Provider\SkuMatcher"/>
     <preference for="MageOS\ClaudeConsumerAgent\Api\Cart\BuyRequestBuilderInterface" type="MageOS\ClaudeConsumerAgent\Model\Backend\BuyRequestBuilder"/>
     <preference for="MageOS\ClaudeConsumerAgent\Api\Client\MessagesClientInterface" type="MageOS\ClaudeConsumerAgent\Model\Client\GuzzleMessagesClient"/>
     <preference for="MageOS\ClaudeConsumerAgent\Api\Session\SessionRepositoryInterface" type="MageOS\ClaudeConsumerAgent\Model\Session\Repository"/>
@@ -91,7 +92,6 @@
         <arguments>
             <argument name="additionalPolicyTerms" xsi:type="array"/>
             <argument name="additionalOrderTerms" xsi:type="array"/>
-            <argument name="additionalIdPatterns" xsi:type="array"/>
         </arguments>
     </type>
 

@@ -10,7 +10,9 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 final class Rules
 {
     public function __construct(
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Lexicon $lexicon
+        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Lexicon $lexicon,
+        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Grounding\SkuCandidates $skuCandidates,
+        private readonly \MageOS\ClaudeConsumerAgent\Api\Backend\SkuMatcherInterface $skuMatcher
     ) {
     }
 
@@ -35,8 +37,9 @@ final class Rules
         ) {
             return 'get_orders';
         }
-        $token = $this->longestMatch($text, $this->lexicon->idPatterns($storeId));
-        if ($token !== null && !$state->hasSeenCaseInsensitive($token)) {
+        $candidates = $this->skuCandidates->fromText($text);
+        $sku = $this->skuMatcher->firstExisting($candidates, $storeId);
+        if ($sku !== null && !$state->hasSeenCaseInsensitive($sku)) {
             return 'get_product_details';
         }
         $pageProductId = $page->getProductId();
@@ -101,24 +104,5 @@ final class Rules
             }
         }
         return false;
-    }
-
-    private function longestMatch(string $text, array $patterns): ?string
-    {
-        if ($text === '') {
-            return null;
-        }
-        $token = null;
-        foreach ($patterns as $pattern) {
-            $result = preg_match('/' . $pattern . '/iu', $text, $matches);
-            if ($result !== 1) {
-                continue;
-            }
-            $candidate = $matches[0];
-            if ($token === null || mb_strlen($candidate) > mb_strlen($token)) {
-                $token = $candidate;
-            }
-        }
-        return $token;
     }
 }
