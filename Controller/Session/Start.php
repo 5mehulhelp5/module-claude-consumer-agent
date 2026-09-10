@@ -55,7 +55,7 @@ class Start implements HttpPostActionInterface, CsrfAwareActionInterface
         $page = PageContext::fromArray($body->page);
         $now = new \DateTimeImmutable('now');
         $context = new SessionContext((string)($body->sessionId ?? ''), $customerId, $quoteId, $storeId, $page, $now);
-        $surface = $this->surfaceResolver->resolve($storeId, null);
+        $surface = $this->surfaceResolver->resolve($storeId, $this->layout);
         $binding = $this->sessionRepository->bind($body->sessionId, $context, $surface);
         $this->sessionManager->writeClose();
         $agentConfig = $this->storeConfig->agent($storeId);
