@@ -419,11 +419,39 @@ function renderAiAgentMarkdown(container, text) {
 
 function initAiAgentBubble() {
     return {
+        rafId: null,
+        pendingText: null,
         init() {
             this.renderText(this.m.text);
             this.$watch('m.text', (value) => {
-                this.renderText(value);
+                this.scheduleRender(value);
             });
+            this.$watch('m.streaming', (streaming) => {
+                if (!streaming) {
+                    this.flushRender();
+                }
+            });
+        },
+        scheduleRender(text) {
+            this.pendingText = text;
+            if (this.m.streaming !== true) {
+                this.flushRender();
+                return;
+            }
+            if (this.rafId !== null) {
+                return;
+            }
+            this.rafId = window.requestAnimationFrame(() => {
+                this.rafId = null;
+                this.renderText(this.pendingText);
+            });
+        },
+        flushRender() {
+            if (this.rafId !== null) {
+                window.cancelAnimationFrame(this.rafId);
+                this.rafId = null;
+            }
+            this.renderText(this.pendingText !== null ? this.pendingText : this.m.text);
         },
         renderText(text) {
             while (this.$el.firstChild) {
