@@ -126,6 +126,38 @@ final class RegistryTest extends TestCase
         $this->assertArrayHasKey('status', $apiDefinitions[0]['input_schema']['properties']);
     }
 
+    public function testDefinitionsAreMemoisedPerStore(): void
+    {
+        $provider = new class implements ToolProviderInterface {
+            public int $calls = 0;
+
+            public function getTools(AgentConfig $config): array
+            {
+                $this->calls++;
+                return [
+                    new Definition(
+                        'get_cart',
+                        'Description of get_cart',
+                        ['type' => 'object', 'properties' => [], 'additionalProperties' => false],
+                        'read',
+                        null,
+                        [],
+                        false,
+                        true,
+                        0
+                    ),
+                ];
+            }
+        };
+        $registry = new Registry([$provider], $this->storeConfigWithPolicyPages(''));
+
+        $registry->definitions(1);
+        $registry->definitions(1);
+        $registry->byName(1, 'get_cart');
+
+        $this->assertSame(1, $provider->calls);
+    }
+
     /**
      * StoreConfig::agent() (wave 0) does not wire enableOrders or enableFulfillment from
      * any config path, so those flags cannot be toggled through a real StoreConfig

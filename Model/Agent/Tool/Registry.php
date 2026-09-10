@@ -12,6 +12,10 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\AgentConfig;
  */
 final class Registry
 {
+    private array $definitionsByStore = [];
+
+    private array $byNameByStore = [];
+
     /**
      * @param \MageOS\ClaudeConsumerAgent\Api\Tool\ToolProviderInterface[] $providers
      */
@@ -25,6 +29,34 @@ final class Registry
      * @return \MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Definition[]
      */
     public function definitions(int $storeId): array
+    {
+        return $this->definitionsByStore[$storeId] ??= $this->buildDefinitions($storeId);
+    }
+
+    public function apiDefinitions(int $storeId): array
+    {
+        return array_map(
+            static fn (Definition $definition): array => $definition->apiDefinition(),
+            $this->definitions($storeId)
+        );
+    }
+
+    public function byName(int $storeId, string $name): ?Definition
+    {
+        if (!isset($this->byNameByStore[$storeId])) {
+            $map = [];
+            foreach ($this->definitions($storeId) as $definition) {
+                $map[$definition->getName()] = $definition;
+            }
+            $this->byNameByStore[$storeId] = $map;
+        }
+        return $this->byNameByStore[$storeId][$name] ?? null;
+    }
+
+    /**
+     * @return \MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Definition[]
+     */
+    private function buildDefinitions(int $storeId): array
     {
         $config = $this->storeConfig->agent($storeId);
         $absent = $this->absentTools($config);
@@ -52,24 +84,6 @@ final class Registry
         $definitions = array_merge($core, $extensions);
         $this->assertNoDuplicates($definitions);
         return $definitions;
-    }
-
-    public function apiDefinitions(int $storeId): array
-    {
-        return array_map(
-            static fn (Definition $definition): array => $definition->apiDefinition(),
-            $this->definitions($storeId)
-        );
-    }
-
-    public function byName(int $storeId, string $name): ?Definition
-    {
-        foreach ($this->definitions($storeId) as $definition) {
-            if ($definition->getName() === $name) {
-                return $definition;
-            }
-        }
-        return null;
     }
 
     private function absentTools(AgentConfig $config): array
