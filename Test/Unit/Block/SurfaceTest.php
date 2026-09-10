@@ -87,4 +87,10 @@ final class SurfaceTest extends TestCase
         $block = $this->buildBlock(true, 'overlay', 'side_cart');
         $this->assertSame('', $this->invokeToHtml($block));
     }
+
+    public function testOverlayHiddenWhenResolverReturnsSideCart(): void
+    {
+        $block = $this->buildBlock(true, 'side_cart', 'overlay');
+        $this->assertSame('', $this->invokeToHtml($block));
+    }
 }

@@ -27,10 +27,14 @@ class Surface extends Template
             return '';
         }
         $surface = (string)$this->getData('surface');
+        $resolved = $this->surfaceResolver->resolve($storeId, $this->getLayout());
         if ($surface === SurfaceMode::OVERLAY) {
+            if ($resolved === SurfaceMode::SIDE_CART) {
+                return '';
+            }
             return parent::_toHtml();
         }
-        if ($this->surfaceResolver->resolve($storeId, $this->getLayout()) !== $surface) {
+        if ($resolved !== $surface) {
             return '';
         }
         return parent::_toHtml();
