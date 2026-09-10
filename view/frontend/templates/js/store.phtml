@@ -261,6 +261,7 @@ $configJson = json_encode(
                         last.streaming = false;
                         this.turn.running = false;
                         this.turn.status = '';
+                        this.announcement = last.text;
                         break;
                     case 'turn_complete':
                         last.streaming = false;

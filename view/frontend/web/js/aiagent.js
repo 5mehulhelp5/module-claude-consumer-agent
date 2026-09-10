@@ -425,6 +425,9 @@ function initAiAgentTranscript() {
                 'ai-agent-bubble-assistant bg-container p-3': this.m.role === 'assistant'
             };
         },
+        isStreaming() {
+            return this.m.streaming === true;
+        },
         init() {
             this.$watch(
                 () => Alpine.store('aiAgent').transcript.length,
