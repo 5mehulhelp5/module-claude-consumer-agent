@@ -16,6 +16,7 @@ part without touching the base module.
 
 - A launcher button on every page that opens a panel on the right (or a
   bottom sheet on a phone). The transcript survives page changes and reloads.
+  The assistant stays off the checkout steps and the order success page.
 - Product search with real cards: image, price, stock, a one-line reason from
   the assistant, and Add to cart. Configurable products list their sizes and
   colours first, the assistant never picks a variant on its own.
