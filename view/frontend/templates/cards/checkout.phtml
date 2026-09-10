@@ -16,7 +16,7 @@ use Magento\Framework\View\Element\Template;
                         <img :src="line.image_url" :alt="line.title" class="w-10 h-10 rounded object-cover">
                     </template>
                     <span class="grow" x-text="line.title"></span>
-                    <span class="text-secondary" x-text="line.quantity"></span>
+                    <span class="text-fg-secondary" x-text="line.quantity"></span>
                     <span class="font-semibold" x-text="lineTotalOf"></span>
                 </li>
             </template>
@@ -26,10 +26,10 @@ use Magento\Framework\View\Element\Template;
             <dd x-text="subtotalFormatted"></dd>
         </dl>
         <template x-if="card.payload.fulfillment_method">
-            <p class="text-xs text-secondary mt-2" x-text="fulfillmentLine"></p>
+            <p class="text-xs text-fg-secondary mt-2" x-text="fulfillmentLine"></p>
         </template>
         <template x-if="card.payload.note">
-            <p class="text-xs text-secondary mt-2" x-text="card.payload.note"></p>
+            <p class="text-xs text-fg-secondary mt-2" x-text="card.payload.note"></p>
         </template>
         <a :href="card.payload.checkout_url" class="btn btn-primary mt-4 w-full text-center">
             <?= $escaper->escapeHtml(__('Go to checkout')) ?>

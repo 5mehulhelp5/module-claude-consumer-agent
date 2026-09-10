@@ -17,7 +17,7 @@ use Magento\Framework\View\Element\Template;
                         <th class="text-left align-top p-2 border-b border-container">
                             <span x-text="entry.product.title"></span>
                             <template x-if="optionValuesText">
-                                <span class="block text-xs text-secondary font-normal" x-text="optionValuesText"></span>
+                                <span class="block text-xs text-fg-secondary font-normal" x-text="optionValuesText"></span>
                             </template>
                             <template x-if="isRecommended">
                                 <span class="ml-2 inline-flex items-center text-xxs uppercase rounded px-1.5 py-0.5 bg-status-successlight text-status-success">
@@ -48,7 +48,7 @@ use Magento\Framework\View\Element\Template;
                 <tr>
                     <template x-for="entry in card.payload.entries" :key="entry.product_id">
                         <td class="p-2 border-b border-container align-top">
-                            <ul class="list-disc list-inside text-secondary">
+                            <ul class="list-disc list-inside text-fg-secondary">
                                 <template x-for="con in consOf">
                                     <li x-text="con"></li>
                                 </template>
@@ -58,13 +58,13 @@ use Magento\Framework\View\Element\Template;
                 </tr>
                 <tr>
                     <template x-for="entry in card.payload.entries" :key="entry.product_id">
-                        <td class="p-2 align-top text-xs text-secondary" x-show="hasBestFor" x-text="bestFor"></td>
+                        <td class="p-2 align-top text-xs text-fg-secondary" x-show="hasBestFor" x-text="bestFor"></td>
                     </template>
                 </tr>
             </tbody>
         </table>
         <template x-if="card.payload.price_delta">
-            <p class="text-xs text-secondary mt-3" x-text="priceDeltaLine"></p>
+            <p class="text-xs text-fg-secondary mt-3" x-text="priceDeltaLine"></p>
         </template>
     </div>
 </template>

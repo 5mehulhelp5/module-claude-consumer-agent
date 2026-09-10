@@ -34,7 +34,7 @@ $aiLabel = $assistant->aiLabelText();
                 <?= $escaper->escapeHtml($assistant->name()) ?>
             </p>
             <?php if ($aiLabel !== ''): ?>
-                <span class="text-xs uppercase text-secondary border border-container rounded px-1.5 py-0.5">
+                <span class="text-xs uppercase text-fg-secondary border border-container rounded px-1.5 py-0.5">
                     <?= $escaper->escapeHtml($aiLabel) ?>
                 </span>
             <?php endif; ?>
@@ -43,7 +43,7 @@ $aiLabel = $assistant->aiLabelText();
             <button
                 type="button"
                 x-show="hasTranscript"
-                class="p-2 text-primary hover:text-secondary disabled:opacity-50"
+                class="p-2 text-primary hover:text-fg-secondary disabled:opacity-50"
                 :disabled="$store.aiAgent.turn.running"
                 @click="newConversation"
                 aria-label="<?= $escaper->escapeHtmlAttr(__('New conversation')) ?>"
@@ -52,7 +52,7 @@ $aiLabel = $assistant->aiLabelText();
             </button>
             <button
                 type="button"
-                class="p-2 text-primary hover:text-secondary"
+                class="p-2 text-primary hover:text-fg-secondary"
                 @click="close"
                 aria-label="<?= $escaper->escapeHtmlAttr(__('Close assistant')) ?>"
             >

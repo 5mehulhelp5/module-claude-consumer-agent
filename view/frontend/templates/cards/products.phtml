@@ -29,23 +29,23 @@ use Magento\Framework\View\Element\Template;
                         </template>
                         <a :href="item.product.url" class="text-sm font-medium hover:underline" x-text="item.product.title"></a>
                         <template x-if="hasCustomOptionLines">
-                            <ul class="text-xs text-secondary">
+                            <ul class="text-xs text-fg-secondary">
                                 <template x-for="(line, lineIndex) in customOptionLines" :key="lineIndex">
                                     <li x-text="line"></li>
                                 </template>
                             </ul>
                         </template>
                         <template x-if="optionValuesText">
-                            <p class="text-xs text-secondary" x-text="optionValuesText"></p>
+                            <p class="text-xs text-fg-secondary" x-text="optionValuesText"></p>
                         </template>
                         <template x-if="showPrice">
                             <p class="text-sm font-semibold" x-text="priceOf"></p>
                         </template>
                         <template x-if="hasDescription">
-                            <p class="text-xs text-secondary line-clamp-3" x-text="item.product.short_description"></p>
+                            <p class="text-xs text-fg-secondary line-clamp-3" x-text="item.product.short_description"></p>
                         </template>
                         <template x-if="reasonVisible">
-                            <p class="text-xs text-secondary" x-text="item.reason"></p>
+                            <p class="text-xs text-fg-secondary" x-text="item.reason"></p>
                         </template>
                         <template x-if="inStockVisible">
                             <span class="inline-flex w-max items-center text-xxs uppercase rounded px-1.5 py-0.5 bg-status-successlight text-status-success">
@@ -115,20 +115,20 @@ use Magento\Framework\View\Element\Template;
                         <div class="flex flex-col gap-1 min-w-0 flex-1">
                             <a :href="item.product.url" class="text-sm font-medium hover:underline" x-text="item.product.title"></a>
                             <template x-if="optionValuesText">
-                                <p class="text-xs text-secondary" x-text="optionValuesText"></p>
+                                <p class="text-xs text-fg-secondary" x-text="optionValuesText"></p>
                             </template>
                             <template x-if="hasCustomOptionLines">
-                                <ul class="text-xs text-secondary">
+                                <ul class="text-xs text-fg-secondary">
                                     <template x-for="(line, lineIndex) in customOptionLines" :key="lineIndex">
                                         <li x-text="line"></li>
                                     </template>
                                 </ul>
                             </template>
                             <template x-if="hasDescription">
-                                <p class="text-xs text-secondary line-clamp-2" x-text="item.product.short_description"></p>
+                                <p class="text-xs text-fg-secondary line-clamp-2" x-text="item.product.short_description"></p>
                             </template>
                             <template x-if="reasonVisible">
-                                <p class="text-xs text-secondary" x-text="item.reason"></p>
+                                <p class="text-xs text-fg-secondary" x-text="item.reason"></p>
                             </template>
                             <div class="flex items-center gap-2">
                                 <template x-if="showPrice">

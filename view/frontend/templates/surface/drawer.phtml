@@ -33,7 +33,7 @@ $assistant = $viewModels->require(Assistant::class);
             <div class="shrink-0 flex items-center gap-2 pb-2 mb-2 border-b border-container">
                 <p class="grow text-sm font-semibold truncate" x-text="$store.aiAgent.config.assistantName"></p>
                 <template x-if="$store.aiAgent.config.showAiLabel">
-                    <span class="text-xxs uppercase tracking-wide bg-container-lighter text-secondary rounded px-1.5 py-0.5">
+                    <span class="text-xxs uppercase tracking-wide bg-container-lighter text-fg-secondary rounded px-1.5 py-0.5">
                         <?= $escaper->escapeHtml(__('AI')) ?>
                     </span>
                 </template>
@@ -69,7 +69,7 @@ $assistant = $viewModels->require(Assistant::class);
         <div class="contents">
             <div class="flex items-center gap-2">
                 <p class="shrink-0 text-sm font-semibold" x-text="$store.aiAgent.config.assistantName"></p>
-                <p class="grow min-w-0 truncate text-sm text-secondary" x-text="lastLine"></p>
+                <p class="grow min-w-0 truncate text-sm text-fg-secondary" x-text="lastLine"></p>
                 <button
                     type="button"
                     class="shrink-0 btn btn-secondary btn-sm"

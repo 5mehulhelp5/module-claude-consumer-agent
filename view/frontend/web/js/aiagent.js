@@ -711,8 +711,8 @@ function initAiAgentCardOrderStatus() {
                 delayed: 'bg-status-warninglight text-status-warning',
                 return_initiated: 'bg-status-warninglight text-status-warning',
                 cancelled: 'bg-status-errorlight text-status-error',
-                refunded: 'bg-container-light text-secondary',
-                unknown: 'bg-container text-secondary'
+                refunded: 'bg-container-light text-fg-secondary',
+                unknown: 'bg-container text-fg-secondary'
             };
             return classes[this.card.payload.order.status] || classes.unknown;
         },

@@ -52,7 +52,7 @@ $autofocus = (bool)$block->getData('autofocus');
         </button>
     </div>
     <?php if (!$compact): ?>
-        <div class="flex items-center justify-between gap-2 text-xs text-secondary">
+        <div class="flex items-center justify-between gap-2 text-xs text-fg-secondary">
             <span x-text="hint"></span>
             <?php if ($contactUrl !== ''): ?>
                 <a href="<?= $escaper->escapeUrl($contactUrl) ?>" class="underline">
