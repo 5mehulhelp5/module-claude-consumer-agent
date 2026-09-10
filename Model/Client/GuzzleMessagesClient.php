@@ -15,6 +15,7 @@ final class GuzzleMessagesClient implements MessagesClientInterface
     public const MAX_RETRIES = 2;
     private const READ_CHUNK_BYTES = 256;
     private const TIMEOUT_MARGIN_SECONDS = 5;
+    private const HEARTBEAT_SLICE_SECONDS = 1;
 
     private const RETRYABLE_STATUSES = [429, 500, 502, 503, 529];
     private const MAX_RETRY_AFTER_SECONDS = 30.0;
@@ -111,15 +112,47 @@ final class GuzzleMessagesClient implements MessagesClientInterface
 
     private function readChunks(StreamInterface $stream, ?callable $onWaiting): \Generator
     {
-        while (!$stream->eof()) {
-            $chunk = $stream->read(self::READ_CHUNK_BYTES);
-            if ($chunk === '') {
+        $resource = $stream->detach();
+        if (!is_resource($resource)) {
+            while (!$stream->eof()) {
                 if ($onWaiting !== null) {
                     $onWaiting();
                 }
+                $chunk = $stream->read(self::READ_CHUNK_BYTES);
+                if ($chunk !== '') {
+                    yield $chunk;
+                }
+            }
+            return;
+        }
+
+        try {
+            yield from $this->readChunksFromResource($resource, $onWaiting);
+        } finally {
+            fclose($resource);
+        }
+    }
+
+    private function readChunksFromResource($resource, ?callable $onWaiting): \Generator
+    {
+        while (!feof($resource)) {
+            if ($onWaiting !== null) {
+                $onWaiting();
+            }
+            $read = [$resource];
+            $write = null;
+            $except = null;
+            $ready = @stream_select($read, $write, $except, self::HEARTBEAT_SLICE_SECONDS);
+            if ($ready === false || $ready === 0) {
                 continue;
             }
-            yield $chunk;
+            $chunk = fread($resource, self::READ_CHUNK_BYTES);
+            if ($chunk === false) {
+                return;
+            }
+            if ($chunk !== '') {
+                yield $chunk;
+            }
         }
     }
 

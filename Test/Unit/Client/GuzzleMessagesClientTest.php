@@ -307,6 +307,50 @@ final class GuzzleMessagesClientTest extends TestCase
         $this->assertSame('message_start', $events[0]->type);
     }
 
+    public function testOnWaitingFiresEveryIterationEvenWhenChunksCarryData(): void
+    {
+        $chunks = [
+            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"usage\":{}}}\n\n",
+            "event: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+        ];
+        $callCount = 0;
+        $stream = $this->createMock(StreamInterface::class);
+        $stream->method('detach')->willReturn(null);
+        $stream->method('eof')->willReturnCallback(
+            static function () use (&$callCount, $chunks): bool {
+                return $callCount >= count($chunks);
+            }
+        );
+        $stream->method('read')->willReturnCallback(
+            static function () use (&$callCount, $chunks): string {
+                return $chunks[$callCount++];
+            }
+        );
+
+        $response = $this->createMock(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(200);
+        $response->method('getBody')->willReturn($stream);
+
+        $http = $this->createMock(\GuzzleHttp\ClientInterface::class);
+        $http->expects($this->once())->method('request')->willReturn($response);
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $sleeper = $this->createMock(Sleeper::class);
+
+        $client = new GuzzleMessagesClient($http, $this->buildStoreConfig(), $logger, $sleeper);
+
+        $waits = 0;
+        $events = iterator_to_array(
+            $client->stream(['messages' => []], static function () use (&$waits): void {
+                $waits++;
+            }),
+            false
+        );
+
+        $this->assertSame(2, $waits);
+        $this->assertSame('message_stop', $events[count($events) - 1]->type);
+    }
+
     public function testMissingApiKeyThrowsUnauthorizedWithoutARequest(): void
     {
         $http = $this->createMock(\GuzzleHttp\ClientInterface::class);
