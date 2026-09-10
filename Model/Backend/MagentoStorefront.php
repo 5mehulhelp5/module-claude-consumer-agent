@@ -97,7 +97,7 @@ final class MagentoStorefront implements StorefrontBackendInterface
             }
         }
 
-        return $this->applyFilters($records, $filters);
+        return $records;
     }
 
     private function loadEnabledProducts(array $ids, int $storeId, int $limit): array
@@ -115,15 +115,6 @@ final class MagentoStorefront implements StorefrontBackendInterface
         } finally {
             $this->storeManager->setCurrentStore($previousStoreId);
         }
-    }
-
-    private function applyFilters(array $records, ?SearchFiltersInterface $filters): array
-    {
-        if ($filters === null) {
-            return $records;
-        }
-
-        return $records;
     }
 
     public function getProductDetails(SessionContext $ctx, string $productId): ?ProductDetailsInterface
