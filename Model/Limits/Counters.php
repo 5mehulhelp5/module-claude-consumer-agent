@@ -23,26 +23,25 @@ final class Counters
     public function bump(string $sessionId, string $browserSessionId, string $ip, AgentConfig $config): void
     {
         $windowAnchor = $browserSessionId !== '' ? $browserSessionId : $sessionId;
-        $sessionKey = 'aiagent_cnt_s_' . substr(sha1($windowAnchor), 0, 24);
-        $ipKey = 'aiagent_cnt_ip_' . substr(sha1($ip), 0, 24);
-        $sessionCount = $this->increment($sessionKey, self::SESSION_TTL);
-        $ipCount = $this->increment($ipKey, self::IP_TTL);
-        if ($sessionCount > $config->turnsPerSessionWindow) {
+        $sessionKey = $this->bucketKey('aiagent_cnt_s_', $windowAnchor, self::SESSION_TTL);
+        $ipKey = $this->bucketKey('aiagent_cnt_ip_', $ip, self::IP_TTL);
+        $sessionCount = (int)$this->cache->load($sessionKey);
+        $ipCount = (int)$this->cache->load($ipKey);
+        if ($sessionCount >= $config->turnsPerSessionWindow) {
             $this->trip($sessionId, 'window');
             throw new LimitExceeded('session turns per window exceeded', self::SESSION_RETRY_AFTER);
         }
-        if ($ipCount > $config->turnsPerIpMinute) {
+        if ($ipCount >= $config->turnsPerIpMinute) {
             $this->trip($sessionId, 'ip');
             throw new LimitExceeded('turns per ip minute exceeded', self::IP_RETRY_AFTER);
         }
+        $this->cache->save((string)($sessionCount + 1), $sessionKey, [self::CACHE_TAG], self::SESSION_TTL);
+        $this->cache->save((string)($ipCount + 1), $ipKey, [self::CACHE_TAG], self::IP_TTL);
     }
 
-    private function increment(string $key, int $ttl): int
+    private function bucketKey(string $prefix, string $subject, int $ttl): string
     {
-        $current = (int)$this->cache->load($key);
-        $next = $current + 1;
-        $this->cache->save((string)$next, $key, [self::CACHE_TAG], $ttl);
-        return $next;
+        return $prefix . substr(sha1($subject), 0, 24) . '_' . intdiv(time(), $ttl);
     }
 
     private function trip(string $sessionId, string $kind): void

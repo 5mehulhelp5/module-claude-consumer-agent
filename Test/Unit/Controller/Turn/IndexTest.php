@@ -327,7 +327,9 @@ final class IndexTest extends TestCase
         ]);
         $index->execute();
 
-        $this->assertContains('aiagent_cnt_s_' . substr(sha1('php-session-1'), 0, 24), $savedKeys);
+        $expectedPrefix = 'aiagent_cnt_s_' . substr(sha1('php-session-1'), 0, 24) . '_';
+        $windowKeys = array_filter($savedKeys, static fn (string $key): bool => str_starts_with($key, $expectedPrefix));
+        $this->assertCount(1, $windowKeys);
     }
 
     public function testWriteCloseIsCalledBeforeTheResultIsCreated(): void
