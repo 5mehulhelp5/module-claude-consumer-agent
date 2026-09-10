@@ -34,6 +34,7 @@
         <arguments>
             <argument name="providers" xsi:type="array">
                 <item name="core" xsi:type="object">MageOS\ClaudeConsumerAgent\Model\Agent\Tool\CoreToolProvider</item>
+                <item name="presentation" xsi:type="object">MageOS\ClaudeConsumerAgent\Model\Agent\Tool\PresentationToolProvider</item>
             </argument>
         </arguments>
     </type>
