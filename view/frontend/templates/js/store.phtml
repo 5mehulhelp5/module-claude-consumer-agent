@@ -253,16 +253,14 @@ $configJson = json_encode(
                         this.turn.status = data.message;
                         break;
                     case 'error':
-                        last.text = last.text || data.message;
+                        last.notice = data.message;
                         last.error = true;
-                        if (data.retry_after) {
-                            last.retryAfter = data.retry_after;
-                        }
+                        last.retryAfter = data.retry_after || null;
                         last.sessionCap = data.kind === 'session_cap';
                         last.streaming = false;
                         this.turn.running = false;
                         this.turn.status = '';
-                        this.announcement = last.text;
+                        this.announcement = data.message;
                         break;
                     case 'turn_complete':
                         last.streaming = false;

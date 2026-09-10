@@ -21,6 +21,15 @@ use Magento\Framework\Escaper;
             <template x-for="card in m.cards" :key="card.id">
                 <div x-data="initAiAgentCard"></div>
             </template>
+            <p x-show="m.notice" x-text="m.notice" class="mt-2 text-sm text-status-error"></p>
+            <button
+                type="button"
+                x-show="m.retryAfter"
+                class="mt-2 btn btn-secondary btn-size-sm"
+                @click="retry"
+            >
+                <?= $escaper->escapeHtml(__('Retry')) ?>
+            </button>
             <button
                 type="button"
                 x-show="isSessionCap"

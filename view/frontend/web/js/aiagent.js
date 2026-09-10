@@ -457,6 +457,24 @@ function initAiAgentTranscript() {
         newConversation() {
             Alpine.store('aiAgent').reset();
         },
+        lastUserText() {
+            const messages = this.messages();
+            for (let index = this.i; index >= 0; index--) {
+                if (messages[index].role === 'user') {
+                    return messages[index].text;
+                }
+            }
+            return '';
+        },
+        retry() {
+            const text = this.lastUserText();
+            if (!text) {
+                return;
+            }
+            this.m.notice = '';
+            this.m.retryAfter = null;
+            Alpine.store('aiAgent').send(text);
+        },
         init() {
             this.$watch(
                 () => Alpine.store('aiAgent').transcript.length,
