@@ -12,6 +12,8 @@ final class Options
 
     private const UNSETTABLE_CUSTOM_OPTION_TYPES = ['file', 'date', 'date_time', 'time'];
 
+    private const STANDALONE_VALUE_MIN_LENGTH = 2;
+
     public function __construct(
         private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Sanitizer $sanitizer
     ) {
@@ -131,19 +133,34 @@ final class Options
     private function valuesConfirmed(array $optionValues, array $recentCustomerText): bool
     {
         $haystack = ' ' . $this->normalize(implode(' ', $recentCustomerText)) . ' ';
-        foreach ($optionValues as $label) {
+        foreach ($optionValues as $name => $label) {
             $needle = $this->normalize((string)$label);
-            if ($needle === '' || !str_contains($haystack, ' ' . $needle . ' ')) {
+            if ($needle === '') {
+                return false;
+            }
+            if (!$this->valuePresent($haystack, $needle, $this->normalize((string)$name))) {
                 return false;
             }
         }
         return true;
     }
 
+    private function valuePresent(string $haystack, string $needle, string $name): bool
+    {
+        if (mb_strlen($needle) >= self::STANDALONE_VALUE_MIN_LENGTH) {
+            return str_contains($haystack, ' ' . $needle . ' ');
+        }
+        if ($name === '') {
+            return false;
+        }
+        return str_contains($haystack, ' ' . $name . ' ' . $needle . ' ')
+            || str_contains($haystack, ' ' . $needle . ' ' . $name . ' ');
+    }
+
     private function normalize(string $text): string
     {
-        $lower = strtolower($text);
-        $normalized = preg_replace('/[^a-z0-9]+/', ' ', $lower);
+        $lower = mb_strtolower($text);
+        $normalized = preg_replace('/[^\p{L}\p{N}]+/u', ' ', $lower);
         return trim((string)$normalized);
     }
 }

@@ -125,6 +125,80 @@ final class OptionsTest extends TestCase
         $this->assertNull($this->gate->check($state, 'p-med-black'));
     }
 
+    public function testOneLetterValueIsNotConfirmedByAnIncidentalToken(): void
+    {
+        $state = new SessionState();
+        $state->rememberProducts([[
+            'product_id' => 'p-m-blue',
+            'title' => 'Tee',
+            'price' => 19.0,
+            'option_values' => ['Size' => 'M', 'Color' => 'Blue'],
+            'variant_of' => 'tee',
+        ]]);
+        $state->rememberCustomerText("I'm after the blue one");
+        $held = $this->gate->check($state, 'p-m-blue');
+        $this->assertNotNull($held);
+        $this->assertSame(Options::NAME, $held->blocked);
+        $this->assertStringContainsString('has not chosen these values in this conversation', $held->resultText);
+    }
+
+    public function testOneLetterValueIsConfirmedNextToItsOptionName(): void
+    {
+        $state = new SessionState();
+        $state->rememberProducts([[
+            'product_id' => 'p-m-black',
+            'title' => 'Tee',
+            'price' => 19.0,
+            'option_values' => ['Size' => 'M', 'Color' => 'Black'],
+            'variant_of' => 'tee',
+        ]]);
+        $state->rememberCustomerText('size M in black');
+        $this->assertNull($this->gate->check($state, 'p-m-black'));
+
+        $reversed = new SessionState();
+        $reversed->rememberProducts([[
+            'product_id' => 'p-m-black',
+            'title' => 'Tee',
+            'price' => 19.0,
+            'option_values' => ['Size' => 'M', 'Color' => 'Black'],
+            'variant_of' => 'tee',
+        ]]);
+        $reversed->rememberCustomerText('Black, M size please');
+        $this->assertNull($this->gate->check($reversed, 'p-m-black'));
+    }
+
+    public function testMultiLetterValuesStillMatchAsStandaloneTokens(): void
+    {
+        $state = new SessionState();
+        $state->rememberProducts([[
+            'product_id' => 'p-medium-black',
+            'title' => 'Tee',
+            'price' => 19.0,
+            'option_values' => ['Size' => 'Medium', 'Colour' => 'Black'],
+            'variant_of' => 'tee',
+        ]]);
+        $state->rememberCustomerText('Medium, black');
+        $this->assertNull($this->gate->check($state, 'p-medium-black'));
+    }
+
+    public function testValuesWithNonLatinLettersMatchCaseInsensitively(): void
+    {
+        $state = new SessionState();
+        $state->rememberProducts([[
+            'product_id' => 'p-gross',
+            'title' => 'Tee',
+            'price' => 19.0,
+            'option_values' => ['Größe' => 'Groß', 'Farbe' => 'Schwarz'],
+            'variant_of' => 'tee',
+        ]]);
+        $state->rememberCustomerText('GROSS in schwarz bitte');
+        $held = $this->gate->check($state, 'p-gross');
+        $this->assertNotNull($held);
+
+        $state->rememberCustomerText('Groß in Schwarz bitte');
+        $this->assertNull($this->gate->check($state, 'p-gross'));
+    }
+
     public function testRequiredCustomOptionsAreHeldWithTheProductPageLink(): void
     {
         $state = new SessionState();
