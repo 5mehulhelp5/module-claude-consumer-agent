@@ -15,6 +15,12 @@ final class SkuCandidatesTest extends TestCase
         $this->candidates = new SkuCandidates();
     }
 
+    public function testATrailingPeriodIsNotPartOfTheCandidate(): void
+    {
+        $this->assertSame(['24-MB01'], $this->candidates->fromText('Tell me about 24-MB01.'));
+        $this->assertSame(['ABC.123'], $this->candidates->fromText('Is ABC.123 in stock?'));
+    }
+
     public function testKeepsTokensThatContainADigit(): void
     {
         $this->assertSame(['24-MB01'], $this->candidates->fromText('do you have 24-MB01 in stock'));

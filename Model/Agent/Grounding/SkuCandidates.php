@@ -13,7 +13,7 @@ final class SkuCandidates
     private const MIN_LENGTH = 3;
     private const MAX_LENGTH = 64;
     private const MAX_CANDIDATES = 8;
-    private const EDGE_TRIM = '/^[^\p{L}\p{N}\-_.\/]+|[^\p{L}\p{N}\-_.\/]+$/u';
+    private const EDGE_TRIM = '/^[^\p{L}\p{N}\-_.\/]+|[^\p{L}\p{N}\-_\/]+$/u';
 
     public function fromText(string $text): array
     {
