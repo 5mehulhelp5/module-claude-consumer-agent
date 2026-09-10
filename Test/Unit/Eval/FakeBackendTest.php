@@ -8,7 +8,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Exception\Unavailable;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Data\PageContext;
 use MageOS\ClaudeConsumerAgent\Model\Data\SearchFilters;
-use MageOS\ClaudeConsumerAgent\Test\Eval\FakeBackend;
+use MageOS\ClaudeConsumerAgent\Model\Eval\FakeBackend;
 use PHPUnit\Framework\TestCase;
 
 class FakeBackendTest extends TestCase

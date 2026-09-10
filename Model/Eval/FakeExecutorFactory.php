@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace MageOS\ClaudeConsumerAgent\Test\Eval;
+namespace MageOS\ClaudeConsumerAgent\Model\Eval;
 
 use MageOS\ClaudeConsumerAgent\Model\Agent\Executor;
 use MageOS\ClaudeConsumerAgent\Model\Agent\ExecutorFactory;
