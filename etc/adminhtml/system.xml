@@ -20,13 +20,17 @@
                        showInWebsite="1" showInStore="1">
                     <label>Surface Mode</label>
                     <source_model>MageOS\ClaudeConsumerAgent\Model\Config\Source\SurfaceMode</source_model>
-                    <comment>Auto uses the cart drawer when it is enabled, else the overlay.</comment>
+                    <comment>Cart docks the assistant into the Hyvä cart drawer. Overlay opens a panel of its own on the
+                        right side of the page.
+                    </comment>
                 </field>
                 <field id="launcher_enabled" translate="label comment" type="select" sortOrder="30"
                        showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Launcher</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Round button bottom right on every page.</comment>
+                    <comment>Round button bottom right on every page. With No, the assistant opens only from the
+                        product page block, the cart page box and, in Cart mode, the header cart icon.
+                    </comment>
                 </field>
                 <field id="product_block_enabled" translate="label comment" type="select" sortOrder="40"
                        showInDefault="1" showInWebsite="1" showInStore="1">
@@ -38,15 +42,12 @@
                        showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Header Icon View</label>
                     <source_model>MageOS\ClaudeConsumerAgent\Model\Config\Source\HeaderIconView</source_model>
-                    <comment>What the drawer shows when opened from the header icon (side cart mode).</comment>
-                </field>
-                <field id="use_bundled_css" translate="label comment" type="select" sortOrder="60"
-                       showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Use Bundled CSS</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Loads the module's precompiled CSS. Switch off after rebuilding the theme's
-                        Tailwind.
+                    <comment>Cart mode only. What the drawer opens with when the customer clicks the header
+                        cart icon: the cart, the chat, or whichever of the two they used last.
                     </comment>
+                    <depends>
+                        <field id="surface_mode">side_cart</field>
+                    </depends>
                 </field>
             </group>
             <group id="model" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1"
@@ -104,7 +105,10 @@
                 <field id="brand_voice" translate="label comment" type="text" sortOrder="30" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Brand Voice</label>
-                    <comment>One sentence.</comment>
+                    <comment>Completes the sentence "Your voice is ..." in the prompt. Two to six adjectives or a short
+                        clause. Examples: "warm, concise, and plain about trade-offs", "expert and direct, like
+                        a good shop assistant, never salesy", "playful, but precise about sizes and materials".
+                    </comment>
                 </field>
                 <field id="greeting" translate="label comment" type="textarea" sortOrder="40" showInDefault="1"
                        showInWebsite="1" showInStore="1">
@@ -119,8 +123,11 @@
                 </field>
                 <field id="domain_search_notes" translate="label comment" type="textarea" sortOrder="60"
                        showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Domain Search Notes</label>
-                    <comment>One extra search rule for this catalog, added to the prompt.</comment>
+                    <label>Search Hints</label>
+                    <comment>One line added to the prompt's search rules for this catalog's vocabulary. Example:
+                        "Customers say hoodie for sweatshirt. Sizes are US. Searching by fabric works better
+                        than by activity."
+                    </comment>
                 </field>
             </group>
             <group id="content" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1"
@@ -145,8 +152,9 @@
                        showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Catalog Map Depth</label>
                     <source_model>MageOS\ClaudeConsumerAgent\Model\Config\Source\CatalogMapDepth</source_model>
-                    <comment>Levels printed below each root in the prompt's catalog map. Off drops the
-                        section entirely.
+                    <comment>The catalog map is the store's category tree printed into the system prompt, so
+                        the assistant knows which departments exist and can list any of them by id. Depth is
+                        how many levels below each root are printed. Off removes the map.
                     </comment>
                 </field>
                 <field id="catalog_map_roots" translate="label comment" type="multiselect" sortOrder="22"
@@ -154,15 +162,17 @@
                     <label>Catalog Map Roots</label>
                     <source_model>MageOS\ClaudeConsumerAgent\Model\Config\Source\CategoryTree</source_model>
                     <can_be_empty>1</can_be_empty>
-                    <comment>Roots the catalog map is built from. Empty means every active,
-                        menu-visible category one level below the store root.
+                    <comment>Top categories the map starts from. Empty means every active category in the
+                        main menu.
                     </comment>
                 </field>
                 <field id="catalog_map_max_chars" translate="label comment" type="text" sortOrder="23"
                        showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Catalog Map Max Characters</label>
                     <validate>validate-digits</validate>
-                    <comment>Hard cap on the catalog map text.</comment>
+                    <comment>Cap on the map text in the prompt. A longer map is cut and the assistant uses category
+                        search instead.
+                    </comment>
                 </field>
                 <field id="store_facts" translate="label comment" type="text" sortOrder="24"
                        showInDefault="1" showInWebsite="1" showInStore="1">
@@ -178,19 +188,11 @@
                        showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Include Core Facts</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Adds facts read from Magento itself: payment methods, carriers, gift messages,
-                        guest checkout, minimum order, store contact.
+                    <comment>Facts the assistant reads from Magento settings by itself: enabled payment
+                        methods, shipping carriers, whether a gift message can be added at checkout, guest
+                        checkout, minimum order amount, store contact. Store Facts above cover what Magento
+                        does not know, for example gift wrapping.
                     </comment>
-                </field>
-                <field id="delivery_line" translate="label comment" type="text" sortOrder="30" showInDefault="1"
-                       showInWebsite="1" showInStore="1">
-                    <label>Delivery Line</label>
-                    <comment>One sentence each; shown as fulfillment facts.</comment>
-                </field>
-                <field id="pickup_line" translate="label comment" type="text" sortOrder="40" showInDefault="1"
-                       showInWebsite="1" showInStore="1">
-                    <label>Pickup Line</label>
-                    <comment>One sentence each; shown as fulfillment facts.</comment>
                 </field>
             </group>
             <group id="cards" translate="label" type="text" sortOrder="45" showInDefault="1" showInWebsite="1"
@@ -283,7 +285,10 @@
                        showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Turn Wall Clock</label>
                     <validate>validate-digits</validate>
-                    <comment>Seconds after which no new round starts.</comment>
+                    <comment>Seconds one reply may keep calling tools. When the clock runs out the assistant answers
+                        with what it has instead of starting another round. A running turn holds one PHP
+                        worker for its whole length.
+                    </comment>
                 </field>
                 <field id="max_search_results" translate="label comment" type="text" sortOrder="100"
                        showInDefault="1" showInWebsite="1" showInStore="1">
@@ -361,17 +366,21 @@
                        showInWebsite="1" showInStore="1">
                     <label>Show AI Label</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Shows "AI assistant" under the composer.</comment>
+                    <comment>Shows the AI badge next to the assistant name and the "AI assistant" line under the
+                        message box, so customers know they talk to software.
+                    </comment>
                 </field>
                 <field id="contact_url" translate="label comment" type="text" sortOrder="30" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Contact URL</label>
-                    <comment>Link to a person.</comment>
+                    <comment>Link added to the "AI assistant" line as "Need a person? Contact us". Empty hides
+                        the link.
+                    </comment>
                 </field>
                 <field id="contact_label" translate="label comment" type="text" sortOrder="40" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Contact Label</label>
-                    <comment>Link to a person.</comment>
+                    <comment>Text of that link.</comment>
                 </field>
                 <field id="debug_log" translate="label comment" type="select" sortOrder="50" showInDefault="1"
                        showInWebsite="1" showInStore="1">

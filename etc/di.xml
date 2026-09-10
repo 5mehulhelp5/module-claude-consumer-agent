@@ -47,7 +47,6 @@
         <arguments>
             <argument name="providers" xsi:type="array">
                 <item name="free_shipping" xsi:type="object">MageOS\ClaudeConsumerAgent\Model\Backend\Provider\FreeShippingFacts</item>
-                <item name="configured_lines" xsi:type="object">MageOS\ClaudeConsumerAgent\Model\Backend\Provider\ConfiguredLines</item>
                 <item name="address_estimate" xsi:type="object">MageOS\ClaudeConsumerAgent\Model\Backend\Provider\AddressEstimate</item>
             </argument>
         </arguments>

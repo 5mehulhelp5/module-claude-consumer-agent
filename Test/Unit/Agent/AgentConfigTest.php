@@ -62,7 +62,7 @@ final class AgentConfigTest extends TestCase
         $this->assertTrue($config->launcherEnabled);
         $this->assertTrue($config->productBlockEnabled);
         $this->assertSame('cart', $config->headerIconView);
-        $this->assertTrue($config->useBundledCss);
+        $this->assertFalse($config->useBundledCss);
         $this->assertSame(
             [
                 'image' => true,

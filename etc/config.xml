@@ -8,7 +8,7 @@
                 <launcher_enabled>1</launcher_enabled>
                 <product_block_enabled>1</product_block_enabled>
                 <header_icon_view>cart</header_icon_view>
-                <use_bundled_css>1</use_bundled_css>
+                <use_bundled_css>0</use_bundled_css>
             </general>
             <model>
                 <api_key backend_model="Magento\Config\Model\Config\Backend\Encrypted"></api_key>
@@ -23,11 +23,11 @@
                 <assistant_name>the shopping assistant</assistant_name>
                 <brand_voice>warm, concise, and plain about trade-offs</brand_voice>
                 <greeting>Hi. Tell me what you are looking for and I will find it.</greeting>
-                <starters>Find something for a gift
-Compare two products
-What is your return policy?
-Where is my order?
-Show me what is new</starters>
+                <starters>Help me choose a gift
+What is new this season?
+What are your best sellers?
+Track my order
+How do returns work?</starters>
                 <domain_search_notes></domain_search_notes>
             </voice>
             <content>
@@ -38,8 +38,6 @@ Show me what is new</starters>
                 <catalog_map_max_chars>6000</catalog_map_max_chars>
                 <store_facts></store_facts>
                 <include_core_facts>1</include_core_facts>
-                <delivery_line></delivery_line>
-                <pickup_line></pickup_line>
             </content>
             <cards>
                 <products_image>1</products_image>

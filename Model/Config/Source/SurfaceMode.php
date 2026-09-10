@@ -14,8 +14,7 @@ final class SurfaceMode implements OptionSourceInterface
     public function toOptionArray(): array
     {
         return [
-            ['value' => self::AUTO, 'label' => __('Automatic')],
-            ['value' => self::SIDE_CART, 'label' => __('Side Cart')],
+            ['value' => self::SIDE_CART, 'label' => __('Cart')],
             ['value' => self::OVERLAY, 'label' => __('Overlay')],
         ];
     }

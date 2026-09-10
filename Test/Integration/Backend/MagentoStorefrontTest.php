@@ -180,7 +180,6 @@ final class MagentoStorefrontTest extends TestCase
     }
 
     /**
-     * @magentoConfigFixture current_store aiagent/content/delivery_line arrives in 2 to 4 business days
      * @magentoConfigFixture current_store carriers/freeshipping/active 1
      * @magentoConfigFixture current_store carriers/freeshipping/free_shipping_subtotal 50
      */
@@ -189,7 +188,6 @@ final class MagentoStorefrontTest extends TestCase
         $options = $this->backend()->getFulfillmentOptions($this->context(), []);
         $methods = array_map(static fn ($option) => $option->getMethod(), $options);
 
-        $this->assertContains('delivery', $methods);
         $this->assertContains('shipping', $methods);
     }
 }

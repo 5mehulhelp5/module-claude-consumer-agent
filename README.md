@@ -24,17 +24,22 @@ can replace or extend behaviour without touching the base module.
 3. `bin/magento setup:upgrade` - creates the three tables, `aiagent_session`,
    `aiagent_message` and `aiagent_turn`
 4. `bin/magento hyva:config:generate` - adds the module's path to
-   `app/etc/hyva-themes.json` so its Tailwind source is picked up
+   `app/etc/hyva-themes.json`, so the theme build scans the module's
+   templates and imports its Tailwind source on its own
 5. `cd app/design/frontend/<Vendor>/<theme>/web/tailwind && npm ci && npm run build`
-   - on Hyva 1.5 this runs `hyva-sources` first, then Tailwind 4
+   - on Hyva 1.5 this runs `hyva-sources` first, then Tailwind 4. A deploy
+   pipeline that already runs this build needs nothing else
 6. `bin/magento setup:static-content:deploy` in production mode, then
    `bin/magento cache:flush`
 7. In admin: Stores > Configuration > Sales > Shopping Assistant. Set the API
    key, model, voice and policy pages, then set Enabled to Yes at the store
    view scope
-8. Optional: once the theme's own build includes this module's Tailwind
-   source, set `general/use_bundled_css` to No so the theme's compiled CSS is
-   the only copy shipped
+8. Only if the theme CSS is not rebuilt after step 4 (for example a store
+   that commits `styles.css` and has no build step on deploy): turn on the
+   bundled fallback stylesheet with
+   `bin/magento config:set aiagent/general/use_bundled_css 1`. The flag is
+   not in the admin and defaults to 0; switch it back off once the theme CSS
+   includes the module
 
 ## Configuration
 
@@ -43,17 +48,17 @@ Every field lives under Stores > Configuration > Sales > Shopping Assistant
 `showInStore` all set, so one install can run several store views with their
 own name, voice, starters, policy pages and limits.
 
-- **general** - enabled, surface mode (auto / side cart / overlay), launcher
-  toggle, product-page block toggle, header icon view (cart / chat / last
-  used), use bundled CSS. The overlay is the default surface; side cart is
-  optional and only applies where `surface_mode` is set to auto or side cart
-  and the theme has a cart drawer to dock into
+- **general** - enabled, surface mode (cart / overlay), launcher toggle,
+  product-page block toggle, header icon view (cart / chat / last used, cart
+  mode only). The overlay is the default surface; cart mode docks the
+  assistant into the theme's cart drawer. `general/use_bundled_css` is a
+  hidden flag, see Install step 8
 - **model** - API key (encrypted), model id, max tokens, thinking effort
   (off / low / medium / high), request and connect timeouts
 - **voice** - brand name, assistant name, brand voice, greeting, starter
   prompts (one per line), domain search notes fed into the prompt
 - **content** - policy pages, allowed categories, catalog map depth (Off / 1 / 2 / 3),
-  catalog map roots, catalog map max characters, delivery line, pickup line
+  catalog map roots, catalog map max characters
 - **cards** - show image, show price, show short description, show stock
   status, show Add to cart button, show the assistant's reason, each a
   Yes/No toggle for what a product card renders
@@ -199,9 +204,9 @@ alternative (for example `.btn, :scope.btn`) so the root elements' own
 utility classes still apply. The design-token layer's `:root,:host` selector
 is rewritten to `:where(...)` over the same five ids instead, since `:root`
 can never match inside a scope. `@scope` is supported by evergreen browsers
-since 2024; merchants who rebuild the theme with the module's Tailwind source
-registered (see Install, step 5) can set `general/use_bundled_css` to No and
-drop this file from the page entirely.
+since 2024. The file is only loaded when `general/use_bundled_css` is 1 (see
+Install, step 8); a theme rebuilt with the module registered (Install, step
+4) does not need it.
 
 ## Lazy loading
 

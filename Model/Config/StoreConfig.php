@@ -38,8 +38,6 @@ final class StoreConfig
     private const PATH_CONTENT_CATALOG_MAP_MAX_CHARS = 'aiagent/content/catalog_map_max_chars';
     private const PATH_CONTENT_STORE_FACTS = 'aiagent/content/store_facts';
     private const PATH_CONTENT_INCLUDE_CORE_FACTS = 'aiagent/content/include_core_facts';
-    private const PATH_CONTENT_DELIVERY_LINE = 'aiagent/content/delivery_line';
-    private const PATH_CONTENT_PICKUP_LINE = 'aiagent/content/pickup_line';
     private const PATH_CARDS_PRODUCTS_IMAGE = 'aiagent/cards/products_image';
     private const PATH_CARDS_PRODUCTS_PRICE = 'aiagent/cards/products_price';
     private const PATH_CARDS_PRODUCTS_DESCRIPTION = 'aiagent/cards/products_description';
@@ -131,8 +129,6 @@ final class StoreConfig
                 $storeId,
                 $defaults->includeCoreFacts
             ),
-            deliveryLine: $this->readString(self::PATH_CONTENT_DELIVERY_LINE, $storeId, $defaults->deliveryLine),
-            pickupLine: $this->readString(self::PATH_CONTENT_PICKUP_LINE, $storeId, $defaults->pickupLine),
             productCard: [
                 'image' => $this->readBool(
                     self::PATH_CARDS_PRODUCTS_IMAGE,
