@@ -1032,7 +1032,6 @@ final class MagentoStorefrontTest extends TestCase
         $order->method('getGrandTotal')->willReturn(50.0);
         $order->method('getOrderCurrencyCode')->willReturn('USD');
         $order->method('getAllVisibleItems')->willReturn($items);
-        $order->method('getTracksCollection')->willReturn([]);
         return $order;
     }
 

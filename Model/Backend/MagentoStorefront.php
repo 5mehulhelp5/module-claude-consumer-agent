@@ -822,12 +822,7 @@ final class MagentoStorefront implements StorefrontBackendInterface
             $items[] = $this->toOrderItem($orderItem, $simpleProductIds);
         }
 
-        $tracks = $order->getTracksCollection();
-        $trackingUrl = null;
-        foreach ($tracks as $track) {
-            $trackingUrl = $this->shippingHelper->getTrackingPopupUrlBySalesModel($track);
-            break;
-        }
+        $trackingUrl = $hasTracking ? $this->shippingHelper->getTrackingPopupUrlBySalesModel($order) : null;
 
         return new Order(
             (string)$order->getIncrementId(),
