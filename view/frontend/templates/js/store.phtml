@@ -113,8 +113,12 @@ $configJson = json_encode(
             init() {
                 try {
                     const storage = hyva.getBrowserStorage();
-                    this.sessionId = storage ? storage.getItem('aiagent_session') : null;
                     this.mode = (storage && storage.getItem('aiagent_mode')) || 'stream';
+                } catch (e) {
+                    this.mode = 'stream';
+                }
+                try {
+                    this.sessionId = window.sessionStorage ? window.sessionStorage.getItem('aiagent_session') : null;
                 } catch (e) {
                     this.sessionId = null;
                 }
@@ -183,9 +187,11 @@ $configJson = json_encode(
                 return this.startPromise;
             },
             async restore() {
-                const response = await fetch(
-                    this.config.urls.transcript + '?session=' + encodeURIComponent(this.sessionId)
-                );
+                const response = await fetch(this.config.urls.transcript, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-Form-Key': hyva.getFormKey()},
+                    body: JSON.stringify({session: this.sessionId})
+                });
                 const data = await response.json();
                 let suggestions = [];
                 this.transcript = data.messages.map((message) => {
@@ -308,9 +314,18 @@ $configJson = json_encode(
             },
             persistSession() {
                 try {
-                    const storage = hyva.getBrowserStorage();
-                    if (storage) {
-                        storage.setItem('aiagent_session', this.sessionId);
+                    if (window.sessionStorage) {
+                        window.sessionStorage.setItem('aiagent_session', this.sessionId);
+                    }
+                } catch (e) {
+                    return;
+                }
+            },
+            clearSession() {
+                this.sessionId = null;
+                try {
+                    if (window.sessionStorage) {
+                        window.sessionStorage.removeItem('aiagent_session');
                     }
                 } catch (e) {
                     return;
@@ -320,6 +335,9 @@ $configJson = json_encode(
 
         window.addEventListener('private-content-loaded', (event) => {
             Alpine.store('aiAgent').onSection(event.detail.data);
+        });
+        window.addEventListener('customer-data-invalidate', () => {
+            Alpine.store('aiAgent').clearSession();
         });
         window.addEventListener('ai-agent:open', (event) => {
             const store = Alpine.store('aiAgent');

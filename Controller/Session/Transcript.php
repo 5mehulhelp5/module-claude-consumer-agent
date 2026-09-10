@@ -3,14 +3,19 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Controller\Session;
 
-use Magento\Framework\App\Action\HttpGetActionInterface;
+use Magento\Framework\App\Action\HttpPostActionInterface;
+use Magento\Framework\App\CsrfAwareActionInterface;
+use Magento\Framework\App\Request\InvalidRequestException;
+use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\ResultInterface;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Data\PageContext;
 
-class Transcript implements HttpGetActionInterface
+class Transcript implements HttpPostActionInterface, CsrfAwareActionInterface
 {
     public function __construct(
+        private readonly \MageOS\ClaudeConsumerAgent\Controller\Request\FormKeyGuard $formKeyGuard,
+        private readonly \MageOS\ClaudeConsumerAgent\Controller\Request\BodyReader $bodyReader,
         private readonly \Magento\Customer\Model\Session $customerSession,
         private readonly \Magento\Checkout\Model\Session $checkoutSession,
         private readonly \Magento\Store\Model\StoreManagerInterface $storeManager,
@@ -33,14 +38,17 @@ class Transcript implements HttpGetActionInterface
         if (!$this->storeConfig->isEnabled($storeId)) {
             return $this->noRoute();
         }
-        $sessionIdParam = $this->request->getParam('session');
-        $sessionId = is_string($sessionIdParam) && $sessionIdParam !== '' ? $sessionIdParam : null;
+        try {
+            $body = $this->bodyReader->readStart($this->request);
+        } catch (\InvalidArgumentException $exception) {
+            return $this->badRequest();
+        }
         $customerId = $this->customerSession->getCustomerId();
         $quoteId = (int)$this->checkoutSession->getQuote()->getId();
-        $page = PageContext::fromArray([]);
+        $page = PageContext::fromArray($body->page);
         $now = new \DateTimeImmutable('now');
-        $context = new SessionContext((string)($sessionId ?? ''), $customerId, $quoteId, $storeId, $page, $now);
-        $binding = $this->sessionRepository->find($sessionId, $context);
+        $context = new SessionContext((string)($body->sessionId ?? ''), $customerId, $quoteId, $storeId, $page, $now);
+        $binding = $this->sessionRepository->find($body->sessionId, $context);
         $this->sessionManager->writeClose();
         $result = $this->jsonFactory->create();
         if ($binding === null) {
@@ -50,6 +58,31 @@ class Transcript implements HttpGetActionInterface
             $messages = $this->transcriptView->render($rows, $binding->state, $this->presentationRegistry);
             $result->setData(['session' => $binding->sessionId, 'messages' => $messages]);
         }
+        $this->response->setNoCacheHeaders();
+        $this->response->setMetadata('NotCacheable', true);
+        return $result;
+    }
+
+    public function validateForCsrf(RequestInterface $request): ?bool
+    {
+        return $this->formKeyGuard->isValid($request);
+    }
+
+    public function createCsrfValidationException(RequestInterface $request): ?InvalidRequestException
+    {
+        $result = $this->jsonFactory->create();
+        $result->setHttpResponseCode(403);
+        $result->setData(['error' => 'form key']);
+        $this->response->setNoCacheHeaders();
+        $this->response->setMetadata('NotCacheable', true);
+        return new InvalidRequestException($result);
+    }
+
+    private function badRequest(): ResultInterface
+    {
+        $result = $this->jsonFactory->create();
+        $result->setHttpResponseCode(400);
+        $result->setData(['error' => 'bad request']);
         $this->response->setNoCacheHeaders();
         $this->response->setMetadata('NotCacheable', true);
         return $result;
