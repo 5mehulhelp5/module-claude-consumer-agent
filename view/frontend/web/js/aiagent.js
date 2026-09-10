@@ -7,6 +7,7 @@ window.aiAgentReader = {
             stream: store.mode === 'stream' ? 1 : 0
         };
         const controller = new AbortController();
+        store.turn.controller = controller;
         let firstByte = false;
         let firstByteMs = 0;
         const startedAt = Date.now();
@@ -73,10 +74,18 @@ window.aiAgentReader = {
                 store.setMode('json');
             }
         } catch (e) {
+            if (controller.signal.aborted) {
+                store.turn.running = false;
+                store.turn.status = '';
+                return;
+            }
             store.apply('error', {message: store.config.i18n.interrupted});
             store.apply('turn_complete', {usage: null});
         } finally {
             clearTimeout(watchdog);
+            if (store.turn.controller === controller) {
+                store.turn.controller = null;
+            }
         }
     }
 };

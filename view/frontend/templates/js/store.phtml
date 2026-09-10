@@ -101,7 +101,7 @@ $configJson = json_encode(
             mode: 'stream',
             transcript: [],
             suggestions: [],
-            turn: {running: false, status: '', id: 0},
+            turn: {running: false, status: '', id: 0, controller: null},
             page: {type: '', productId: '', productName: '', categoryId: '', categoryName: '', query: ''},
             cart: {count: 0, subtotal: ''},
             surface: {mode: config.surface, resolved: config.surface, view: 'chat', open: false},
@@ -219,6 +219,9 @@ $configJson = json_encode(
             },
             apply(type, data) {
                 const last = this.transcript[this.transcript.length - 1];
+                if (!last) {
+                    return;
+                }
                 switch (type) {
                     case 'text_delta':
                         last.text += data.text;
@@ -284,6 +287,9 @@ $configJson = json_encode(
                 }
             },
             async reset() {
+                if (this.turn.controller) {
+                    this.turn.controller.abort();
+                }
                 await fetch(this.config.urls.reset, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json', 'X-Form-Key': hyva.getFormKey()},

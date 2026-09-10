@@ -40,7 +40,8 @@ $assistant = $viewModels->require(Assistant::class);
                 <button
                     type="button"
                     x-show="hasTranscript"
-                    class="rounded-full p-1.5"
+                    class="rounded-full p-1.5 disabled:opacity-50"
+                    :disabled="$store.aiAgent.turn.running"
                     @click="newConversation"
                     aria-label="<?= $escaper->escapeHtmlAttr(__('New conversation')) ?>"
                 >

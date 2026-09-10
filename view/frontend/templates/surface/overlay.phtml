@@ -46,7 +46,8 @@ $aiLabel = $assistant->aiLabelText();
             <button
                 type="button"
                 x-show="hasTranscript"
-                class="p-2 text-primary hover:text-secondary"
+                class="p-2 text-primary hover:text-secondary disabled:opacity-50"
+                :disabled="$store.aiAgent.turn.running"
                 @click="newConversation"
                 aria-label="<?= $escaper->escapeHtmlAttr(__('New conversation')) ?>"
             >
