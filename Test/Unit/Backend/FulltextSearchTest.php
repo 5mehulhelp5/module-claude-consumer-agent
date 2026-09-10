@@ -4,7 +4,12 @@ declare(strict_types=1);
 namespace MageOS\ClaudeConsumerAgent\Test\Unit\Backend;
 
 use Magento\Catalog\Api\CategoryListInterface;
+use Magento\Catalog\Api\Data\CategoryInterface;
+use Magento\Catalog\Api\Data\CategorySearchResultsInterface;
+use Magento\Catalog\Model\Category;
 use Magento\Catalog\Model\Product\Visibility;
+use Magento\Catalog\Model\ResourceModel\Category\Collection as CategoryCollection;
+use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 use Magento\Framework\Api\Filter;
 use Magento\Framework\Api\FilterBuilder;
 use Magento\Framework\Api\Search\DocumentInterface;
@@ -12,6 +17,7 @@ use Magento\Framework\Api\Search\SearchCriteria;
 use Magento\Framework\Api\Search\SearchCriteriaBuilder;
 use Magento\Framework\Api\Search\SearchCriteriaBuilderFactory;
 use Magento\Framework\Api\Search\SearchResultInterface;
+use Magento\Framework\Api\SearchCriteria as PlainSearchCriteria;
 use Magento\Framework\Api\SearchCriteriaBuilder as PlainSearchCriteriaBuilder;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Search\Api\SearchInterface;
@@ -19,6 +25,7 @@ use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use MageOS\ClaudeConsumerAgent\Api\Backend\BestsellerRankInterface;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
+use MageOS\ClaudeConsumerAgent\Model\Backend\Provider\AllowedCategories;
 use MageOS\ClaudeConsumerAgent\Model\Backend\Provider\FulltextSearch;
 use MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig;
 use MageOS\ClaudeConsumerAgent\Model\Data\PageContext;
@@ -37,10 +44,14 @@ final class FulltextSearchTest extends TestCase
         return new SessionContext('session-1', null, 1, $storeId, new PageContext(), new \DateTimeImmutable('now'));
     }
 
-    private function storeConfig(): StoreConfig
+    private function storeConfig(array $allowedCategories = []): StoreConfig
     {
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
-        $scopeConfig->method('getValue')->willReturn(null);
+        $scopeConfig->method('getValue')->willReturnCallback(
+            static fn (string $path): ?string => $path === 'aiagent/content/allowed_categories'
+                ? implode(',', $allowedCategories)
+                : null
+        );
         $scopeConfig->method('isSetFlag')->willReturn(false);
 
         $store = $this->createMock(StoreInterface::class);
@@ -49,6 +60,45 @@ final class FulltextSearchTest extends TestCase
         $storeManager->method('getStore')->willReturn($store);
 
         return new StoreConfig($scopeConfig, $storeManager);
+    }
+
+    private function category(int $id, string $path): Category&MockObject
+    {
+        $category = $this->createMock(Category::class);
+        $category->method('getId')->willReturn($id);
+        $category->method('getPath')->willReturn($path);
+        return $category;
+    }
+
+    private function allowedCategories(
+        array $allowedCategories = [],
+        array $categories = [],
+        ?CategoryCollectionFactory $collectionFactory = null
+    ): AllowedCategories {
+        if ($collectionFactory === null) {
+            $collection = $this->createMock(CategoryCollection::class);
+            $collection->method('setStoreId')->willReturnSelf();
+            $collection->method('addAttributeToSelect')->willReturnSelf();
+            $collection->method('addIdFilter')->willReturnSelf();
+            $collection->method('getIterator')->willReturn(new \ArrayIterator($categories));
+
+            $collectionFactory = $this->createMock(CategoryCollectionFactory::class);
+            $collectionFactory->method('create')->willReturn($collection);
+        }
+
+        return new AllowedCategories($collectionFactory, $this->storeConfig($allowedCategories));
+    }
+
+    private function categoryListResolving(string $name, int $categoryId): CategoryListInterface&MockObject
+    {
+        $category = $this->createMock(CategoryInterface::class);
+        $category->method('getId')->willReturn($categoryId);
+        $results = $this->createMock(CategorySearchResultsInterface::class);
+        $results->method('getItems')->willReturn([$category]);
+
+        $categoryList = $this->createMock(CategoryListInterface::class);
+        $categoryList->method('getList')->willReturn($results);
+        return $categoryList;
     }
 
     private function filterBuilder(): FilterBuilder&MockObject
@@ -100,7 +150,11 @@ final class FulltextSearchTest extends TestCase
 
     private function categorySearchCriteriaBuilder(): PlainSearchCriteriaBuilder&MockObject
     {
-        return $this->createMock(PlainSearchCriteriaBuilder::class);
+        $builder = $this->createMock(PlainSearchCriteriaBuilder::class);
+        $builder->method('addFilter')->willReturnSelf();
+        $builder->method('setPageSize')->willReturnSelf();
+        $builder->method('create')->willReturn($this->createMock(PlainSearchCriteria::class));
+        return $builder;
     }
 
     private function searchResult(array $ids): SearchResultInterface&MockObject
@@ -143,15 +197,17 @@ final class FulltextSearchTest extends TestCase
         $search = $overrides['search'] ?? $this->createMock(SearchInterface::class);
         $storeManager = $overrides['storeManager'] ?? $this->defaultStoreManager();
         $bestsellerRank = $overrides['bestsellerRank'] ?? $this->passthroughBestsellerRank();
+        $categoryList = $overrides['categoryList'] ?? $this->createMock(CategoryListInterface::class);
+        $allowedCategories = $overrides['allowedCategories'] ?? $this->allowedCategories();
 
         $provider = new FulltextSearch(
             $searchCriteriaBuilderFactory,
             $filterBuilder,
             $search,
-            $this->createMock(CategoryListInterface::class),
+            $categoryList,
             $this->categorySearchCriteriaBuilder(),
             $storeManager,
-            $this->storeConfig(),
+            $allowedCategories,
             $bestsellerRank
         );
 
@@ -393,12 +449,98 @@ final class FulltextSearchTest extends TestCase
             $categoryList,
             $this->categorySearchCriteriaBuilder(),
             $this->defaultStoreManager(),
-            $this->storeConfig(),
+            $this->allowedCategories(),
             $this->passthroughBestsellerRank()
         );
 
         $filters = SearchFilters::fromArray(['category_id' => 175, 'category' => 'Seating']);
         $provider->search($this->context(), 'widget', $filters, 10);
+
+        $this->assertContains(['field' => 'category_ids', 'value' => ['175']], $this->filterCalls);
+    }
+
+    public function testRequestedCategoryInsideTheAllowlistIsUsedAsTheFilter(): void
+    {
+        $search = $this->createMock(SearchInterface::class);
+        $search->method('search')->willReturn($this->searchResult([]));
+
+        [$provider] = $this->build([
+            'search' => $search,
+            'allowedCategories' => $this->allowedCategories([10, 20]),
+        ]);
+
+        $filters = SearchFilters::fromArray(['category_id' => 20]);
+        $provider->search($this->context(), '', $filters, 10);
+
+        $this->assertContains(['field' => 'category_ids', 'value' => ['20']], $this->filterCalls);
+    }
+
+    public function testRequestedDescendantOfAnAllowedCategoryIsUsedAsTheFilter(): void
+    {
+        $search = $this->createMock(SearchInterface::class);
+        $search->method('search')->willReturn($this->searchResult([]));
+
+        [$provider] = $this->build([
+            'search' => $search,
+            'allowedCategories' => $this->allowedCategories([10], [$this->category(55, '1/2/10/55')]),
+        ]);
+
+        $filters = SearchFilters::fromArray(['category_id' => 55]);
+        $provider->search($this->context(), '', $filters, 10);
+
+        $this->assertContains(['field' => 'category_ids', 'value' => ['55']], $this->filterCalls);
+    }
+
+    public function testRequestedCategoryOutsideTheAllowlistFallsBackToTheAllowlist(): void
+    {
+        $search = $this->createMock(SearchInterface::class);
+        $search->method('search')->willReturn($this->searchResult([]));
+
+        [$provider] = $this->build([
+            'search' => $search,
+            'allowedCategories' => $this->allowedCategories([10, 20], [$this->category(99, '1/2/5/99')]),
+        ]);
+
+        $filters = SearchFilters::fromArray(['category_id' => 99]);
+        $provider->search($this->context(), 'widget', $filters, 10);
+
+        $this->assertContains(['field' => 'category_ids', 'value' => ['10', '20']], $this->filterCalls);
+        $this->assertNotContains(['field' => 'category_ids', 'value' => ['99']], $this->filterCalls);
+    }
+
+    public function testResolvedCategoryNameOutsideTheAllowlistFallsBackToTheAllowlist(): void
+    {
+        $search = $this->createMock(SearchInterface::class);
+        $search->method('search')->willReturn($this->searchResult([]));
+
+        [$provider] = $this->build([
+            'search' => $search,
+            'categoryList' => $this->categoryListResolving('Clearance', 99),
+            'allowedCategories' => $this->allowedCategories([10], [$this->category(99, '1/2/5/99')]),
+        ]);
+
+        $filters = SearchFilters::fromArray(['category' => 'Clearance']);
+        $provider->search($this->context(), 'widget', $filters, 10);
+
+        $this->assertContains(['field' => 'category_ids', 'value' => ['10']], $this->filterCalls);
+        $this->assertNotContains(['field' => 'category_ids', 'value' => ['99']], $this->filterCalls);
+    }
+
+    public function testEmptyAllowlistKeepsTheRequestedCategoryWithoutLoadingIt(): void
+    {
+        $search = $this->createMock(SearchInterface::class);
+        $search->method('search')->willReturn($this->searchResult([]));
+
+        $collectionFactory = $this->createMock(CategoryCollectionFactory::class);
+        $collectionFactory->expects($this->never())->method('create');
+
+        [$provider] = $this->build([
+            'search' => $search,
+            'allowedCategories' => $this->allowedCategories([], [], $collectionFactory),
+        ]);
+
+        $filters = SearchFilters::fromArray(['category_id' => 175]);
+        $provider->search($this->context(), '', $filters, 10);
 
         $this->assertContains(['field' => 'category_ids', 'value' => ['175']], $this->filterCalls);
     }

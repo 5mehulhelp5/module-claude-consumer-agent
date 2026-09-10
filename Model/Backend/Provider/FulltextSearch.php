@@ -24,7 +24,7 @@ final class FulltextSearch implements SearchProviderInterface
         private readonly \Magento\Catalog\Api\CategoryListInterface $categoryList,
         private readonly \Magento\Framework\Api\SearchCriteriaBuilder $categorySearchCriteriaBuilder,
         private readonly \Magento\Store\Model\StoreManagerInterface $storeManager,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig $storeConfig,
+        private readonly \MageOS\ClaudeConsumerAgent\Model\Backend\Provider\AllowedCategories $allowedCategories,
         private readonly \MageOS\ClaudeConsumerAgent\Api\Backend\BestsellerRankInterface $bestsellerRank
     ) {
     }
@@ -157,19 +157,26 @@ final class FulltextSearch implements SearchProviderInterface
 
     private function categoryFilterValues(?SearchFiltersInterface $filters, int $storeId): array
     {
-        if ($filters !== null && $filters->getCategoryId() !== null) {
-            return [(string)$filters->getCategoryId()];
+        $requested = $this->requestedCategoryId($filters, $storeId);
+        if ($requested !== null && $this->allowedCategories->permits([$requested], $storeId)) {
+            return [(string)$requested];
         }
 
-        if ($filters !== null && $filters->getCategory() !== null) {
-            $resolved = $this->resolveCategoryId($filters->getCategory(), $storeId);
-            if ($resolved !== null) {
-                return [(string)$resolved];
-            }
-        }
+        return array_map('strval', $this->allowedCategories->ids($storeId));
+    }
 
-        $allowedCategories = $this->storeConfig->agent($storeId)->allowedCategories;
-        return $allowedCategories !== [] ? array_map('strval', $allowedCategories) : [];
+    private function requestedCategoryId(?SearchFiltersInterface $filters, int $storeId): ?int
+    {
+        if ($filters === null) {
+            return null;
+        }
+        if ($filters->getCategoryId() !== null) {
+            return $filters->getCategoryId();
+        }
+        if ($filters->getCategory() !== null) {
+            return $this->resolveCategoryId($filters->getCategory(), $storeId);
+        }
+        return null;
     }
 
     private function resolveCategoryId(string $name, int $storeId): ?int
