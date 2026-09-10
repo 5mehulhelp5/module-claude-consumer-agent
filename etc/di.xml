@@ -184,4 +184,34 @@
             <argument name="logger" xsi:type="object">MageOS\ClaudeConsumerAgent\Logger\VirtualLogger</argument>
         </arguments>
     </type>
+
+    <type name="MageOS\ClaudeConsumerAgent\Controller\Result\JsonTurn">
+        <arguments>
+            <argument name="logger" xsi:type="object">MageOS\ClaudeConsumerAgent\Logger\VirtualLogger</argument>
+        </arguments>
+    </type>
+
+    <type name="MageOS\ClaudeConsumerAgent\Model\Backend\Provider\AddressEstimate">
+        <arguments>
+            <argument name="logger" xsi:type="object">MageOS\ClaudeConsumerAgent\Logger\VirtualLogger</argument>
+        </arguments>
+    </type>
+
+    <type name="MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Products">
+        <arguments>
+            <argument name="logger" xsi:type="object">MageOS\ClaudeConsumerAgent\Logger\VirtualLogger</argument>
+        </arguments>
+    </type>
+
+    <type name="MageOS\ClaudeConsumerAgent\Model\Agent\Gate\CartWrite">
+        <arguments>
+            <argument name="logger" xsi:type="object">MageOS\ClaudeConsumerAgent\Logger\VirtualLogger</argument>
+        </arguments>
+    </type>
+
+    <type name="MageOS\ClaudeConsumerAgent\Console\Command\EvalRun">
+        <arguments>
+            <argument name="logger" xsi:type="object">MageOS\ClaudeConsumerAgent\Logger\VirtualLogger</argument>
+        </arguments>
+    </type>
 </config>
