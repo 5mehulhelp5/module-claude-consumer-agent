@@ -12,6 +12,8 @@ final class Products
 
     private const NOTE_TITLE_MAX_CHARS = 80;
 
+    private const MAX_EXPANDED_FAMILIES = 2;
+
     public function __construct(
         private readonly \Psr\Log\LoggerInterface $logger,
         private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Sanitizer $sanitizer
@@ -22,6 +24,7 @@ final class Products
     {
         $items = [];
         $dropped = [];
+        $expandedFamilies = 0;
         foreach ((is_array($input['picks'] ?? null) ? $input['picks'] : []) as $pick) {
             $productId = (string)($pick['product_id'] ?? '');
             $product = $ctx->state->seen($productId);
@@ -33,12 +36,28 @@ final class Products
             $options = is_array($product['options'] ?? null) ? $product['options'] : [];
             $variantOf = $product['variant_of'] ?? null;
             if ($options !== [] && ($variantOf === null || $variantOf === '')) {
-                $variantItems = $this->expandFamily($productId, $product, $reason, $ctx);
-                if ($variantItems !== null) {
-                    foreach ($variantItems as $variantItem) {
+                $cachedVariants = $this->cachedVariants($productId, $ctx);
+                if ($cachedVariants !== null) {
+                    foreach ($this->buildVariantItems($cachedVariants, $product, $reason) as $variantItem) {
                         $items[] = $variantItem;
                     }
                     continue;
+                }
+                if ($expandedFamilies < self::MAX_EXPANDED_FAMILIES) {
+                    $variantItems = $this->expandFamily($productId, $product, $reason, $ctx);
+                    if ($variantItems !== null) {
+                        $expandedFamilies++;
+                        foreach ($variantItems as $variantItem) {
+                            $items[] = $variantItem;
+                        }
+                        continue;
+                    }
+                } else {
+                    $ctx->notes[] = 'Variant expansion is capped at ' . self::MAX_EXPANDED_FAMILIES
+                        . ' families per set; ' . $this->sanitizer->text(
+                            (string)($product['title'] ?? ''),
+                            self::NOTE_TITLE_MAX_CHARS
+                        ) . ' is shown without its variants.';
                 }
             }
             $items[] = [
@@ -95,6 +114,25 @@ final class Products
             $variantRecords[] = $variant->toArray();
         }
         $ctx->state->rememberProducts($variantRecords);
+        $items = $this->buildVariantItems($variantRecords, $product, $reason);
+        $title = $this->sanitizer->text((string)($product['title'] ?? ''), self::NOTE_TITLE_MAX_CHARS);
+        $ctx->notes[] = 'Expanded ' . $title . ' into ' . count($items) . ' variants.';
+        return $items;
+    }
+
+    private function cachedVariants(string $productId, EnrichmentContext $ctx): ?array
+    {
+        $variants = [];
+        foreach ($ctx->state->seenProducts as $record) {
+            if (($record['variant_of'] ?? null) === $productId) {
+                $variants[] = $record;
+            }
+        }
+        return $variants !== [] ? $variants : null;
+    }
+
+    private function buildVariantItems(array $variantRecords, array $product, mixed $reason): array
+    {
         $inStock = [];
         $outOfStock = [];
         foreach ($variantRecords as $record) {
@@ -116,8 +154,6 @@ final class Products
                 'variant_of' => $record['variant_of'] ?? null,
             ];
         }
-        $title = $this->sanitizer->text((string)($product['title'] ?? ''), self::NOTE_TITLE_MAX_CHARS);
-        $ctx->notes[] = 'Expanded ' . $title . ' into ' . count($items) . ' variants.';
         return $items;
     }
 }

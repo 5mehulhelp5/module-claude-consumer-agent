@@ -395,6 +395,105 @@ final class RunnerTest extends TestCase
         $this->assertSame('Fits a family of four', $items[0]['reason']);
     }
 
+    public function testFamilyPickReusesVariantsAlreadySeenInStateWithoutABackendCall(): void
+    {
+        $backend = $this->createMock(StorefrontBackendInterface::class);
+        $backend->expects($this->never())->method('getProductDetails');
+        $runner = $this->buildRunner($backend);
+        $state = $this->stateWithSeenProducts([
+            $this->familySeenProduct(),
+            [
+                'product_id' => 'p-500-s',
+                'title' => 'Trail Tent - Small',
+                'price' => 179.0,
+                'currency' => 'USD',
+                'option_values' => ['Size' => 'Small'],
+                'variant_of' => 'p-500',
+            ],
+            [
+                'product_id' => 'p-500-l',
+                'title' => 'Trail Tent - Large',
+                'price' => 219.0,
+                'currency' => 'USD',
+                'option_values' => ['Size' => 'Large'],
+                'variant_of' => 'p-500',
+            ],
+        ]);
+
+        $outcome = $runner->run(
+            'present_products',
+            ['picks' => [['product_id' => 'p-500', 'reason' => 'Fits a family of four']]],
+            $this->context(),
+            $state
+        );
+
+        $this->assertFalse($outcome->isError);
+        $items = $outcome->events[0]->data['payload']['items'];
+        $this->assertSame(
+            ['p-500-s', 'p-500-l'],
+            array_column(array_column($items, 'product'), 'product_id')
+        );
+        $this->assertSame('Fits a family of four', $items[0]['reason']);
+    }
+
+    public function testFamilyExpansionIsCappedAtTwoFamiliesPerPresentation(): void
+    {
+        $family = static fn (string $id, string $title): array => [
+            'product_id' => $id,
+            'title' => $title,
+            'price' => 199.0,
+            'currency' => 'USD',
+            'options' => ['Size' => ['Small', 'Large']],
+        ];
+        $variantFor = static fn (string $parentId, string $suffix): Product => new Product(
+            productId: $parentId . '-' . $suffix,
+            title: 'Variant',
+            price: 199.0,
+            currency: 'USD',
+            optionValues: ['Size' => $suffix],
+            variantOf: $parentId
+        );
+        $backend = $this->createMock(StorefrontBackendInterface::class);
+        $backend->expects($this->exactly(2))->method('getProductDetails')->willReturnCallback(
+            static function (SessionContext $ctx, string $productId) use ($family, $variantFor): ProductDetails {
+                return ProductDetails::fromProduct(
+                    Product::fromArray($family($productId, 'Family ' . $productId)),
+                    null,
+                    [],
+                    [$variantFor($productId, 'a'), $variantFor($productId, 'b')]
+                );
+            }
+        );
+        $runner = $this->buildRunner($backend);
+        $state = $this->stateWithSeenProducts([
+            $family('p-500', 'Trail Tent'),
+            $family('p-600', 'Trail Stove'),
+            $family('p-700', 'Trail Pack'),
+        ]);
+
+        $outcome = $runner->run(
+            'present_products',
+            [
+                'picks' => [
+                    ['product_id' => 'p-500'],
+                    ['product_id' => 'p-600'],
+                    ['product_id' => 'p-700'],
+                ],
+            ],
+            $this->context(),
+            $state
+        );
+
+        $this->assertFalse($outcome->isError);
+        $items = $outcome->events[0]->data['payload']['items'];
+        $this->assertSame(
+            ['p-500-a', 'p-500-b', 'p-600-a', 'p-600-b', 'p-700'],
+            array_column(array_column($items, 'product'), 'product_id')
+        );
+        $this->assertStringContainsString('capped at 2 families', $outcome->resultText);
+        $this->assertStringContainsString('Trail Pack', $outcome->resultText);
+    }
+
     public function testRefusedEmptyProductsComponentCarriesProvenanceGate(): void
     {
         $backend = $this->createMock(StorefrontBackendInterface::class);
