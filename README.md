@@ -50,7 +50,7 @@ own name, voice, starters, policy pages and limits.
 
 - **general** - enabled, surface mode (cart / overlay), launcher toggle,
   product-page block toggle, header icon view (cart / chat / last used, cart
-  mode only). The overlay is the default surface; cart mode docks the
+  mode only), streaming replies. The overlay is the default surface; cart mode docks the
   assistant into the theme's cart drawer. `general/use_bundled_css` is a
   hidden flag, see Install step 8
 - **model** - API key (encrypted), model id, max tokens, thinking effort
@@ -66,9 +66,11 @@ own name, voice, starters, policy pages and limits.
   turns per IP per minute, max tool iterations, max quantity per item, max
   cart lines, max message length, turn wall clock, max search results, max
   fenced characters, compact-above-tokens
-- **runtime** - streaming (auto / off), first-byte threshold, heartbeat
-  seconds
-- **lexicon** - product id patterns, policy intent terms, order intent terms,
+- **runtime** - only `streaming` (auto / off) is in the admin, shown in the
+  General group. `first_byte_threshold` and `heartbeat_seconds` are hidden
+  config paths with defaults in `config.xml`
+- **lexicon** - hidden config paths (`product_id_patterns`,
+  `policy_intent_terms`, `order_intent_terms`) with defaults in `config.xml`,
   each merged with any terms a store layer adds through `Lexicon`'s di.xml
   arguments
 - **privacy** - retention days, show AI label, contact URL and label, debug

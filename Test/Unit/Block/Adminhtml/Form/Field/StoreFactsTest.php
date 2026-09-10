@@ -8,7 +8,6 @@ use Magento\Framework\App\ObjectManager;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Framework\View\Helper\SecureHtmlRenderer;
 use Magento\Framework\View\LayoutInterface;
-use MageOS\ClaudeConsumerAgent\Block\Adminhtml\Form\Field\SourceColumn;
 use MageOS\ClaudeConsumerAgent\Block\Adminhtml\Form\Field\StoreFacts;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
@@ -27,7 +26,9 @@ final class StoreFactsTest extends TestCase
     private function buildBlock(): StoreFacts
     {
         $layout = $this->createMock(LayoutInterface::class);
-        $layout->method('createBlock')->willReturn($this->createMock(SourceColumn::class));
+        $layout->method('createBlock')->willReturnCallback(
+            fn (string $class) => $this->createMock($class)
+        );
 
         $context = $this->createMock(Context::class);
         $context->method('getLayout')->willReturn($layout);

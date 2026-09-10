@@ -62,7 +62,7 @@ final class Rules
             }
             $keywords = is_array($fact['keywords'] ?? null) ? $fact['keywords'] : [];
             if ($keywords === []) {
-                continue;
+                $keywords = [trim((string)($fact['topic'] ?? ''))];
             }
             if ($this->matchesAny($text, $keywords)) {
                 return true;

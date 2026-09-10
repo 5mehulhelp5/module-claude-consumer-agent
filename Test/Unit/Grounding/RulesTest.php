@@ -146,6 +146,18 @@ final class RulesTest extends TestCase
         $this->assertNull($this->forced('Do you price match?', $config));
     }
 
+    public function testFactWithoutKeywordsMatchesOnItsTopic(): void
+    {
+        $config = new AgentConfig(
+            enablePolicies: true,
+            storeFacts: [
+                ['topic' => 'Price match', 'keywords' => [], 'source' => 'text', 'value' => 'We match any price.'],
+            ]
+        );
+        $this->assertNull($this->forced('Do you offer a PRICE MATCH on returns?', $config));
+        $this->assertSame('search_policies', $this->forced('How do returns work?', $config));
+    }
+
     public function testNotOfferedFactKeywordSuppressesGetOrders(): void
     {
         $config = new AgentConfig(

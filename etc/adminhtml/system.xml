@@ -49,6 +49,16 @@
                         <field id="surface_mode">side_cart</field>
                     </depends>
                 </field>
+                <field id="streaming" translate="label comment" type="select" sortOrder="60" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>Streaming Replies</label>
+                    <config_path>aiagent/runtime/streaming</config_path>
+                    <source_model>MageOS\ClaudeConsumerAgent\Model\Config\Source\Streaming</source_model>
+                    <comment>Auto shows each reply word by word while the model writes it. Set Off when a proxy,
+                        CDN or firewall in front of the store holds responses back until they are complete:
+                        the customer then sees the whole reply at once instead of a blank panel.
+                    </comment>
+                </field>
             </group>
             <group id="model" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1"
                    showInStore="1">
@@ -179,8 +189,10 @@
                     <label>Store Facts</label>
                     <frontend_model>MageOS\ClaudeConsumerAgent\Block\Adminhtml\Form\Field\StoreFacts</frontend_model>
                     <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
-                    <comment>Each row is a service or term the assistant may answer about. Anything not listed
-                        is treated as not offered. Long content belongs in a CMS page or block; keep text
+                    <comment>Each row is a service or term the assistant may answer about. Topic names it.
+                        Keywords are the customer words that trigger it, comma separated; leave them empty to
+                        match on the topic words. Source: a text answer, a CMS page or block (enter its
+                        identifier), or Not offered. Long content belongs in a CMS page or block; keep text
                         answers to two sentences.
                     </comment>
                 </field>
@@ -307,50 +319,6 @@
                     <label>Compact Above Tokens</label>
                     <validate>validate-digits</validate>
                     <comment>Prompt size that triggers compaction.</comment>
-                </field>
-            </group>
-            <group id="runtime" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1"
-                   showInStore="1">
-                <label>Runtime</label>
-                <field id="streaming" translate="label comment" type="select" sortOrder="10" showInDefault="1"
-                       showInWebsite="1" showInStore="1">
-                    <label>Streaming</label>
-                    <source_model>MageOS\ClaudeConsumerAgent\Model\Config\Source\Streaming</source_model>
-                    <comment>Off forces JSON turns (for a buffering proxy or CDN).</comment>
-                </field>
-                <field id="first_byte_threshold" translate="label comment" type="text" sortOrder="20"
-                       showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>First Byte Threshold</label>
-                    <validate>validate-digits</validate>
-                    <comment>Seconds before the widget treats the path as buffered.</comment>
-                </field>
-                <field id="heartbeat_seconds" translate="label comment" type="text" sortOrder="30"
-                       showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Heartbeat Seconds</label>
-                    <validate>validate-digits</validate>
-                    <comment>Comment heartbeat while a model call runs.</comment>
-                </field>
-            </group>
-            <group id="lexicon" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="1"
-                   showInStore="1">
-                <label>Lexicon</label>
-                <field id="product_id_patterns" translate="label comment" type="textarea" sortOrder="10"
-                       showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Product ID Patterns</label>
-                    <backend_model>MageOS\ClaudeConsumerAgent\Model\Config\Backend\Lines</backend_model>
-                    <comment>One regular expression per line; a match forces a product read.</comment>
-                </field>
-                <field id="policy_intent_terms" translate="label comment" type="textarea" sortOrder="20"
-                       showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Policy Intent Terms</label>
-                    <backend_model>MageOS\ClaudeConsumerAgent\Model\Config\Backend\Lines</backend_model>
-                    <comment>One term per line.</comment>
-                </field>
-                <field id="order_intent_terms" translate="label comment" type="textarea" sortOrder="30"
-                       showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Order Intent Terms</label>
-                    <backend_model>MageOS\ClaudeConsumerAgent\Model\Config\Backend\Lines</backend_model>
-                    <comment>One term per line.</comment>
                 </field>
             </group>
             <group id="privacy" translate="label" type="text" sortOrder="80" showInDefault="1" showInWebsite="1"
