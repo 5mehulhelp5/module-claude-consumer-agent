@@ -58,6 +58,4 @@ interface StorefrontBackendInterface
      * @return \MageOS\ClaudeConsumerAgent\Api\Data\FulfillmentOptionInterface[]
      */
     public function getFulfillmentOptions(SessionContext $ctx, array $productIds): array;
-
-    public function checkoutHandoff(SessionContext $ctx, CartInterface $cart): array;
 }

@@ -182,11 +182,6 @@ final class FakeBackend implements StorefrontBackendInterface
         );
     }
 
-    public function checkoutHandoff(SessionContext $ctx, CartInterface $cart): array
-    {
-        return [];
-    }
-
     private function newLine(string $productId, array $record): array
     {
         return [

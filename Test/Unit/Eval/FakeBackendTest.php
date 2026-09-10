@@ -202,13 +202,6 @@ class FakeBackendTest extends TestCase
         $this->assertSame(5, $matches[0]->getCategoryId());
     }
 
-    public function testCheckoutHandoffReturnsEmptyArray(): void
-    {
-        $backend = new FakeBackend();
-
-        $this->assertSame([], $backend->checkoutHandoff($this->context(), $backend->getCart($this->context())));
-    }
-
     private function context(?int $customerId = null): SessionContext
     {
         return new SessionContext('sess-1', $customerId, 1, 1, new PageContext(), new \DateTimeImmutable());

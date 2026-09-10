@@ -900,9 +900,4 @@ final class MagentoStorefront implements StorefrontBackendInterface
     {
         return $this->fulfillmentProvider->options($ctx, array_slice($productIds, 0, 20));
     }
-
-    public function checkoutHandoff(SessionContext $ctx, CartInterface $cart): array
-    {
-        return [];
-    }
 }
