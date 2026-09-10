@@ -95,7 +95,6 @@ final class AgentConfig
         public readonly bool $launcherEnabled = true,
         public readonly bool $productBlockEnabled = true,
         public readonly string $headerIconView = 'cart',
-        public readonly bool $useBundledCss = false,
         public readonly bool $enableCart = true,
         public readonly bool $enableOrders = true,
         ?bool $enablePolicies = null,

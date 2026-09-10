@@ -76,19 +76,6 @@ Finish with `bin/magento cache:flush`. In production mode also run
 and `aiagent_turn`. A composer install (`mageos/module-claude-consumer-agent`)
 will replace the clone once the package is published.
 
-### Store that does not rebuild its theme CSS
-
-A store that commits `styles.css` and has no build step on deploy can load the
-module's own precompiled, scoped stylesheet instead:
-
-```bash
-bin/magento config:set aiagent/general/use_bundled_css 1
-```
-
-The flag is not in the admin and defaults to 0. Switch it back off once the
-theme CSS includes the module. See [Bundled CSS](#bundled-css) for how the
-file is built and scoped.
-
 ## Configuration
 
 Stores > Configuration > Sales > Shopping Assistant. Every field has default,
@@ -192,7 +179,6 @@ with `bin/magento config:set` when needed.
 
 | Path | Default | Meaning |
 |---|---|---|
-| `aiagent/general/use_bundled_css` | 0 | Load the module's own scoped stylesheet |
 | `aiagent/runtime/first_byte_threshold` | 4 | Seconds the browser waits for the first streamed byte before it switches the session to JSON replies |
 | `aiagent/runtime/heartbeat_seconds` | 10 | Interval of `: ping` comments while a model call runs, keeps proxies from closing the idle connection |
 | `aiagent/lexicon/product_id_patterns` | one regex | Customer text that matches forces a product read |
@@ -328,22 +314,6 @@ deletes older sessions and `aiagent:session:purge` is the manual escape
 hatch. `aiagent_turn` keeps one row per turn with the four usage fields the
 API reports (input, output, cache write, cache read), duration and stop
 reason. No dollar amounts are computed anywhere.
-
-## Bundled CSS
-
-`view/frontend/web/css/aiagent.css` is a standalone Tailwind 4 build of the
-module's templates with the Hyvä default tokens, loaded at the end of body
-only when `aiagent/general/use_bundled_css` is 1. Every rule in it is wrapped
-in `@scope (#ai-agent-overlay, #ai-agent-cards, #ai-agent-drawer-panel,
-#ai-agent-launcher, #ai-agent-cart-ask)`, so it can only style the module's
-own surfaces. Rebuild it with:
-
-```bash
-sh view/frontend/tailwind/bundled/build.sh <path to a Hyvä theme web/tailwind directory with node_modules>
-```
-
-The script runs the Tailwind CLI against the module templates and scopes the
-output with `scope.php`.
 
 ## Lazy loading
 

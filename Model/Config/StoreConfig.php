@@ -17,7 +17,6 @@ final class StoreConfig
     private const PATH_GENERAL_LAUNCHER_ENABLED = 'aiagent/general/launcher_enabled';
     private const PATH_GENERAL_PRODUCT_BLOCK_ENABLED = 'aiagent/general/product_block_enabled';
     private const PATH_GENERAL_HEADER_ICON_VIEW = 'aiagent/general/header_icon_view';
-    private const PATH_GENERAL_USE_BUNDLED_CSS = 'aiagent/general/use_bundled_css';
     private const PATH_MODEL_API_KEY = 'aiagent/model/api_key';
     private const PATH_MODEL_MODEL_ID = 'aiagent/model/model_id';
     private const PATH_MODEL_MAX_TOKENS = 'aiagent/model/max_tokens';
@@ -252,8 +251,7 @@ final class StoreConfig
                 self::PATH_GENERAL_HEADER_ICON_VIEW,
                 $storeId,
                 $defaults->headerIconView
-            ),
-            useBundledCss: $this->readBool(self::PATH_GENERAL_USE_BUNDLED_CSS, $storeId, $defaults->useBundledCss)
+            )
         );
         $this->agentCache[$storeId] = $config;
         return $config;

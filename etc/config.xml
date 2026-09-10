@@ -8,7 +8,6 @@
                 <launcher_enabled>1</launcher_enabled>
                 <product_block_enabled>1</product_block_enabled>
                 <header_icon_view>cart</header_icon_view>
-                <use_bundled_css>0</use_bundled_css>
             </general>
             <model>
                 <api_key backend_model="Magento\Config\Model\Config\Backend\Encrypted"></api_key>

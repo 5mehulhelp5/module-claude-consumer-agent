@@ -15,9 +15,6 @@ $lucideIcons = $viewModels->require(LucideIcons::class);
 $assistant = $block->getAssistant();
 $aiLabel = $assistant->aiLabelText();
 ?>
-<?php if ($block->usesBundledCss()): ?>
-<link rel="stylesheet" href="<?= $escaper->escapeUrl($block->getBundledCssUrl()) ?>">
-<?php endif; ?>
 <template id="ai-agent-shell" data-ai-agent-shell>
 <dialog
     id="ai-agent-overlay"

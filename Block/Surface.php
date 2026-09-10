@@ -40,15 +40,4 @@ class Surface extends Template
     {
         return $this->assistant;
     }
-
-    public function usesBundledCss(): bool
-    {
-        $storeId = (int)$this->_storeManager->getStore()->getId();
-        return $this->storeConfig->agent($storeId)->useBundledCss;
-    }
-
-    public function getBundledCssUrl(): string
-    {
-        return $this->getViewFileUrl('MageOS_ClaudeConsumerAgent::css/aiagent.css');
-    }
 }

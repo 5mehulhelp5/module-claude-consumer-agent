@@ -1,8 +1,0 @@
-@import "tailwindcss" source(none);
-@import "@hyva-themes/hyva-modules/css";
-@import "../../../../../../../../vendor/hyva-themes/magento2-default-theme/web/tailwind/components/button.css";
-@import "./tokens.css";
-
-@source "../../templates";
-
-@import "../tailwind-source.css";
