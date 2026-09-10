@@ -51,12 +51,13 @@ class Reset implements HttpPostActionInterface, CsrfAwareActionInterface
         $page = PageContext::fromArray($body->page);
         $now = new \DateTimeImmutable('now');
         $context = new SessionContext((string)($body->sessionId ?? ''), $customerId, $quoteId, $storeId, $page, $now);
-        $binding = $this->sessionRepository->bind($body->sessionId, $context);
-        $this->sessionRepository->delete($binding->sessionId);
-        $fresh = $this->sessionRepository->create($context);
+        $binding = $this->sessionRepository->find($body->sessionId, $context);
+        if ($binding !== null) {
+            $this->sessionRepository->delete($binding->sessionId);
+        }
         $this->sessionManager->writeClose();
         $result = $this->jsonFactory->create();
-        $result->setData(['session' => $fresh->sessionId]);
+        $result->setData(['session' => null]);
         $this->response->setNoCacheHeaders();
         $this->response->setMetadata('NotCacheable', true);
         return $result;
