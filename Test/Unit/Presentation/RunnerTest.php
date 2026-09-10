@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace MageOS\ClaudeConsumerAgent\Test\Unit\Presentation;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\UrlInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use MageOS\ClaudeConsumerAgent\Api\Data\PageContextInterface;
@@ -18,6 +19,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Runner;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 use MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig;
+use MageOS\ClaudeConsumerAgent\Model\Data\Cart;
 use MageOS\ClaudeConsumerAgent\Model\Data\Product;
 use MageOS\ClaudeConsumerAgent\Model\Data\ProductDetails;
 use PHPUnit\Framework\TestCase;
@@ -39,8 +41,11 @@ final class RunnerTest extends TestCase
         }
     }
 
-    private function buildRunner(StorefrontBackendInterface $backend, ?LoggerInterface $logger = null): Runner
-    {
+    private function buildRunner(
+        StorefrontBackendInterface $backend,
+        ?LoggerInterface $logger = null,
+        ?UrlInterface $url = null
+    ): Runner {
         $sanitizerClass = self::SANITIZER_CLASS;
         $fenceClass = self::FENCE_CLASS;
         $serializerClass = self::SERIALIZER_CLASS;
@@ -52,7 +57,7 @@ final class RunnerTest extends TestCase
             new Products($logger ?? $this->createMock(LoggerInterface::class), $sanitizer),
             new Comparison(),
             new OrderStatus($serializer),
-            new Checkout($serializer),
+            new Checkout($serializer, $url ?? $this->createMock(UrlInterface::class)),
             new Suggestions($sanitizer)
         );
         $validator = new $validatorClass();
@@ -509,6 +514,27 @@ final class RunnerTest extends TestCase
         $this->assertFalse($outcome->isError);
         $this->assertSame('provenance', $outcome->blocked);
         $this->assertSame([], $outcome->events);
+    }
+
+    public function testCheckoutUrlIsBuiltFromTheUrlInterfaceScopedToTheStore(): void
+    {
+        $backend = $this->createMock(StorefrontBackendInterface::class);
+        $backend->method('getCart')->willReturn(Cart::fromArray([
+            'items' => [['product_id' => 'p-100', 'title' => 'Tent', 'price' => 149.0, 'quantity' => 1]],
+            'currency' => 'USD',
+        ]));
+        $url = $this->createMock(UrlInterface::class);
+        $url->expects($this->once())
+            ->method('getUrl')
+            ->with('checkout', ['_scope' => 1])
+            ->willReturn('https://storefront.example.com/checkout/');
+        $runner = $this->buildRunner($backend, null, $url);
+
+        $outcome = $runner->run('checkout', [], $this->context(), new SessionState());
+
+        $this->assertFalse($outcome->isError);
+        $payload = $outcome->events[0]->data['payload'];
+        $this->assertSame('https://storefront.example.com/checkout/', $payload['checkout_url']);
     }
 
     public function testComparisonPriceDelta(): void

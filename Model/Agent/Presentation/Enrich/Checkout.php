@@ -9,7 +9,8 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\EnrichmentContext;
 final class Checkout
 {
     public function __construct(
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Serializer $serializer
+        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Serializer $serializer,
+        private readonly \Magento\Framework\UrlInterface $url
     ) {
     }
 
@@ -27,7 +28,7 @@ final class Checkout
             $payload['fulfillment_method'] = $input['fulfillment_method'];
         }
         $payload['cart'] = $this->serializer->cart($cart);
-        $payload['checkout_url'] = '/checkout';
+        $payload['checkout_url'] = $this->url->getUrl('checkout', ['_scope' => $ctx->context->storeId]);
         return $payload;
     }
 }

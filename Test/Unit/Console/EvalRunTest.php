@@ -171,7 +171,7 @@ class EvalRunTest extends TestCase
             new Products($this->createMock(LoggerInterface::class), $sanitizer),
             new Comparison(),
             new OrderStatus($serializer),
-            new Checkout($serializer),
+            new Checkout($serializer, $this->createMock(\Magento\Framework\UrlInterface::class)),
             new Suggestions($sanitizer)
         );
 
