@@ -95,6 +95,40 @@ final class SessionPurgeTest extends TestCase
         $this->assertStringContainsString('Deleted 2 session(s).', $tester->getDisplay());
     }
 
+    public function testOlderThanZeroIsRefusedBeforeAnyPurge(): void
+    {
+        $this->sessionResource->expects($this->never())->method('deleteOlderThan');
+        $this->sessionResource->expects($this->never())->method('countOlderThan');
+        $this->sessionResource->expects($this->never())->method('deleteAll');
+        $tester = $this->buildTester();
+        $exitCode = $tester->execute(['--older-than' => '0']);
+        $this->assertSame(Cli::RETURN_FAILURE, $exitCode);
+        $this->assertStringContainsString('--older-than', $tester->getDisplay());
+    }
+
+    public function testNonNumericOrNegativeOlderThanIsRefused(): void
+    {
+        $this->sessionResource->expects($this->never())->method('deleteOlderThan');
+        $this->sessionResource->expects($this->never())->method('countOlderThan');
+        foreach (['abc', '-5', '1.5', ' 7', ''] as $value) {
+            $tester = $this->buildTester();
+            $exitCode = $tester->execute(['--older-than' => $value, '--dry-run' => true]);
+            $this->assertSame(Cli::RETURN_FAILURE, $exitCode, sprintf('value "%s" was accepted', $value));
+        }
+    }
+
+    public function testCustomerMustBeAPositiveInteger(): void
+    {
+        $this->sessionResource->expects($this->never())->method('deleteByCustomer');
+        $this->sessionResource->expects($this->never())->method('countByCustomer');
+        foreach (['0', 'abc', '-1', ''] as $value) {
+            $tester = $this->buildTester();
+            $exitCode = $tester->execute(['--customer' => $value]);
+            $this->assertSame(Cli::RETURN_FAILURE, $exitCode, sprintf('value "%s" was accepted', $value));
+            $this->assertStringContainsString('--customer', $tester->getDisplay());
+        }
+    }
+
     public function testNoSelectorIsRefused(): void
     {
         $tester = $this->buildTester();

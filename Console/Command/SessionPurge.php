@@ -84,14 +84,27 @@ class SessionPurge extends Command
         }
 
         if ($olderThan !== null) {
+            if (!$this->isPositiveInteger($olderThan)) {
+                $output->writeln('<error>--older-than must be a whole number of days greater than zero.</error>');
+                return Cli::RETURN_FAILURE;
+            }
             return $this->purgeOlderThan((int)$olderThan, $dryRun, $output);
         }
 
         if ($customer !== null) {
+            if (!$this->isPositiveInteger($customer)) {
+                $output->writeln('<error>--customer must be a customer id greater than zero.</error>');
+                return Cli::RETURN_FAILURE;
+            }
             return $this->purgeCustomer((int)$customer, $dryRun, $output);
         }
 
         return $this->purgeAll($dryRun, $output);
+    }
+
+    private function isPositiveInteger(mixed $value): bool
+    {
+        return is_string($value) && ctype_digit($value) && (int)$value > 0;
     }
 
     private function purgeOlderThan(int $days, bool $dryRun, OutputInterface $output): int
