@@ -17,7 +17,8 @@ final class CategoryNameSearch implements CategorySearchProviderInterface
     public function __construct(
         private readonly \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $collectionFactory,
         private readonly \Magento\Store\Model\StoreManagerInterface $storeManager,
-        private readonly \Magento\Framework\App\ResourceConnection $resourceConnection
+        private readonly \Magento\Framework\App\ResourceConnection $resourceConnection,
+        private readonly \Magento\Catalog\Model\Indexer\Category\Product\TableMaintainer $categoryProductTableMaintainer
     ) {
     }
 
@@ -61,7 +62,7 @@ final class CategoryNameSearch implements CategorySearchProviderInterface
         );
         $top = array_slice($candidates, 0, max(1, $limit), true);
 
-        $counts = $this->productCounts(array_keys($top));
+        $counts = $this->productCounts(array_keys($top), $ctx->storeId);
         $ancestorNames = $this->ancestorNames($top, $storeRootId);
 
         $matches = [];
@@ -131,16 +132,17 @@ final class CategoryNameSearch implements CategorySearchProviderInterface
         return ['path' => (string)$item->getPath()];
     }
 
-    private function productCounts(array $categoryIds): array
+    private function productCounts(array $categoryIds, int $storeId): array
     {
         if ($categoryIds === []) {
             return [];
         }
         $connection = $this->resourceConnection->getConnection();
-        $table = $this->resourceConnection->getTableName('catalog_category_product');
+        $table = $this->categoryProductTableMaintainer->getMainTable($storeId);
         $select = $connection->select()
             ->from($table, ['category_id', 'count' => new \Zend_Db_Expr('COUNT(product_id)')])
             ->where('category_id IN (?)', $categoryIds)
+            ->where('store_id = ?', $storeId)
             ->group('category_id');
         $rows = $connection->fetchPairs($select);
         return array_map('intval', $rows);
