@@ -94,10 +94,4 @@ final class ResolverTest extends TestCase
         $layout->method('getBlock')->willReturn(false);
         $this->assertSame('overlay', $resolver->resolve(1, $layout));
     }
-
-    public function testRuntimeFallbackFlagIsTrue(): void
-    {
-        $resolver = $this->buildResolver('auto', true);
-        $this->assertTrue($resolver->runtimeFallbackFlag());
-    }
 }

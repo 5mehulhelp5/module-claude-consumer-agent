@@ -37,9 +37,4 @@ final class Resolver
         }
         return $layout->getBlock(self::CART_DRAWER_BLOCK) ? SurfaceMode::SIDE_CART : SurfaceMode::OVERLAY;
     }
-
-    public function runtimeFallbackFlag(): bool
-    {
-        return true;
-    }
 }
