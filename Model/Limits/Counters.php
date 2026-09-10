@@ -8,7 +8,7 @@ use MageOS\ClaudeConsumerAgent\Model\Limits\Exception\LimitExceeded;
 
 final class Counters
 {
-    private const CACHE_TAG = 'AIAGENT';
+    private const CACHE_TAG = 'AIAGENT_LIMITS';
     private const SESSION_TTL = 600;
     private const IP_TTL = 60;
     private const SESSION_RETRY_AFTER = 60;
