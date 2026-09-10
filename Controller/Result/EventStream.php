@@ -59,6 +59,8 @@ class EventStream extends AbstractResult
         if (!headers_sent()) {
             ini_set('zlib.output_compression', '0');
         }
+        ignore_user_abort(true);
+        $this->registerSlotReleaseFallback();
         if ($this->compressionIsOn()) {
             return $this->renderJsonFallback($response);
         }
@@ -74,6 +76,17 @@ class EventStream extends AbstractResult
         }
         $this->runTurn($response);
         return $this;
+    }
+
+    private function registerSlotReleaseFallback(): void
+    {
+        $slot = $this->slot;
+        if ($slot === null) {
+            return;
+        }
+        register_shutdown_function(static function () use ($slot): void {
+            $slot->release();
+        });
     }
 
     private function runTurn(HttpResponseInterface $response): void
