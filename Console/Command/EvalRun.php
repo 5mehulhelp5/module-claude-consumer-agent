@@ -74,22 +74,8 @@ class EvalRun extends Command
     public function __construct(
         private readonly \Magento\Framework\ObjectManagerInterface $objectManager,
         private readonly \Magento\Store\Model\StoreManagerInterface $storeManager,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig $storeConfig,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\StaticSystem $staticSystem,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\DynamicContext $dynamicContext,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\Assembly $assembly,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Lexicon $lexicon,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Grounding\SkuCandidates $skuCandidates,
+        private readonly \MageOS\ClaudeConsumerAgent\Model\Eval\Toolkit $toolkit,
         private readonly \MageOS\ClaudeConsumerAgent\Api\Backend\SkuMatcherInterface $skuMatcher,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Turn\StreamedRoundFactory $streamedRoundFactory,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Schema\Validator $validator,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Gate\Provenance $provenance,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Gate\Options $options,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Sanitizer $sanitizer,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Fence $fence,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Serializer $serializer,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Skill\Registry $skillRegistry,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Registry $presentationRegistry,
         private readonly \Magento\Framework\Lock\LockManagerInterface $lockManager,
         private readonly \Magento\Framework\App\ResourceConnection $resourceConnection,
         private readonly \Psr\Log\LoggerInterface $logger,
@@ -256,7 +242,7 @@ class EvalRun extends Command
     {
         $overrides = is_array($case['config'] ?? null) ? $case['config'] : [];
         if ($overrides === []) {
-            return $this->storeConfig;
+            return $this->toolkit->storeConfig();
         }
 
         $values = [];
@@ -279,21 +265,36 @@ class EvalRun extends Command
         \MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig $storeConfig,
         SkuMatcherInterface $skuMatcher
     ): Orchestrator {
-        $cartWrite = new CartWrite($backend, $this->lockManager, $this->options, $this->provenance, $this->serializer, $this->logger);
+        $cartWrite = new CartWrite(
+            $backend,
+            $this->lockManager,
+            $this->toolkit->options(),
+            $this->toolkit->provenance(),
+            $this->toolkit->serializer(),
+            $this->logger
+        );
         $handlers = [
-            'load_skill' => new LoadSkill($this->skillRegistry),
-            'search_products' => new SearchProducts($backend, $this->serializer),
-            'search_categories' => new SearchCategories($backend, $this->serializer),
-            'get_product_details' => new GetProductDetails($backend, $this->serializer, $this->fence),
-            'get_cart' => new GetCart($backend, $this->serializer, $this->fence),
+            'load_skill' => new LoadSkill($this->toolkit->skillRegistry()),
+            'search_products' => new SearchProducts($backend, $this->toolkit->serializer()),
+            'search_categories' => new SearchCategories($backend, $this->toolkit->serializer()),
+            'get_product_details' => new GetProductDetails(
+                $backend,
+                $this->toolkit->serializer(),
+                $this->toolkit->fence()
+            ),
+            'get_cart' => new GetCart($backend, $this->toolkit->serializer(), $this->toolkit->fence()),
             'add_to_cart' => new AddToCart($cartWrite),
             'update_cart_item' => new UpdateCartItem($cartWrite),
             'remove_from_cart' => new RemoveFromCart($cartWrite),
-            'get_preferences' => new GetPreferences($backend, $this->fence),
-            'get_orders' => new GetOrders($backend, $this->serializer, $this->fence),
-            'get_order_status' => new GetOrderStatus($backend, $this->serializer, $this->fence),
-            'search_policies' => new SearchPolicies($backend, $this->serializer, $this->fence),
-            'get_fulfillment_options' => new GetFulfillmentOptions($backend, $this->serializer, $this->fence),
+            'get_preferences' => new GetPreferences($backend, $this->toolkit->fence()),
+            'get_orders' => new GetOrders($backend, $this->toolkit->serializer(), $this->toolkit->fence()),
+            'get_order_status' => new GetOrderStatus($backend, $this->toolkit->serializer(), $this->toolkit->fence()),
+            'search_policies' => new SearchPolicies($backend, $this->toolkit->serializer(), $this->toolkit->fence()),
+            'get_fulfillment_options' => new GetFulfillmentOptions(
+                $backend,
+                $this->toolkit->serializer(),
+                $this->toolkit->fence()
+            ),
             'memory_off' => new MemoryOff(),
         ];
 
@@ -312,28 +313,33 @@ class EvalRun extends Command
             $handlers['search_policies'],
             $handlers['get_fulfillment_options'],
             $handlers['memory_off'],
-            $this->skillRegistry,
-            $this->presentationRegistry
+            $this->toolkit->skillRegistry(),
+            $this->toolkit->presentationRegistry()
         );
         $toolRegistry = new ToolRegistry([$coreToolProvider], $storeConfig);
-        $presentationRunner = new PresentationRunner($this->presentationRegistry, $this->validator, $backend, $storeConfig);
+        $presentationRunner = new PresentationRunner(
+            $this->toolkit->presentationRegistry(),
+            $this->toolkit->validator(),
+            $backend,
+            $storeConfig
+        );
         $executorFactory = new FakeExecutorFactory(
             $toolRegistry,
             $presentationRunner,
-            $this->validator,
-            $this->provenance,
-            $this->sanitizer,
+            $this->toolkit->validator(),
+            $this->toolkit->provenance(),
+            $this->toolkit->sanitizer(),
             $this->logger
         );
-        $rules = new Rules($this->lexicon, $this->skuCandidates, $skuMatcher);
+        $rules = new Rules($this->toolkit->lexicon(), $this->toolkit->skuCandidates(), $skuMatcher);
 
         return $this->objectManager->create(Orchestrator::class, [
             'client' => $client,
             'backend' => $backend,
-            'staticSystem' => $this->staticSystem,
-            'dynamicContext' => $this->dynamicContext,
-            'assembly' => $this->assembly,
-            'pageNote' => new PageNote($this->sanitizer),
+            'staticSystem' => $this->toolkit->staticSystem(),
+            'dynamicContext' => $this->toolkit->dynamicContext(),
+            'assembly' => $this->toolkit->assembly(),
+            'pageNote' => new PageNote($this->toolkit->sanitizer()),
             'toolRegistry' => $toolRegistry,
             'executorFactory' => $executorFactory,
             'rules' => $rules,
@@ -341,7 +347,7 @@ class EvalRun extends Command
             'sessions' => new InMemorySessions(),
             'storeConfig' => $storeConfig,
             'logger' => $this->logger,
-            'streamedRoundFactory' => $this->streamedRoundFactory,
+            'streamedRoundFactory' => $this->toolkit->streamedRoundFactory(),
             'turnLog' => new InMemoryTurnLog(),
         ]);
     }

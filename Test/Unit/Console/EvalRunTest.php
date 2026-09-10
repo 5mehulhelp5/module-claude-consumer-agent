@@ -28,6 +28,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Sanitizer;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Gate\Options;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Gate\Provenance;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Grounding\SkuCandidates;
+use MageOS\ClaudeConsumerAgent\Model\Eval\Toolkit;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Lexicon;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Checkout;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Comparison;
@@ -192,22 +193,24 @@ class EvalRunTest extends TestCase
         return new EvalRun(
             $objectManager,
             $storeManager,
-            $storeConfig,
-            $staticSystem,
-            $dynamicContext,
-            $assembly,
-            $lexicon,
-            new SkuCandidates(),
+            new Toolkit(
+                $storeConfig,
+                $staticSystem,
+                $dynamicContext,
+                $assembly,
+                $lexicon,
+                new SkuCandidates(),
+                $streamedRoundFactory,
+                $validator,
+                $provenance,
+                $options,
+                $sanitizer,
+                $fence,
+                $serializer,
+                $skillRegistry,
+                $presentationRegistry
+            ),
             $this->createMock(SkuMatcherInterface::class),
-            $streamedRoundFactory,
-            $validator,
-            $provenance,
-            $options,
-            $sanitizer,
-            $fence,
-            $serializer,
-            $skillRegistry,
-            $presentationRegistry,
             $lockManager,
             $resourceConnection,
             $logger,

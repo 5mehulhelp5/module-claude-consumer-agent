@@ -212,6 +212,7 @@
     <type name="MageOS\ClaudeConsumerAgent\Console\Command\EvalRun">
         <arguments>
             <argument name="logger" xsi:type="object">MageOS\ClaudeConsumerAgent\Logger\VirtualLogger</argument>
+            <argument name="toolkit" xsi:type="object">MageOS\ClaudeConsumerAgent\Model\Eval\Toolkit\Proxy</argument>
             <argument name="skuMatcher" xsi:type="object">MageOS\ClaudeConsumerAgent\Api\Backend\SkuMatcherInterface\Proxy</argument>
             <argument name="lockManager" xsi:type="object">Magento\Framework\Lock\LockManagerInterface\Proxy</argument>
             <argument name="resourceConnection" xsi:type="object">Magento\Framework\App\ResourceConnection\Proxy</argument>
