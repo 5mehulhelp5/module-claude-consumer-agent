@@ -53,7 +53,7 @@ class Session
         $connection->delete($this->getTable(), ['session_id = ?' => $id]);
     }
 
-    public function deleteOlderThan(\DateTimeInterface $before, int $batch = 500): int
+    public function deleteOlderThan(\DateTimeInterface $before, ?int $storeId = null, int $batch = 500): int
     {
         $connection = $this->resourceConnection->getConnection();
         $deleted = 0;
@@ -62,6 +62,9 @@ class Session
                 ->from($this->getTable(), ['session_id'])
                 ->where('updated_at < ?', $before->format('Y-m-d H:i:s'))
                 ->limit($batch);
+            if ($storeId !== null) {
+                $select->where('store_id = ?', $storeId);
+            }
             $ids = $connection->fetchCol($select);
             if (count($ids) === 0) {
                 break;
