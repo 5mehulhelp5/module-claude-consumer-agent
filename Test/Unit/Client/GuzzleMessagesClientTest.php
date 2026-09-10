@@ -273,6 +273,31 @@ final class GuzzleMessagesClientTest extends TestCase
         }
     }
 
+    public function testOversizedErrorBodyIsReadOnlyUpToTheCapAndFallsBackToTheStatus(): void
+    {
+        $hugeMessage = str_repeat('x', 100_000);
+        $hugeErrorBody = '{"type":"error","error":{"type":"api_error","message":"' . $hugeMessage . '"}}';
+        $history = [];
+        $mockHandler = new MockHandler([
+            new Response(500, [], $hugeErrorBody),
+            new Response(500, [], $hugeErrorBody),
+            new Response(500, [], $hugeErrorBody),
+        ]);
+        $http = $this->buildClientWithHandler($mockHandler, $history);
+        $logger = $this->createMock(LoggerInterface::class);
+        $sleeper = $this->createMock(Sleeper::class);
+        $sleeper->method('sleep');
+
+        $client = new GuzzleMessagesClient($http, $this->buildStoreConfig(), $logger, $sleeper);
+
+        try {
+            iterator_to_array($client->stream(['messages' => []]), false);
+            $this->fail('Expected ServerError was not thrown');
+        } catch (ServerError $exception) {
+            $this->assertSame('HTTP 500', $exception->getMessage());
+        }
+    }
+
     public function testConnectExceptionIsRetried(): void
     {
         $history = [];

@@ -16,6 +16,7 @@ final class GuzzleMessagesClient implements MessagesClientInterface
     private const READ_CHUNK_BYTES = 256;
     private const TIMEOUT_MARGIN_SECONDS = 5;
     private const HEARTBEAT_SLICE_SECONDS = 1;
+    private const MAX_ERROR_BYTES = 65_536;
 
     private const RETRYABLE_STATUSES = [429, 500, 502, 503, 529];
     private const MAX_RETRY_AFTER_SECONDS = 30.0;
@@ -107,7 +108,7 @@ final class GuzzleMessagesClient implements MessagesClientInterface
                 return $response;
             }
 
-            $errorBody = json_decode($response->getBody()->getContents(), true);
+            $errorBody = json_decode($response->getBody()->read(self::MAX_ERROR_BYTES), true);
             $errorBody = is_array($errorBody) ? $errorBody : [];
 
             if (in_array($status, self::RETRYABLE_STATUSES, true) && $attempt < self::MAX_RETRIES) {

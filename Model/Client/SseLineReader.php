@@ -5,6 +5,8 @@ namespace MageOS\ClaudeConsumerAgent\Model\Client;
 
 final class SseLineReader
 {
+    private const MAX_FRAME_BYTES = 1_048_576;
+
     public function read(iterable $chunks): \Generator
     {
         $buffer = '';
@@ -37,6 +39,11 @@ final class SseLineReader
                     $dataLines[] = ltrim(substr($line, 5));
                     continue;
                 }
+            }
+            if (strlen($buffer) > self::MAX_FRAME_BYTES) {
+                throw new \RuntimeException(
+                    'SSE frame exceeded the ' . self::MAX_FRAME_BYTES . '-byte buffer cap.'
+                );
             }
         }
         if ($eventName !== null && $dataLines !== []) {

@@ -105,4 +105,20 @@ final class SseLineReaderTest extends TestCase
         $this->assertCount(1, $events);
         $this->assertSame('ping', $events[0]->type);
     }
+
+    public function testFrameExceedingTheByteCapThrows(): void
+    {
+        $this->expectException(\RuntimeException::class);
+
+        $chunks = (function (): iterable {
+            yield "event: content_block_delta\ndata: {\"delta\":{\"text\":\"";
+            $sent = 0;
+            while ($sent < 1_048_576 + 1) {
+                yield str_repeat('a', 65_536);
+                $sent += 65_536;
+            }
+        })();
+
+        $this->collect($chunks);
+    }
 }
