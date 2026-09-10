@@ -31,13 +31,14 @@ final class GuzzleMessagesClient implements MessagesClientInterface
     public function stream(array $request, ?callable $onWaiting = null, ?int $storeId = null): \Generator
     {
         $storeId ??= 0;
-        $apiKey = $this->config->apiKey($storeId);
-        if ($apiKey === '') {
+        $rawApiKey = $this->config->apiKey($storeId);
+        if ($rawApiKey === '') {
             throw new Exception\Unauthorized('No API key configured for store ' . $storeId);
         }
-        if (preg_match('/^[\x21-\x7e]+$/', $apiKey) !== 1) {
+        if (preg_match('/^[\x21-\x7e]+$/', $rawApiKey) !== 1) {
             throw new Exception\Unauthorized('The configured API key is not a valid header value.');
         }
+        $apiKey = new ApiKey($rawApiKey);
         $agentConfig = $this->config->agent($storeId);
         $body = $request;
         $body['stream'] = true;
@@ -68,14 +69,19 @@ final class GuzzleMessagesClient implements MessagesClientInterface
         }
     }
 
-    private function send(string $encodedBody, int $connectTimeout, int $requestTimeout, string $apiKey): ResponseInterface
-    {
+    private function send(
+        string $encodedBody,
+        int $connectTimeout,
+        int $requestTimeout,
+        string|ApiKey $apiKey
+    ): ResponseInterface {
+        $key = $apiKey instanceof ApiKey ? $apiKey : new ApiKey($apiKey);
         $attempt = 0;
         while (true) {
             try {
                 $response = $this->http->request('POST', self::ENDPOINT, [
                     'headers' => [
-                        'x-api-key' => $apiKey,
+                        'x-api-key' => (string)$key,
                         'anthropic-version' => self::API_VERSION,
                         'content-type' => 'application/json',
                         'accept' => 'text/event-stream',

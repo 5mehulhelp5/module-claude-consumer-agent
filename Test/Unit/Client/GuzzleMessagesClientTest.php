@@ -13,6 +13,7 @@ use GuzzleHttp\Psr7\Response;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use MageOS\ClaudeConsumerAgent\Model\Client\ApiKey;
 use MageOS\ClaudeConsumerAgent\Model\Client\Exception\BadRequest;
 use MageOS\ClaudeConsumerAgent\Model\Client\Exception\ServerError;
 use MageOS\ClaudeConsumerAgent\Model\Client\Exception\Transport;
@@ -294,6 +295,41 @@ final class GuzzleMessagesClientTest extends TestCase
         $this->assertCount(2, $history);
         $this->assertSame([0.5], $sleeps);
         $this->assertSame('message_stop', $events[count($events) - 1]->type);
+    }
+
+    public function testApiKeyArgumentInTheSendFrameIsWrappedAndMasked(): void
+    {
+        $secretKey = 'sk-ant-do-not-leak-me';
+        $history = [];
+        $request = new Request('POST', GuzzleMessagesClient::ENDPOINT);
+        $mockHandler = new MockHandler([
+            new ConnectException('Connection refused', $request),
+            new ConnectException('Connection refused', $request),
+            new ConnectException('Connection refused', $request),
+        ]);
+        $http = $this->buildClientWithHandler($mockHandler, $history);
+        $logger = $this->createMock(LoggerInterface::class);
+        $sleeper = $this->createMock(Sleeper::class);
+        $sleeper->method('sleep');
+
+        $client = new GuzzleMessagesClient($http, $this->buildStoreConfig($secretKey), $logger, $sleeper);
+
+        try {
+            iterator_to_array($client->stream(['messages' => []]), false);
+            $this->fail('Expected a Transport exception was not thrown');
+        } catch (Transport $exception) {
+            $sendFrame = null;
+            foreach ($exception->getTrace() as $frame) {
+                if (($frame['function'] ?? null) === 'send') {
+                    $sendFrame = $frame;
+                    break;
+                }
+            }
+            $this->assertNotNull($sendFrame, 'Expected a send() frame in the exception trace');
+            $apiKeyArgument = $sendFrame['args'][3] ?? null;
+            $this->assertInstanceOf(ApiKey::class, $apiKeyArgument);
+            $this->assertStringNotContainsString($secretKey, print_r($apiKeyArgument, true));
+        }
     }
 
     public function testNoRetryAfterFirstBodyByte(): void
