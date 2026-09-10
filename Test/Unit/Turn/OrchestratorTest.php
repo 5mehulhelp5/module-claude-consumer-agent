@@ -432,6 +432,30 @@ final class OrchestratorTest extends TestCase
         $this->assertSame('end_turn', $captured['stop_reason']);
     }
 
+    public function testSessionSaveFailureLogsAWarningAndKeepsThePriorTurnNumber(): void
+    {
+        $client = new FakeClient([FakeClient::textRound('Hello there.', 'end_turn')]);
+        [$orchestrator, , $turnLog, , $logger] = $this->buildOrchestrator($client, [], [], false);
+        $binding = $this->binding();
+        $binding->state->turnCounter = 4;
+
+        $logger->expects($this->once())->method('warning')->with(
+            $this->stringContains('turn=5')
+        );
+
+        $captured = null;
+        $turnLog->method('record')->with(
+            $this->callback(static function (array $row) use (&$captured): bool {
+                $captured = $row;
+                return true;
+            })
+        );
+
+        iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
+
+        $this->assertSame(4, $captured['turn_no']);
+    }
+
     public function testTurnLogRoundsCountsEveryModelCall(): void
     {
         $toolUses = [['id' => 'tu1', 'name' => 'tool_a', 'input' => []]];
@@ -543,7 +567,8 @@ final class OrchestratorTest extends TestCase
     private function buildOrchestrator(
         MessagesClientInterface $client,
         array $definitions,
-        array $configOverrides = []
+        array $configOverrides = [],
+        bool $saveSucceeds = true
     ): array {
         $storeConfig = $this->storeConfig($configOverrides);
         $backend = $this->createMock(StorefrontBackendInterface::class);
@@ -626,7 +651,7 @@ final class OrchestratorTest extends TestCase
         $transcripts = new TranscriptRepository($messageResource, $resourceConnection);
 
         $sessions = $this->createMock(SessionRepositoryInterface::class);
-        $sessions->method('save')->willReturn(true);
+        $sessions->method('save')->willReturn($saveSucceeds);
 
         $logger = $this->createMock(LoggerInterface::class);
         $turnLog = $this->createMock(TurnLogInterface::class);
@@ -649,7 +674,7 @@ final class OrchestratorTest extends TestCase
             $turnLog
         );
 
-        return [$orchestrator, $messageResource, $turnLog];
+        return [$orchestrator, $messageResource, $turnLog, $sessions, $logger];
     }
 
     private function storeConfig(array $valueOverrides = []): StoreConfig

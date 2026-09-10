@@ -280,11 +280,20 @@ class Orchestrator
                 $this->transcripts->rewrite($binding->sessionId, $history->all());
             }
             $state->turnCounter++;
-            $this->sessions->save($binding, $state);
+            $saved = $this->sessions->save($binding, $state);
+            $persistedTurnNo = $state->turnCounter;
+            if (!$saved) {
+                $this->logger->warning(sprintf(
+                    'session save failed session=%s turn=%d',
+                    $this->digest($binding->sessionId),
+                    $state->turnCounter
+                ));
+                $persistedTurnNo = $state->turnCounter - 1;
+            }
             $this->turnLog->record([
                 'session_id' => $binding->sessionId,
                 'store_id' => $context->storeId,
-                'turn_no' => $state->turnCounter,
+                'turn_no' => $persistedTurnNo,
                 'model_id' => $config->modelId,
                 'rounds' => $rounds,
                 'input_tokens' => $usage['input_tokens'],
