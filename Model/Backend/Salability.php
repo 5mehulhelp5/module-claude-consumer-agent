@@ -34,7 +34,8 @@ final class Salability
         }
 
         $websiteId = (int)$this->storeManager->getStore($ctx->storeId)->getWebsiteId();
-        return $this->stockRegistry->getStockStatus((int)$p->getId(), $websiteId)->getStockStatus() === 1;
+        $stockStatus = (int)$this->stockRegistry->getStockStatus((int)$p->getId(), $websiteId)->getStockStatus();
+        return $stockStatus === StockStatusInterface::STATUS_IN_STOCK;
     }
 
     private function isSalableByMsi(ProductInterface $p, SessionContext $ctx): ?bool
