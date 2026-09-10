@@ -55,11 +55,16 @@ final class GuzzleMessagesClient implements MessagesClientInterface
         $response = $this->send($encodedBody, $agentConfig->connectTimeout, $agentConfig->requestTimeout, $apiKey);
 
         $lineReader = new SseLineReader();
+        $lastEventType = null;
         foreach ($lineReader->read($this->readChunks($response->getBody(), $onWaiting)) as $rawEvent) {
             if ($agentConfig->debugLog) {
                 $this->logger->debug('aiagent frame', ['type' => $rawEvent->type, 'data' => $rawEvent->data]);
             }
+            $lastEventType = $rawEvent->type;
             yield $rawEvent;
+        }
+        if ($lastEventType !== 'message_stop') {
+            throw new Exception\Transport('The model stream ended before message_stop.');
         }
     }
 

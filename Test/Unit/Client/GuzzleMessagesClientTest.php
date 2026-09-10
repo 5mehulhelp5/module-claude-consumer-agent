@@ -15,6 +15,7 @@ use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use MageOS\ClaudeConsumerAgent\Model\Client\Exception\BadRequest;
 use MageOS\ClaudeConsumerAgent\Model\Client\Exception\ServerError;
+use MageOS\ClaudeConsumerAgent\Model\Client\Exception\Transport;
 use MageOS\ClaudeConsumerAgent\Model\Client\Exception\Unauthorized;
 use MageOS\ClaudeConsumerAgent\Model\Client\GuzzleMessagesClient;
 use MageOS\ClaudeConsumerAgent\Model\Client\Sleeper;
@@ -100,6 +101,33 @@ final class GuzzleMessagesClientTest extends TestCase
             $types
         );
         $this->assertSame('hi', $events[2]->data['delta']['text']);
+    }
+
+    public function testStreamCutShortBeforeMessageStopThrowsTransport(): void
+    {
+        $truncated = "event: message_start\n"
+            . "data: {\"type\":\"message_start\",\"message\":{\"usage\":{}}}\n\n"
+            . "event: content_block_delta\n"
+            . "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"hi\"}}\n\n";
+        $history = [];
+        $mockHandler = new MockHandler([new Response(200, [], $truncated)]);
+        $http = $this->buildClientWithHandler($mockHandler, $history);
+        $logger = $this->createMock(LoggerInterface::class);
+        $sleeper = $this->createMock(Sleeper::class);
+
+        $client = new GuzzleMessagesClient($http, $this->buildStoreConfig(), $logger, $sleeper);
+
+        $events = [];
+        try {
+            foreach ($client->stream(['messages' => []]) as $event) {
+                $events[] = $event;
+            }
+            $this->fail('Expected Transport was not thrown');
+        } catch (Transport $exception) {
+            $this->assertSame('The model stream ended before message_stop.', $exception->getMessage());
+        }
+        $this->assertCount(2, $events);
+        $this->assertSame('content_block_delta', $events[1]->type);
     }
 
     public function testRequestCarriesAReadTimeoutAndATotalTimeoutAboveIt(): void
