@@ -129,6 +129,8 @@ final class MagentoStorefrontTest extends TestCase
         $product->method('getProductUrl')->willReturn(null);
         $product->method('getOptions')->willReturn([]);
         $product->method('getAttributeText')->willReturn(false);
+        $product->method('getStatus')->willReturn(Status::STATUS_ENABLED);
+        $product->method('getWebsiteIds')->willReturn([1]);
         return $product;
     }
 
@@ -441,6 +443,54 @@ final class MagentoStorefrontTest extends TestCase
         $storefront->addToCart($this->context(), '201', 1);
     }
 
+    public function testAddToCartRejectsADisabledProduct(): void
+    {
+        $product = $this->createMock(MagentoProduct::class);
+        $product->method('getId')->willReturn(210);
+        $product->method('getStatus')->willReturn(Status::STATUS_DISABLED);
+        $product->method('getWebsiteIds')->willReturn([1]);
+
+        $productRepository = $this->createMock(ProductRepositoryInterface::class);
+        $productRepository->method('getById')->willReturn($product);
+
+        $cartRepository = $this->createMock(CartRepositoryInterface::class);
+        $cartRepository->method('get')->willReturn($this->createMock(Quote::class));
+
+        $storefront = $this->buildStorefront([
+            'productRepository' => $productRepository,
+            'cartRepository' => $cartRepository,
+        ]);
+
+        $this->expectException(Unavailable::class);
+        $this->expectExceptionMessage('210 is out of stock');
+
+        $storefront->addToCart($this->context(), '210', 1);
+    }
+
+    public function testAddToCartRejectsAProductNotAssignedToTheCurrentWebsite(): void
+    {
+        $product = $this->createMock(MagentoProduct::class);
+        $product->method('getId')->willReturn(211);
+        $product->method('getStatus')->willReturn(Status::STATUS_ENABLED);
+        $product->method('getWebsiteIds')->willReturn([2]);
+
+        $productRepository = $this->createMock(ProductRepositoryInterface::class);
+        $productRepository->method('getById')->willReturn($product);
+
+        $cartRepository = $this->createMock(CartRepositoryInterface::class);
+        $cartRepository->method('get')->willReturn($this->createMock(Quote::class));
+
+        $storefront = $this->buildStorefront([
+            'productRepository' => $productRepository,
+            'cartRepository' => $cartRepository,
+        ]);
+
+        $this->expectException(Unavailable::class);
+        $this->expectExceptionMessage('211 is out of stock');
+
+        $storefront->addToCart($this->context(), '211', 1);
+    }
+
     public function testAddToCartUsesTheLoadedMagentoProductForTheBuyRequest(): void
     {
         $product = $this->magentoProduct(301, 'Solo Item', 12.0);
@@ -516,6 +566,8 @@ final class MagentoStorefrontTest extends TestCase
         $product->method('getSku')->willReturn($sku);
         $product->method('getAttributeText')->willReturn(false);
         $product->method('getOptions')->willReturn([$option]);
+        $product->method('getStatus')->willReturn(Status::STATUS_ENABLED);
+        $product->method('getWebsiteIds')->willReturn([1]);
         return $product;
     }
 

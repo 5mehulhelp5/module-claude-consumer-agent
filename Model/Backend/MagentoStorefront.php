@@ -372,6 +372,15 @@ final class MagentoStorefront implements StorefrontBackendInterface
             throw new Unavailable($productId . ' is out of stock');
         }
 
+        if ((int)$product->getStatus() !== Status::STATUS_ENABLED) {
+            throw new Unavailable($productId . ' is out of stock');
+        }
+
+        $currentWebsiteId = (int)$this->storeManager->getStore($ctx->storeId)->getWebsiteId();
+        if (!in_array($currentWebsiteId, (array)$product->getWebsiteIds(), true)) {
+            throw new Unavailable($productId . ' is out of stock');
+        }
+
         if (!$this->salability->isSalable($product, $ctx)) {
             $siblings = $this->inStockSiblingIds($product, $ctx);
             $message = $productId . ' is out of stock';
