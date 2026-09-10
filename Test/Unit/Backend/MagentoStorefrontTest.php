@@ -41,7 +41,10 @@ use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address as QuoteAddress;
 use Magento\Quote\Model\Quote\Item as QuoteItem;
 use Magento\Quote\Model\Quote\Item\Option as QuoteItemOption;
+use Magento\Sales\Api\Data\OrderSearchResultInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Model\Order as SalesOrder;
+use Magento\Sales\Model\Order\Item as SalesOrderItem;
 use Magento\Shipping\Helper\Data as ShippingHelper;
 use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManagerInterface;
@@ -822,5 +825,106 @@ final class MagentoStorefrontTest extends TestCase
         $this->expectException(SignInRequired::class);
 
         $storefront->getOrder($this->context(null), '100000001');
+    }
+
+    private function orderItem(
+        string $sku,
+        string $name,
+        float $price,
+        int $fallbackProductId
+    ): SalesOrderItem&MockObject {
+
+        $item = $this->createMock(SalesOrderItem::class);
+        $item->method('getProductOptions')->willReturn(['simple_sku' => $sku]);
+        $item->method('getName')->willReturn($name);
+        $item->method('getQtyOrdered')->willReturn(1);
+        $item->method('getPrice')->willReturn($price);
+        $item->method('getProductId')->willReturn($fallbackProductId);
+        return $item;
+    }
+
+    private function salesOrder(string $incrementId, array $items): SalesOrder&MockObject
+    {
+        $order = $this->createMock(SalesOrder::class);
+        $order->method('getIncrementId')->willReturn($incrementId);
+        $order->method('getState')->willReturn(SalesOrder::STATE_PROCESSING);
+        $order->method('getStatus')->willReturn('processing');
+        $order->method('getCreatedAt')->willReturn('2026-01-01 00:00:00');
+        $order->method('getGrandTotal')->willReturn(50.0);
+        $order->method('getOrderCurrencyCode')->willReturn('USD');
+        $order->method('getAllVisibleItems')->willReturn($items);
+        $order->method('getTracksCollection')->willReturn([]);
+        return $order;
+    }
+
+    public function testGetOrdersResolvesSimpleSkusInOneBulkRepositoryCall(): void
+    {
+        $itemOne = $this->orderItem('SHIRT-RED-M', 'Red Shirt', 25.0, 900);
+        $itemTwo = $this->orderItem('SHIRT-BLUE-L', 'Blue Shirt', 30.0, 901);
+
+        $orderOne = $this->salesOrder('100000001', [$itemOne]);
+        $orderTwo = $this->salesOrder('100000002', [$itemTwo]);
+
+        $listResult = $this->createMock(OrderSearchResultInterface::class);
+        $listResult->method('getItems')->willReturn([$orderOne, $orderTwo]);
+        $orderRepository = $this->createMock(OrderRepositoryInterface::class);
+        $orderRepository->method('getList')->willReturn($listResult);
+
+        $simpleOne = $this->magentoProduct(910, 'Red Shirt Simple', 25.0);
+        $simpleOne->method('getSku')->willReturn('SHIRT-RED-M');
+        $simpleTwo = $this->magentoProduct(911, 'Blue Shirt Simple', 30.0);
+        $simpleTwo->method('getSku')->willReturn('SHIRT-BLUE-L');
+
+        $productResults = $this->createMock(ProductSearchResultsInterface::class);
+        $productResults->method('getItems')->willReturn([$simpleOne, $simpleTwo]);
+
+        $productRepository = $this->createMock(ProductRepositoryInterface::class);
+        $productRepository->expects($this->once())->method('getList')->willReturn($productResults);
+        $productRepository->expects($this->never())->method('get');
+
+        $orderStatusMapper = $this->createMock(OrderStatusMapperInterface::class);
+        $orderStatusMapper->method('map')->willReturn('processing');
+
+        $storefront = $this->buildStorefront([
+            'orderRepository' => $orderRepository,
+            'productRepository' => $productRepository,
+            'orderStatusMapper' => $orderStatusMapper,
+        ]);
+
+        $orders = $storefront->getOrders($this->context(42), 10);
+
+        $this->assertCount(2, $orders);
+        $this->assertSame('910', $orders[0]->getItems()[0]->getProductId());
+        $this->assertSame('911', $orders[1]->getItems()[0]->getProductId());
+    }
+
+    public function testGetOrdersFallsBackToOrderItemProductIdWhenSkuUnresolved(): void
+    {
+        $item = $this->orderItem('MISSING-SKU', 'Ghost Item', 15.0, 902);
+        $order = $this->salesOrder('100000003', [$item]);
+
+        $listResult = $this->createMock(OrderSearchResultInterface::class);
+        $listResult->method('getItems')->willReturn([$order]);
+        $orderRepository = $this->createMock(OrderRepositoryInterface::class);
+        $orderRepository->method('getList')->willReturn($listResult);
+
+        $productResults = $this->createMock(ProductSearchResultsInterface::class);
+        $productResults->method('getItems')->willReturn([]);
+        $productRepository = $this->createMock(ProductRepositoryInterface::class);
+        $productRepository->method('getList')->willReturn($productResults);
+        $productRepository->expects($this->never())->method('get');
+
+        $orderStatusMapper = $this->createMock(OrderStatusMapperInterface::class);
+        $orderStatusMapper->method('map')->willReturn('processing');
+
+        $storefront = $this->buildStorefront([
+            'orderRepository' => $orderRepository,
+            'productRepository' => $productRepository,
+            'orderStatusMapper' => $orderStatusMapper,
+        ]);
+
+        $orders = $storefront->getOrders($this->context(42), 10);
+
+        $this->assertSame('902', $orders[0]->getItems()[0]->getProductId());
     }
 }

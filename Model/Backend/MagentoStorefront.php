@@ -735,9 +735,12 @@ final class MagentoStorefront implements StorefrontBackendInterface
             ->setPageSize($limit)
             ->create();
 
+        $orderItems = $this->orderRepository->getList($criteria)->getItems();
+        $simpleProductIds = $this->simpleProductIdsBySku($orderItems, $ctx->storeId);
+
         $orders = [];
-        foreach ($this->orderRepository->getList($criteria)->getItems() as $order) {
-            $orders[] = $this->toOrder($order, $ctx);
+        foreach ($orderItems as $order) {
+            $orders[] = $this->toOrder($order, $ctx, $simpleProductIds);
         }
         return $orders;
     }
@@ -756,14 +759,55 @@ final class MagentoStorefront implements StorefrontBackendInterface
 
         $items = $this->orderRepository->getList($criteria)->getItems();
         $first = reset($items);
-        return $first !== false ? $this->toOrder($first, $ctx) : null;
+        if ($first === false) {
+            return null;
+        }
+
+        $simpleProductIds = $this->simpleProductIdsBySku([$first], $ctx->storeId);
+        return $this->toOrder($first, $ctx, $simpleProductIds);
     }
 
-    private function toOrder(SalesOrder $order, SessionContext $ctx): Order
+    private function simpleProductIdsBySku(array $orders, int $storeId): array
+    {
+        $skus = [];
+        foreach ($orders as $order) {
+            foreach ($order->getAllVisibleItems() as $orderItem) {
+                $options = $orderItem->getProductOptions();
+                $options = is_array($options) ? $options : [];
+                $sku = isset($options['simple_sku']) ? (string)$options['simple_sku'] : null;
+                if ($sku !== null && $sku !== '') {
+                    $skus[$sku] = true;
+                }
+            }
+        }
+        if ($skus === []) {
+            return [];
+        }
+
+        $previousStoreId = (int)$this->storeManager->getStore()->getId();
+        $this->storeManager->setCurrentStore($storeId);
+
+        try {
+            $criteria = $this->searchCriteriaBuilder
+                ->addFilter('sku', array_keys($skus), 'in')
+                ->create();
+            $products = $this->productRepository->getList($criteria)->getItems();
+        } finally {
+            $this->storeManager->setCurrentStore($previousStoreId);
+        }
+
+        $ids = [];
+        foreach ($products as $product) {
+            $ids[$product->getSku()] = (string)$product->getId();
+        }
+        return $ids;
+    }
+
+    private function toOrder(SalesOrder $order, SessionContext $ctx, array $simpleProductIds): Order
     {
         $items = [];
         foreach ($order->getAllVisibleItems() as $orderItem) {
-            $items[] = $this->toOrderItem($orderItem, $ctx);
+            $items[] = $this->toOrderItem($orderItem, $simpleProductIds);
         }
 
         $tracks = $order->getTracksCollection();
@@ -785,14 +829,14 @@ final class MagentoStorefront implements StorefrontBackendInterface
         );
     }
 
-    private function toOrderItem(SalesOrderItem $orderItem, SessionContext $ctx): OrderItem
+    private function toOrderItem(SalesOrderItem $orderItem, array $simpleProductIds): OrderItem
     {
         $options = $orderItem->getProductOptions();
         $options = is_array($options) ? $options : [];
         $simpleSku = isset($options['simple_sku']) ? (string)$options['simple_sku'] : null;
 
         return new OrderItem(
-            $this->orderItemProductId($orderItem, $simpleSku, $ctx),
+            $this->orderItemProductId($orderItem, $simpleSku, $simpleProductIds),
             (string)$orderItem->getName(),
             (int)$orderItem->getQtyOrdered(),
             (float)$orderItem->getPrice(),
@@ -801,14 +845,10 @@ final class MagentoStorefront implements StorefrontBackendInterface
         );
     }
 
-    private function orderItemProductId(SalesOrderItem $orderItem, ?string $simpleSku, SessionContext $ctx): string
+    private function orderItemProductId(SalesOrderItem $orderItem, ?string $simpleSku, array $simpleProductIds): string
     {
-        if ($simpleSku !== null && $simpleSku !== '') {
-            try {
-                return (string)$this->productRepository->get($simpleSku, false, $ctx->storeId)->getId();
-            } catch (NoSuchEntityException $exception) {
-                return (string)$orderItem->getProductId();
-            }
+        if ($simpleSku !== null && $simpleSku !== '' && isset($simpleProductIds[$simpleSku])) {
+            return $simpleProductIds[$simpleSku];
         }
         return (string)$orderItem->getProductId();
     }
