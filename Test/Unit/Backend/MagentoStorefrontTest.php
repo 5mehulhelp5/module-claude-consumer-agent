@@ -9,9 +9,12 @@ use Magento\Catalog\Api\Data\ProductSearchResultsInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Helper\Image as ImageHelper;
 use Magento\Catalog\Helper\Product\Configuration as ProductConfigurationHelper;
+use Magento\Catalog\Model\Category;
 use Magento\Catalog\Model\Product as MagentoProduct;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Catalog\Model\Product\Visibility;
+use Magento\Catalog\Model\ResourceModel\Category\Collection as CategoryCollection;
+use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable as ConfigurableResource;
@@ -22,11 +25,13 @@ use Magento\Framework\Api\SearchCriteria;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Api\SortOrder;
 use Magento\Framework\Api\SortOrderBuilder;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\DataObject;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Framework\Pricing\Amount\AmountInterface;
 use Magento\Framework\Pricing\Price\PriceInterface;
 use Magento\Framework\Pricing\PriceInfoInterface;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\InventoryApi\Api\Data\StockInterface;
 use Magento\InventorySalesApi\Api\IsProductSalableInterface;
 use Magento\InventorySalesApi\Api\StockResolverInterface;
@@ -51,9 +56,11 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Exception\Unavailable;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Backend\BuyRequestBuilder;
 use MageOS\ClaudeConsumerAgent\Model\Backend\MagentoStorefront;
+use MageOS\ClaudeConsumerAgent\Model\Backend\Provider\AllowedCategories;
 use MageOS\ClaudeConsumerAgent\Model\Backend\Provider\CoreOptions;
 use MageOS\ClaudeConsumerAgent\Model\Backend\ProductMapper;
 use MageOS\ClaudeConsumerAgent\Model\Backend\Salability;
+use MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig;
 use MageOS\ClaudeConsumerAgent\Model\Data\PageContext;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -169,6 +176,59 @@ final class MagentoStorefrontTest extends TestCase
         return $builder;
     }
 
+    private function storeConfig(array $allowedCategories): StoreConfig
+    {
+        $scopeConfig = $this->createMock(ScopeConfigInterface::class);
+        $scopeConfig->method('getValue')->willReturnCallback(
+            static fn (string $path): ?string => $path === 'aiagent/content/allowed_categories'
+                ? implode(',', $allowedCategories)
+                : null
+        );
+        $scopeConfig->method('isSetFlag')->willReturn(false);
+
+        return new StoreConfig($scopeConfig, $this->storeManager());
+    }
+
+    private function category(int $id, string $path): Category&MockObject
+    {
+        $category = $this->createMock(Category::class);
+        $category->method('getId')->willReturn($id);
+        $category->method('getPath')->willReturn($path);
+        return $category;
+    }
+
+    private function allowedCategories(
+        array $allowedCategories = [],
+        array $categories = [],
+        ?CategoryCollectionFactory $collectionFactory = null
+    ): AllowedCategories {
+        if ($collectionFactory === null) {
+            $collection = $this->createMock(CategoryCollection::class);
+            $collection->method('setStoreId')->willReturnSelf();
+            $collection->method('addAttributeToSelect')->willReturnSelf();
+            $collection->method('addIdFilter')->willReturnSelf();
+            $collection->method('getIterator')->willReturn(new \ArrayIterator($categories));
+
+            $collectionFactory = $this->createMock(CategoryCollectionFactory::class);
+            $collectionFactory->method('create')->willReturn($collection);
+        }
+
+        return (new ObjectManager($this))->getObject(AllowedCategories::class, [
+            'collectionFactory' => $collectionFactory,
+            'storeConfig' => $this->storeConfig($allowedCategories),
+        ]);
+    }
+
+    private function detailedProduct(int $id, array $categoryIds): MagentoProduct&MockObject
+    {
+        $product = $this->magentoProduct($id, 'Product ' . $id, 10.0);
+        $product->method('getStatus')->willReturn(Status::STATUS_ENABLED);
+        $product->method('getVisibility')->willReturn(Visibility::VISIBILITY_BOTH);
+        $product->method('getAttributes')->willReturn([]);
+        $product->method('getCategoryIds')->willReturn($categoryIds);
+        return $product;
+    }
+
     private function defaultDependencies(): array
     {
         return [
@@ -193,6 +253,7 @@ final class MagentoStorefrontTest extends TestCase
             'policySource' => $this->createMock(PolicySourceInterface::class),
             'fulfillmentProvider' => $this->createMock(FulfillmentProviderInterface::class),
             'categorySearchProvider' => $this->createMock(CategorySearchProviderInterface::class),
+            'allowedCategories' => $this->allowedCategories(),
         ];
     }
 
@@ -591,6 +652,51 @@ final class MagentoStorefrontTest extends TestCase
             'More variants exist; ask about a size or colour to narrow the list.',
             $details->getNote()
         );
+    }
+
+    public function testGetProductDetailsReturnsNullForAProductOutsideTheAllowlist(): void
+    {
+        $productRepository = $this->createMock(ProductRepositoryInterface::class);
+        $productRepository->method('getById')->willReturn($this->detailedProduct(700, [7]));
+
+        $storefront = $this->buildStorefront([
+            'productRepository' => $productRepository,
+            'allowedCategories' => $this->allowedCategories([10], [$this->category(7, '1/2/5/7')]),
+        ]);
+
+        $this->assertNull($storefront->getProductDetails($this->context(), '700'));
+    }
+
+    public function testGetProductDetailsReturnsAProductUnderAnAllowedCategory(): void
+    {
+        $productRepository = $this->createMock(ProductRepositoryInterface::class);
+        $productRepository->method('getById')->willReturn($this->detailedProduct(701, [55]));
+
+        $storefront = $this->buildStorefront([
+            'productRepository' => $productRepository,
+            'allowedCategories' => $this->allowedCategories([10], [$this->category(55, '1/2/10/55')]),
+        ]);
+
+        $details = $storefront->getProductDetails($this->context(), '701');
+
+        $this->assertNotNull($details);
+        $this->assertSame('701', $details->getProductId());
+    }
+
+    public function testGetProductDetailsIgnoresTheAllowlistWhenItIsEmpty(): void
+    {
+        $productRepository = $this->createMock(ProductRepositoryInterface::class);
+        $productRepository->method('getById')->willReturn($this->detailedProduct(702, [7]));
+
+        $collectionFactory = $this->createMock(CategoryCollectionFactory::class);
+        $collectionFactory->expects($this->never())->method('create');
+
+        $storefront = $this->buildStorefront([
+            'productRepository' => $productRepository,
+            'allowedCategories' => $this->allowedCategories([], [], $collectionFactory),
+        ]);
+
+        $this->assertNotNull($storefront->getProductDetails($this->context(), '702'));
     }
 
     public function testGetOrdersThrowsSignInRequiredForGuest(): void

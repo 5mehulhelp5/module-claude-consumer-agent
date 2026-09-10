@@ -63,6 +63,7 @@ final class MagentoStorefront implements StorefrontBackendInterface
         private readonly \Magento\Shipping\Helper\Data $shippingHelper,
         private readonly \MageOS\ClaudeConsumerAgent\Api\Backend\PolicySourceInterface $policySource,
         private readonly \MageOS\ClaudeConsumerAgent\Api\Backend\FulfillmentProviderInterface $fulfillmentProvider,
+        private readonly \MageOS\ClaudeConsumerAgent\Model\Backend\Provider\AllowedCategories $allowedCategories,
         private readonly \MageOS\ClaudeConsumerAgent\Api\Backend\CategorySearchProviderInterface $categorySearchProvider
     ) {
     }
@@ -160,6 +161,9 @@ final class MagentoStorefront implements StorefrontBackendInterface
             return null;
         }
         if ((int)$product->getVisibility() === Visibility::VISIBILITY_NOT_VISIBLE) {
+            return null;
+        }
+        if (!$this->allowedCategories->permits((array)$product->getCategoryIds(), $ctx->storeId)) {
             return null;
         }
 
