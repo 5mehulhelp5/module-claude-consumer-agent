@@ -11,6 +11,8 @@ interface SessionRepositoryInterface
 {
     public function bind(?string $sessionId, SessionContext $ctx, string $surface = 'overlay'): Binding;
 
+    public function find(?string $sessionId, SessionContext $ctx): ?Binding;
+
     public function create(SessionContext $ctx, string $surface = 'overlay'): Binding;
 
     public function save(Binding $binding, SessionState $state): bool;

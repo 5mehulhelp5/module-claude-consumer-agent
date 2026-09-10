@@ -166,6 +166,103 @@ final class RepositoryTest extends TestCase
         $this->assertSame(42, $binding->row['customer_id']);
     }
 
+    public function testFindWithoutASessionIdReturnsNullAndTouchesNothing(): void
+    {
+        $resource = $this->createMock(Session::class);
+        $resource->expects($this->never())->method('load');
+        $resource->expects($this->never())->method('insert');
+        $resource->expects($this->never())->method('update');
+        $repository = $this->buildRepository($resource, $this->createMock(LoggerInterface::class));
+
+        $this->assertNull($repository->find(null, $this->buildContext(null, 5, 1)));
+        $this->assertNull($repository->find('not-a-session-id', $this->buildContext(null, 5, 1)));
+    }
+
+    public function testFindWithAnUnknownSessionIdReturnsNullAndInsertsNothing(): void
+    {
+        $sessionId = str_repeat('1', 64);
+        $resource = $this->createMock(Session::class);
+        $resource->expects($this->once())->method('load')->with($sessionId)->willReturn(null);
+        $resource->expects($this->never())->method('insert');
+        $resource->expects($this->never())->method('update');
+        $repository = $this->buildRepository($resource, $this->createMock(LoggerInterface::class));
+
+        $this->assertNull($repository->find($sessionId, $this->buildContext(null, 5, 1)));
+    }
+
+    public function testFindReturnsNullForAForeignOrMismatchedRowWithoutWriting(): void
+    {
+        $sessionId = str_repeat('2', 64);
+        $resource = $this->createMock(Session::class);
+        $resource->method('load')->willReturn([
+            'session_id' => $sessionId,
+            'customer_id' => 999,
+            'quote_id' => 5,
+            'store_id' => 1,
+            'surface' => 'overlay',
+            'state' => '{}',
+            'version' => 0,
+            'turns' => 0,
+        ]);
+        $resource->expects($this->never())->method('insert');
+        $resource->expects($this->never())->method('update');
+        $repository = $this->buildRepository($resource, $this->createMock(LoggerInterface::class));
+
+        $this->assertNull($repository->find($sessionId, $this->buildContext(42, 5, 1)));
+        $this->assertNull($repository->find($sessionId, $this->buildContext(999, 5, 2)));
+    }
+
+    public function testFindReturnsTheOwnedRowWithoutWriting(): void
+    {
+        $sessionId = str_repeat('3', 64);
+        $resource = $this->createMock(Session::class);
+        $resource->method('load')->willReturn([
+            'session_id' => $sessionId,
+            'customer_id' => 42,
+            'quote_id' => 5,
+            'store_id' => 1,
+            'surface' => 'overlay',
+            'state' => '{}',
+            'version' => 3,
+            'turns' => 2,
+        ]);
+        $resource->expects($this->never())->method('insert');
+        $resource->expects($this->never())->method('update');
+        $repository = $this->buildRepository($resource, $this->createMock(LoggerInterface::class));
+
+        $binding = $repository->find($sessionId, $this->buildContext(42, 5, 1));
+
+        $this->assertNotNull($binding);
+        $this->assertSame($sessionId, $binding->sessionId);
+        $this->assertFalse($binding->isNew);
+        $this->assertSame(3, $binding->expectedVersion);
+        $this->assertSame(2, $binding->row['turns']);
+    }
+
+    public function testFindDoesNotClaimAGuestRowForASignedInCustomer(): void
+    {
+        $sessionId = str_repeat('4', 64);
+        $resource = $this->createMock(Session::class);
+        $resource->method('load')->willReturn([
+            'session_id' => $sessionId,
+            'customer_id' => null,
+            'quote_id' => 77,
+            'store_id' => 1,
+            'surface' => 'overlay',
+            'state' => '{}',
+            'version' => 0,
+            'turns' => 0,
+        ]);
+        $resource->expects($this->never())->method('insert');
+        $resource->expects($this->never())->method('update');
+        $repository = $this->buildRepository($resource, $this->createMock(LoggerInterface::class));
+
+        $binding = $repository->find($sessionId, $this->buildContext(42, 77, 1));
+
+        $this->assertNotNull($binding);
+        $this->assertNull($binding->row['customer_id']);
+    }
+
     public function testSaveConflictReturnsFalseAndLogs(): void
     {
         $sessionId = str_repeat('e', 64);

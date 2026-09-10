@@ -21,19 +21,28 @@ final class Repository implements SessionRepositoryInterface
 
     public function bind(?string $sessionId, SessionContext $ctx, string $surface = 'overlay'): Binding
     {
-        if ($sessionId === null || !$this->isValidSessionId($sessionId)) {
+        $binding = $this->find($sessionId, $ctx);
+        if ($binding === null) {
             return $this->create($ctx, $surface);
+        }
+        if ($binding->row['customer_id'] === null && $ctx->customerId !== null) {
+            $this->resource->update($binding->sessionId, ['customer_id' => $ctx->customerId]);
+            $binding->row['customer_id'] = $ctx->customerId;
+        }
+        return $binding;
+    }
+
+    public function find(?string $sessionId, SessionContext $ctx): ?Binding
+    {
+        if ($sessionId === null || !$this->isValidSessionId($sessionId)) {
+            return null;
         }
         $row = $this->resource->load($sessionId);
         if ($row === null) {
-            return $this->create($ctx, $surface);
+            return null;
         }
         if (!$this->isOwned($row, $ctx) || (int)$row['store_id'] !== $ctx->storeId) {
-            return $this->create($ctx, $surface);
-        }
-        if ($row['customer_id'] === null && $ctx->customerId !== null) {
-            $this->resource->update($sessionId, ['customer_id' => $ctx->customerId]);
-            $row['customer_id'] = $ctx->customerId;
+            return null;
         }
         return new Binding(
             $sessionId,

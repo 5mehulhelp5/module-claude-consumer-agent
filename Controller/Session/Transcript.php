@@ -13,7 +13,6 @@ class Transcript implements HttpGetActionInterface
     public function __construct(
         private readonly \Magento\Customer\Model\Session $customerSession,
         private readonly \Magento\Checkout\Model\Session $checkoutSession,
-        private readonly \Magento\Quote\Api\CartRepositoryInterface $cartRepository,
         private readonly \Magento\Store\Model\StoreManagerInterface $storeManager,
         private readonly \MageOS\ClaudeConsumerAgent\Model\Session\Repository $sessionRepository,
         private readonly \MageOS\ClaudeConsumerAgent\Model\Session\TranscriptRepository $transcriptRepository,
@@ -37,20 +36,15 @@ class Transcript implements HttpGetActionInterface
         $sessionIdParam = $this->request->getParam('session');
         $sessionId = is_string($sessionIdParam) && $sessionIdParam !== '' ? $sessionIdParam : null;
         $customerId = $this->customerSession->getCustomerId();
-        $quote = $this->checkoutSession->getQuote();
-        if ($quote->getId() === null) {
-            $this->cartRepository->save($quote);
-            $this->checkoutSession->setQuoteId((int)$quote->getId());
-        }
-        $quoteId = (int)$quote->getId();
+        $quoteId = (int)$this->checkoutSession->getQuote()->getId();
         $page = PageContext::fromArray([]);
         $now = new \DateTimeImmutable('now');
         $context = new SessionContext((string)($sessionId ?? ''), $customerId, $quoteId, $storeId, $page, $now);
-        $binding = $this->sessionRepository->bind($sessionId, $context);
+        $binding = $this->sessionRepository->find($sessionId, $context);
         $this->sessionManager->writeClose();
         $result = $this->jsonFactory->create();
-        if ($binding->isNew) {
-            $result->setData(['session' => $binding->sessionId, 'messages' => []]);
+        if ($binding === null) {
+            $result->setData(['session' => null, 'messages' => []]);
         } else {
             $rows = $this->transcriptRepository->load($binding->sessionId);
             $messages = $this->transcriptView->render($rows, $binding->state, $this->presentationRegistry);

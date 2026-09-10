@@ -21,6 +21,11 @@ final class InMemorySessions implements SessionRepositoryInterface
         return $this->create($ctx, $surface);
     }
 
+    public function find(?string $sessionId, SessionContext $ctx): ?Binding
+    {
+        return null;
+    }
+
     public function create(SessionContext $ctx, string $surface = 'overlay'): Binding
     {
         return new Binding($ctx->sessionId, null, new SessionState(), true, 0, $ctx);
