@@ -254,6 +254,9 @@ $configJson = json_encode(
                         if (data.retry_after) {
                             last.retryAfter = data.retry_after;
                         }
+                        last.streaming = false;
+                        this.turn.running = false;
+                        this.turn.status = '';
                         break;
                     case 'turn_complete':
                         last.streaming = false;

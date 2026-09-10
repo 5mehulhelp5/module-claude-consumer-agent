@@ -116,7 +116,7 @@ final class JsonTurnTest extends TestCase
         $this->assertSame('turn_complete', $captured['events'][1]['type']);
     }
 
-    public function testBusyEventOnlyProducesOneEventWithoutCallingTheOrchestrator(): void
+    public function testBusyEventProducesTheErrorAndACompletionEventWithoutCallingTheOrchestrator(): void
     {
         $orchestrator = $this->createMock(Orchestrator::class);
         $orchestrator->expects($this->never())->method('streamTurn');
@@ -143,8 +143,9 @@ final class JsonTurnTest extends TestCase
         );
         $result->renderResult($response);
 
-        $this->assertCount(1, $captured['events']);
+        $this->assertCount(2, $captured['events']);
         $this->assertSame('error', $captured['events'][0]['type']);
+        $this->assertSame('turn_complete', $captured['events'][1]['type']);
     }
 
     public function testThrowingGeneratorProducesAnErrorEventAndStillReleasesTheSlotAndLogs(): void

@@ -170,7 +170,7 @@ final class EventStreamTest extends \PHPUnit\Framework\TestCase
         $this->assertStringContainsString('event: turn_complete', $writes[2]);
     }
 
-    public function testBusyEventOnlyWritesTheOpenCommentAndOneFrameWithoutCallingTheOrchestrator(): void
+    public function testBusyEventWritesTheOpenCommentTheErrorAndACompletionFrameWithoutCallingTheOrchestrator(): void
     {
         $orchestrator = $this->createMock(Orchestrator::class);
         $orchestrator->expects($this->never())->method('streamTurn');
@@ -189,9 +189,10 @@ final class EventStreamTest extends \PHPUnit\Framework\TestCase
         $result->renderResult($this->responseMock());
         $writes = $result->getWrites();
 
-        $this->assertCount(2, $writes);
+        $this->assertCount(3, $writes);
         $this->assertSame(": open\n\n", $writes[0]);
         $this->assertStringContainsString('event: error', $writes[1]);
+        $this->assertStringContainsString('event: turn_complete', $writes[2]);
     }
 
     public function testCompressionOnProducesTheJsonFallbackWithTheUnavailableHeader(): void

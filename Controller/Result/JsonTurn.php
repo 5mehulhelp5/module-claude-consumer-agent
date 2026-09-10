@@ -66,7 +66,7 @@ class JsonTurn extends AbstractResult
     private function busyEvents(): array
     {
         $this->slot?->release();
-        return [$this->busyEvent];
+        return [$this->busyEvent, Event::turnComplete('busy', [], 0, 0)];
     }
 
     private function collectEvents(): array

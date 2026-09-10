@@ -67,6 +67,7 @@ class EventStream extends AbstractResult
         $this->write(": open\n\n");
         if ($this->busyEvent !== null) {
             $this->write(SseFrame::encode($this->busyEvent));
+            $this->write(SseFrame::encode($this->busyCompletion()));
             $this->slot?->release();
             $response->setBody('');
             return $this;
@@ -107,7 +108,9 @@ class EventStream extends AbstractResult
 
     private function renderJsonFallback(HttpResponseInterface $response): self
     {
-        $events = $this->busyEvent !== null ? [$this->busyEvent] : $this->collectEvents();
+        $events = $this->busyEvent !== null
+            ? [$this->busyEvent, $this->busyCompletion()]
+            : $this->collectEvents();
         $response->setHeader('X-AiAgent-Stream', 'unavailable', true);
         $response->setNoCacheHeaders();
         $response->setMetadata('NotCacheable', true);
@@ -133,6 +136,11 @@ class EventStream extends AbstractResult
             $this->slot?->release();
         }
         return $events;
+    }
+
+    private function busyCompletion(): Event
+    {
+        return Event::turnComplete('busy', [], 0, 0);
     }
 
     private function logError(\Throwable $exception): void
