@@ -7,5 +7,5 @@ use Magento\Sales\Model\Order;
 
 interface OrderStatusMapperInterface
 {
-    public function map(Order $order): string;
+    public function map(Order $order, bool $hasTracking): string;
 }

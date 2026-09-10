@@ -64,6 +64,8 @@ final class MagentoStorefront implements StorefrontBackendInterface
         private readonly \MageOS\ClaudeConsumerAgent\Api\Backend\PolicySourceInterface $policySource,
         private readonly \MageOS\ClaudeConsumerAgent\Api\Backend\FulfillmentProviderInterface $fulfillmentProvider,
         private readonly \MageOS\ClaudeConsumerAgent\Model\Backend\Provider\AllowedCategories $allowedCategories,
+        private readonly \Magento\Sales\Api\ShipmentTrackRepositoryInterface $shipmentTrackRepository,
+        private readonly \Magento\Sales\Api\ShipmentRepositoryInterface $shipmentRepository,
         private readonly \MageOS\ClaudeConsumerAgent\Api\Backend\CategorySearchProviderInterface $categorySearchProvider
     ) {
     }
@@ -726,10 +728,12 @@ final class MagentoStorefront implements StorefrontBackendInterface
 
         $orderItems = $this->orderRepository->getList($criteria)->getItems();
         $simpleProductIds = $this->simpleProductIdsBySku($orderItems, $ctx->storeId);
+        $trackedOrderIds = $this->trackedOrderIds($orderItems);
 
         $orders = [];
         foreach ($orderItems as $order) {
-            $orders[] = $this->toOrder($order, $ctx, $simpleProductIds);
+            $hasTracking = $trackedOrderIds[(int)$order->getId()] ?? false;
+            $orders[] = $this->toOrder($order, $ctx, $simpleProductIds, $hasTracking);
         }
         return $orders;
     }
@@ -753,7 +757,9 @@ final class MagentoStorefront implements StorefrontBackendInterface
         }
 
         $simpleProductIds = $this->simpleProductIdsBySku([$first], $ctx->storeId);
-        return $this->toOrder($first, $ctx, $simpleProductIds);
+        $trackedOrderIds = $this->trackedOrderIds([$first]);
+        $hasTracking = $trackedOrderIds[(int)$first->getId()] ?? false;
+        return $this->toOrder($first, $ctx, $simpleProductIds, $hasTracking);
     }
 
     private function simpleProductIdsBySku(array $orders, int $storeId): array
@@ -792,7 +798,32 @@ final class MagentoStorefront implements StorefrontBackendInterface
         return $ids;
     }
 
-    private function toOrder(SalesOrder $order, SessionContext $ctx, array $simpleProductIds): Order
+    private function trackedOrderIds(array $orders): array
+    {
+        $orderIds = [];
+        foreach ($orders as $order) {
+            $orderIds[] = (int)$order->getId();
+        }
+        if ($orderIds === []) {
+            return [];
+        }
+
+        $tracked = [];
+
+        $trackCriteria = $this->searchCriteriaBuilder->addFilter('order_id', $orderIds, 'in')->create();
+        foreach ($this->shipmentTrackRepository->getList($trackCriteria)->getItems() as $track) {
+            $tracked[(int)$track->getOrderId()] = true;
+        }
+
+        $shipmentCriteria = $this->searchCriteriaBuilder->addFilter('order_id', $orderIds, 'in')->create();
+        foreach ($this->shipmentRepository->getList($shipmentCriteria)->getItems() as $shipment) {
+            $tracked[(int)$shipment->getOrderId()] = true;
+        }
+
+        return $tracked;
+    }
+
+    private function toOrder(SalesOrder $order, SessionContext $ctx, array $simpleProductIds, bool $hasTracking): Order
     {
         $items = [];
         foreach ($order->getAllVisibleItems() as $orderItem) {
@@ -808,7 +839,7 @@ final class MagentoStorefront implements StorefrontBackendInterface
 
         return new Order(
             (string)$order->getIncrementId(),
-            $this->orderStatusMapper->map($order),
+            $this->orderStatusMapper->map($order, $hasTracking),
             new \DateTimeImmutable((string)$order->getCreatedAt()),
             (float)$order->getGrandTotal(),
             (string)$order->getOrderCurrencyCode(),

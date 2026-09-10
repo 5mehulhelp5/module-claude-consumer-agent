@@ -44,7 +44,11 @@ use Magento\Quote\Model\Quote\Address as QuoteAddress;
 use Magento\Quote\Model\Quote\Item as QuoteItem;
 use Magento\Quote\Model\Quote\Item\Option as QuoteItemOption;
 use Magento\Sales\Api\Data\OrderSearchResultInterface;
+use Magento\Sales\Api\Data\ShipmentSearchResultInterface;
+use Magento\Sales\Api\Data\ShipmentTrackSearchResultInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Api\ShipmentRepositoryInterface;
+use Magento\Sales\Api\ShipmentTrackRepositoryInterface;
 use Magento\Sales\Model\Order as SalesOrder;
 use Magento\Sales\Model\Order\Item as SalesOrderItem;
 use Magento\Shipping\Helper\Data as ShippingHelper;
@@ -195,6 +199,24 @@ final class MagentoStorefrontTest extends TestCase
         return $urlFinder;
     }
 
+    private function shipmentTrackRepository(array $tracks = []): ShipmentTrackRepositoryInterface&MockObject
+    {
+        $results = $this->createMock(ShipmentTrackSearchResultInterface::class);
+        $results->method('getItems')->willReturn($tracks);
+        $repository = $this->createMock(ShipmentTrackRepositoryInterface::class);
+        $repository->method('getList')->willReturn($results);
+        return $repository;
+    }
+
+    private function shipmentRepository(array $shipments = []): ShipmentRepositoryInterface&MockObject
+    {
+        $results = $this->createMock(ShipmentSearchResultInterface::class);
+        $results->method('getItems')->willReturn($shipments);
+        $repository = $this->createMock(ShipmentRepositoryInterface::class);
+        $repository->method('getList')->willReturn($results);
+        return $repository;
+    }
+
     private function searchCriteriaBuilder(): SearchCriteriaBuilder&MockObject
     {
         $builder = $this->createMock(SearchCriteriaBuilder::class);
@@ -292,6 +314,8 @@ final class MagentoStorefrontTest extends TestCase
             'fulfillmentProvider' => $this->createMock(FulfillmentProviderInterface::class),
             'categorySearchProvider' => $this->createMock(CategorySearchProviderInterface::class),
             'allowedCategories' => $this->allowedCategories(),
+            'shipmentTrackRepository' => $this->shipmentTrackRepository(),
+            'shipmentRepository' => $this->shipmentRepository(),
         ];
     }
 
@@ -1081,5 +1105,50 @@ final class MagentoStorefrontTest extends TestCase
         $orders = $storefront->getOrders($this->context(42), 10);
 
         $this->assertSame('902', $orders[0]->getItems()[0]->getProductId());
+    }
+
+    public function testGetOrdersResolvesTrackingInOneBulkCallAndPassesItToTheStatusMapper(): void
+    {
+        $orderOne = $this->salesOrder('100000001', []);
+        $orderOne->method('getId')->willReturn(1);
+        $orderTwo = $this->salesOrder('100000002', []);
+        $orderTwo->method('getId')->willReturn(2);
+
+        $listResult = $this->createMock(OrderSearchResultInterface::class);
+        $listResult->method('getItems')->willReturn([$orderOne, $orderTwo]);
+        $orderRepository = $this->createMock(OrderRepositoryInterface::class);
+        $orderRepository->method('getList')->willReturn($listResult);
+
+        $track = $this->createMock(\Magento\Sales\Api\Data\ShipmentTrackInterface::class);
+        $track->method('getOrderId')->willReturn(1);
+        $trackResults = $this->createMock(ShipmentTrackSearchResultInterface::class);
+        $trackResults->method('getItems')->willReturn([$track]);
+        $shipmentTrackRepository = $this->createMock(ShipmentTrackRepositoryInterface::class);
+        $shipmentTrackRepository->expects($this->once())->method('getList')->willReturn($trackResults);
+
+        $shipmentResults = $this->createMock(ShipmentSearchResultInterface::class);
+        $shipmentResults->method('getItems')->willReturn([]);
+        $shipmentRepository = $this->createMock(ShipmentRepositoryInterface::class);
+        $shipmentRepository->expects($this->once())->method('getList')->willReturn($shipmentResults);
+
+        $calls = [];
+        $orderStatusMapper = $this->createMock(OrderStatusMapperInterface::class);
+        $orderStatusMapper->method('map')->willReturnCallback(
+            function (SalesOrder $order, bool $hasTracking) use (&$calls): string {
+                $calls[] = $hasTracking;
+                return 'processing';
+            }
+        );
+
+        $storefront = $this->buildStorefront([
+            'orderRepository' => $orderRepository,
+            'shipmentTrackRepository' => $shipmentTrackRepository,
+            'shipmentRepository' => $shipmentRepository,
+            'orderStatusMapper' => $orderStatusMapper,
+        ]);
+
+        $storefront->getOrders($this->context(42), 10);
+
+        $this->assertSame([true, false], $calls);
     }
 }

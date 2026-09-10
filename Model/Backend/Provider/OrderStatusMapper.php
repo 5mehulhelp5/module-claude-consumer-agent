@@ -9,7 +9,7 @@ use MageOS\ClaudeConsumerAgent\Api\Data\OrderInterface;
 
 final class OrderStatusMapper implements OrderStatusMapperInterface
 {
-    public function map(Order $order): string
+    public function map(Order $order, bool $hasTracking): string
     {
         $state = (string)$order->getState();
         $status = (string)$order->getStatus();
@@ -26,10 +26,7 @@ final class OrderStatusMapper implements OrderStatusMapperInterface
         if ($state === Order::STATE_COMPLETE) {
             return OrderInterface::STATUS_DELIVERED;
         }
-        if ($order->getTracksCollection()->getSize() > 0
-            || $status === 'shipped'
-            || $order->getShipmentsCollection()->getSize() > 0
-        ) {
+        if ($hasTracking || $status === 'shipped') {
             return OrderInterface::STATUS_SHIPPED;
         }
         if ($state === Order::STATE_HOLDED) {
