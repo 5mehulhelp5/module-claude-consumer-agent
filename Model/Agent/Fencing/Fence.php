@@ -27,7 +27,7 @@ final class Fence
 
     public function fencePayload(mixed $payload, int $maxChars = 12000): string
     {
-        $sanitized = $this->sanitizer->value($payload);
+        $sanitized = $this->sanitizer->value($payload, $maxChars);
         if (is_string($sanitized)) {
             $body = $sanitized;
         } else {
