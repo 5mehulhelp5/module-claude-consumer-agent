@@ -44,6 +44,7 @@ final class CartWrite
         $cap = $config->maxQuantityPerItem;
         $lockName = $this->lockName($ctx->sessionId);
         if (!$this->lockManager->lock($lockName, self::LOCK_TIMEOUT)) {
+            $this->logger->warning('cart lock timed out session=' . $ctx->sessionId . ' lock=' . $lockName);
             return ToolOutcome::error('The cart is busy; try again in a moment.');
         }
         try {
@@ -81,6 +82,7 @@ final class CartWrite
         $applied = min($requested, $cap);
         $lockName = $this->lockName($ctx->sessionId);
         if (!$this->lockManager->lock($lockName, self::LOCK_TIMEOUT)) {
+            $this->logger->warning('cart lock timed out session=' . $ctx->sessionId . ' lock=' . $lockName);
             return ToolOutcome::error('The cart is busy; try again in a moment.');
         }
         try {
@@ -103,6 +105,7 @@ final class CartWrite
     {
         $lockName = $this->lockName($ctx->sessionId);
         if (!$this->lockManager->lock($lockName, self::LOCK_TIMEOUT)) {
+            $this->logger->warning('cart lock timed out session=' . $ctx->sessionId . ' lock=' . $lockName);
             return ToolOutcome::error('The cart is busy; try again in a moment.');
         }
         try {
@@ -132,6 +135,7 @@ final class CartWrite
                 return null;
             }
         }
+        $this->logger->warning('cart version conflict session=' . $ctx->sessionId . ' product_id=' . $productId);
         return $held;
     }
 }

@@ -25,7 +25,8 @@ final class CartWriteTest extends TestCase
 {
     private function buildGate(
         StorefrontBackendInterface&MockObject $backend,
-        LockManagerInterface&MockObject $lockManager
+        LockManagerInterface&MockObject $lockManager,
+        ?LoggerInterface $logger = null
     ): CartWrite {
         return new CartWrite(
             $backend,
@@ -33,7 +34,7 @@ final class CartWriteTest extends TestCase
             new Options(new Sanitizer()),
             new Provenance(),
             new Serializer(new Fence(new Sanitizer())),
-            $this->createMock(LoggerInterface::class)
+            $logger ?? $this->createMock(LoggerInterface::class)
         );
     }
 
@@ -90,6 +91,16 @@ final class CartWriteTest extends TestCase
         $result = $gate->add($this->buildContext(), $this->seenState('p-1'), new AgentConfig(), 'p-1', 1);
         $this->assertTrue($result->isError);
         $this->assertSame('The cart is busy; try again in a moment.', $result->resultText);
+    }
+
+    public function testAddLockBusyLogsAWarning(): void
+    {
+        $lockManager = $this->createMock(LockManagerInterface::class);
+        $lockManager->method('lock')->willReturn(false);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('warning')->with($this->stringContains('cart lock timed out'));
+        $gate = $this->buildGate($this->createMock(StorefrontBackendInterface::class), $lockManager, $logger);
+        $gate->add($this->buildContext(), $this->seenState('p-1'), new AgentConfig(), 'p-1', 1);
     }
 
     public function testAddRefusesANewLineWhenTheCartIsFull(): void
