@@ -288,7 +288,7 @@ function initAiAgentOverlay() {
             Alpine.store('aiAgent').surface.open = false;
             const launcher = document.getElementById('ai-agent-launcher');
             if (launcher) {
-                launcher.focus();
+                window.setTimeout(() => launcher.focus(), 250);
             }
         },
         isClosed() {
