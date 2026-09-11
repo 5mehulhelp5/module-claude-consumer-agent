@@ -9,6 +9,7 @@ use Magento\Framework\App\Request\InvalidRequestException;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\ResultInterface;
 use MageOS\ClaudeConsumerAgent\Controller\Request\TurnRequest;
+use MageOS\ClaudeConsumerAgent\Model\Agent\AgentConfig;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Event;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Config\Source\Streaming;
@@ -70,15 +71,15 @@ class Index implements HttpPostActionInterface, CsrfAwareActionInterface
         $ip = (string)($this->remoteAddress->getRemoteAddress() ?: '');
         $browserSessionId = (string)$this->sessionManager->getSessionId();
         $slot = $this->slotLock->acquire($storeId);
-        $retryAfter = null;
         try {
-            $this->counters->bump($binding->sessionId, $browserSessionId, $ip, $agentConfig);
-        } catch (LimitExceeded $exception) {
-            $retryAfter = $exception->getRetryAfter();
+            $retryAfter = $this->bumpCounters($binding->sessionId, $browserSessionId, $ip, $agentConfig);
+            $turnsSoFar = $binding->row !== null ? (int)($binding->row['turns'] ?? 0) : 0;
+            $overSessionCap = $turnsSoFar >= $agentConfig->turnsPerSession;
+            $this->sessionManager->writeClose();
+        } catch (\Throwable $exception) {
+            $slot?->release();
+            throw $exception;
         }
-        $turnsSoFar = $binding->row !== null ? (int)($binding->row['turns'] ?? 0) : 0;
-        $overSessionCap = $turnsSoFar >= $agentConfig->turnsPerSession;
-        $this->sessionManager->writeClose();
         if ($slot === null || $retryAfter !== null || $overSessionCap) {
             $slot?->release();
             if ($overSessionCap) {
@@ -106,6 +107,20 @@ class Index implements HttpPostActionInterface, CsrfAwareActionInterface
         $this->response->setNoCacheHeaders();
         $this->response->setMetadata('NotCacheable', true);
         return new InvalidRequestException($result);
+    }
+
+    private function bumpCounters(
+        string $sessionId,
+        string $browserSessionId,
+        string $ip,
+        AgentConfig $agentConfig
+    ): ?int {
+        try {
+            $this->counters->bump($sessionId, $browserSessionId, $ip, $agentConfig);
+        } catch (LimitExceeded $exception) {
+            return $exception->getRetryAfter();
+        }
+        return null;
     }
 
     private function busyResult(TurnRequest $body, Event $event): ResultInterface

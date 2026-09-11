@@ -53,29 +53,32 @@ class EventStream extends AbstractResult
 
     protected function render(HttpResponseInterface $response)
     {
-        if ($this->context === null && $this->busyEvent === null) {
-            throw new \LogicException('EventStream requires setTurn() or setBusy() to be called before render().');
-        }
-        if (!headers_sent()) {
-            ini_set('zlib.output_compression', '0');
-        }
-        ignore_user_abort(true);
         $this->registerSlotReleaseFallback();
-        if ($this->compressionIsOn()) {
-            return $this->renderJsonFallback($response);
-        }
-        $this->sendStreamHeaders($response);
-        $this->drainOutputBuffers();
-        $this->write(": open\n\n");
-        if ($this->busyEvent !== null) {
-            $this->write(SseFrame::encode($this->busyEvent));
-            $this->write(SseFrame::encode($this->busyCompletion()));
-            $this->slot?->release();
-            $response->setBody('');
+        try {
+            if ($this->context === null && $this->busyEvent === null) {
+                throw new \LogicException('EventStream requires setTurn() or setBusy() to be called before render().');
+            }
+            if (!headers_sent()) {
+                ini_set('zlib.output_compression', '0');
+            }
+            ignore_user_abort(true);
+            if ($this->compressionIsOn()) {
+                return $this->renderJsonFallback($response);
+            }
+            $this->sendStreamHeaders($response);
+            $this->drainOutputBuffers();
+            $this->write(": open\n\n");
+            if ($this->busyEvent !== null) {
+                $this->write(SseFrame::encode($this->busyEvent));
+                $this->write(SseFrame::encode($this->busyCompletion()));
+                $response->setBody('');
+                return $this;
+            }
+            $this->runTurn($response);
             return $this;
+        } finally {
+            $this->slot?->release();
         }
-        $this->runTurn($response);
-        return $this;
     }
 
     private function registerSlotReleaseFallback(): void

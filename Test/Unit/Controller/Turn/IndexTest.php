@@ -260,6 +260,27 @@ final class IndexTest extends TestCase
         $this->assertSame($eventStreamResult, $result);
     }
 
+    public function testAFailureWhileBumpingTheCountersReleasesTheSlotBeforeItPropagates(): void
+    {
+        $lockManager = $this->createMock(LockManagerInterface::class);
+        $lockManager->method('lock')->willReturn(true);
+        $lockManager->expects($this->once())->method('unlock')->with('aiagent:turn:1:1');
+        $slotLock = new SlotLock($lockManager, $this->storeConfig(), $this->createMock(LoggerInterface::class));
+
+        $counterLockManager = $this->createMock(LockManagerInterface::class);
+        $counterLockManager->method('lock')->willThrowException(new \RuntimeException('counter store down'));
+        $counters = new Counters(
+            $this->createMock(CacheInterface::class),
+            $counterLockManager,
+            $this->createMock(LoggerInterface::class)
+        );
+
+        $index = $this->buildIndex(['slotLock' => $slotLock, 'counters' => $counters]);
+
+        $this->expectException(\RuntimeException::class);
+        $index->execute();
+    }
+
     public function testBusyResultWhenCountersThrowLimitExceeded(): void
     {
         $eventStreamResult = $this->eventStreamResult();

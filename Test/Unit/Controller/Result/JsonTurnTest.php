@@ -116,6 +116,32 @@ final class JsonTurnTest extends TestCase
         $this->assertSame('turn_complete', $captured['events'][1]['type']);
     }
 
+    public function testAFailureWhileWritingTheBodyStillReleasesTheSlot(): void
+    {
+        $lockManager = $this->createMock(LockManagerInterface::class);
+        $lockManager->expects($this->once())->method('unlock')->with('test-slot');
+        $slot = new SlotHandle($lockManager, 'test-slot');
+
+        $orchestrator = $this->createMock(Orchestrator::class);
+        $orchestrator->method('streamTurn')->willReturn($this->generatorOf([Event::textDelta('hi')]));
+
+        $response = $this->createMock(HttpResponse::class);
+        $response->method('representJson')->willThrowException(new \RuntimeException('write failed'));
+
+        $result = $this->buildResult(
+            $this->binding(),
+            'hello',
+            $this->context(),
+            $slot,
+            null,
+            $orchestrator,
+            $this->createMock(LoggerInterface::class)
+        );
+
+        $this->expectException(\RuntimeException::class);
+        $result->renderResult($response);
+    }
+
     public function testBusyEventProducesTheErrorAndACompletionEventWithoutCallingTheOrchestrator(): void
     {
         $orchestrator = $this->createMock(Orchestrator::class);

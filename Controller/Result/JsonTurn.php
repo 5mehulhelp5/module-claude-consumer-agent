@@ -49,23 +49,38 @@ class JsonTurn extends AbstractResult
 
     protected function render(HttpResponseInterface $response)
     {
-        if ($this->context === null && $this->busyEvent === null) {
-            throw new \LogicException('JsonTurn requires setTurn() or setBusy() to be called before render().');
+        $this->registerSlotReleaseFallback();
+        try {
+            if ($this->context === null && $this->busyEvent === null) {
+                throw new \LogicException('JsonTurn requires setTurn() or setBusy() to be called before render().');
+            }
+            $events = $this->busyEvent !== null ? $this->busyEvents() : $this->collectEvents();
+            $response->setNoCacheHeaders();
+            $response->setMetadata('NotCacheable', true);
+            $body = json_encode(
+                ['events' => array_map(static fn (Event $event): array => $event->toArray(), $events)],
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+            );
+            $response->representJson($body !== false ? $body : '{"events":[]}');
+            return $this;
+        } finally {
+            $this->slot?->release();
         }
-        $events = $this->busyEvent !== null ? $this->busyEvents() : $this->collectEvents();
-        $response->setNoCacheHeaders();
-        $response->setMetadata('NotCacheable', true);
-        $body = json_encode(
-            ['events' => array_map(static fn (Event $event): array => $event->toArray(), $events)],
-            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
-        );
-        $response->representJson($body !== false ? $body : '{"events":[]}');
-        return $this;
+    }
+
+    private function registerSlotReleaseFallback(): void
+    {
+        $slot = $this->slot;
+        if ($slot === null) {
+            return;
+        }
+        register_shutdown_function(static function () use ($slot): void {
+            $slot->release();
+        });
     }
 
     private function busyEvents(): array
     {
-        $this->slot?->release();
         return [$this->busyEvent, Event::turnComplete('busy', [], 0, 0)];
     }
 
