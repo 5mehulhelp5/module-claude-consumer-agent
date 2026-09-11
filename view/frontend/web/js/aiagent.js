@@ -715,14 +715,17 @@ function initAiAgentCardProducts() {
             if (!Array.isArray(options)) {
                 return [];
             }
-            return options
-                .filter((option) => option.required === true)
-                .map((option) => {
-                    const values = Array.isArray(option.values) ? option.values : [];
-                    const shown = values.slice(0, 4).map((value) => value.title);
-                    const more = values.length > 4 ? ' +' + (values.length - 4) + ' more' : '';
-                    return option.title + ': ' + shown.join(', ') + more;
-                });
+            const required = options.filter((option) => option.required === true);
+            const lines = required.slice(0, 3).map((option) => {
+                const values = Array.isArray(option.values) ? option.values : [];
+                const shown = values.slice(0, 4).map((value) => value.title);
+                const more = values.length > 4 ? ' +' + (values.length - 4) + ' more' : '';
+                return option.title + ': ' + shown.join(', ') + more;
+            });
+            if (required.length > 3) {
+                lines.push('+' + (required.length - 3) + ' more options');
+            }
+            return lines;
         },
         hasCustomOptionLines() {
             return !this.needsPageChoice() && this.customOptionLines().length > 0;
