@@ -9,9 +9,10 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
  * Backs a per-case AgentConfig override in fixture mode: every path in $values wins over
  * whatever the store actually has configured, and every other path reads as unset so
  * StoreConfig falls back to the AgentConfig defaults instead of reaching a real config
- * store.
+ * store. Not final: Magento generates an interceptor for every ScopeConfigInterface
+ * implementation.
  */
-final class FakeScopeConfig implements ScopeConfigInterface
+class FakeScopeConfig implements ScopeConfigInterface
 {
     public function __construct(
         private readonly array $values
