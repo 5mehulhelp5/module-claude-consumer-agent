@@ -271,6 +271,7 @@ function initAiAgentOverlay() {
         open: false,
         show() {
             const store = Alpine.store('aiAgent');
+            const scrollY = window.scrollY;
             this.open = true;
             store.surface.open = true;
             if (!store.started) {
@@ -279,8 +280,13 @@ function initAiAgentOverlay() {
             this.$nextTick(() => {
                 const textarea = this.$el.querySelector('textarea');
                 if (textarea) {
-                    textarea.focus();
+                    textarea.focus({preventScroll: true});
                 }
+                window.requestAnimationFrame(() => {
+                    if (window.scrollY !== scrollY) {
+                        window.scrollTo(0, scrollY);
+                    }
+                });
             });
         },
         close() {
@@ -518,27 +524,41 @@ function initAiAgentTranscript() {
         scrollToLatest() {
             this.$refs.scroller.scrollTop = this.$refs.scroller.scrollHeight;
         },
+        scrollToEnd() {
+            this.$nextTick(() => {
+                window.requestAnimationFrame(() => {
+                    this.scrollToLatest();
+                });
+            });
+        },
         init() {
             this.$watch(
                 () => Alpine.store('aiAgent').transcript.length,
                 () => {
-                    this.scrollToLatest();
+                    this.scrollToEnd();
                 }
             );
             this.$watch(
                 () => this.lastMessageActivity(),
                 () => {
-                    this.$nextTick(() => {
-                        this.scrollToLatest();
-                    });
+                    this.scrollToEnd();
+                }
+            );
+            this.$watch(
+                () => Alpine.store('aiAgent').turn.running,
+                (running) => {
+                    if (!running) {
+                        this.scrollToEnd();
+                    }
                 }
             );
         },
         listeners: {
             ['@ai-agent:transcript-restored.window']() {
-                this.$nextTick(() => {
-                    this.scrollToLatest();
-                });
+                this.scrollToEnd();
+            },
+            ['@ai-agent:open.window']() {
+                this.scrollToEnd();
             }
         }
     };
@@ -639,6 +659,12 @@ function initAiAgentCardProducts() {
             return {};
         },
         itemsLayoutClasses() {
+            const count = (this.card.payload.items || []).length;
+            if (count === 1) {
+                return {
+                    'grid grid-cols-1 gap-4': true
+                };
+            }
             return {
                 'flex flex-row gap-4 overflow-x-auto': this.card.payload.layout === 'carousel',
                 'grid grid-cols-1 sm:grid-cols-2 gap-4': this.card.payload.layout !== 'carousel'
