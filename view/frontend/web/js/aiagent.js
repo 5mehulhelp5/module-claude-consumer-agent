@@ -566,6 +566,20 @@ function initAiAgentCard() {
 function initAiAgentComposer() {
     return {
         text: '',
+        init() {
+            this.$watch(() => this.placeholder(), () => this.fit());
+            this.fit();
+        },
+        fit() {
+            this.$nextTick(() => {
+                const textarea = this.$root.querySelector('textarea');
+                if (!textarea) {
+                    return;
+                }
+                textarea.style.height = 'auto';
+                textarea.style.height = Math.min(textarea.scrollHeight, 5 * 24) + 'px';
+            });
+        },
         setText() {
             this.text = this.$event.target.value;
             const el = this.$event.target;
@@ -613,7 +627,8 @@ function initAiAgentComposer() {
             return aiPart + contactPart;
         },
         placeholder() {
-            return Alpine.store('aiAgent').config.i18n.placeholder;
+            const store = Alpine.store('aiAgent');
+            return store.transcript.length > 0 ? store.config.i18n.placeholderReply : store.config.i18n.placeholder;
         },
         chips() {
             return Alpine.store('aiAgent').suggestions;

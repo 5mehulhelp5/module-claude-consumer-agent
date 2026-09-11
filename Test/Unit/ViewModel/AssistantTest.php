@@ -133,6 +133,7 @@ final class AssistantTest extends TestCase
                 'cartCount',
                 'cartEmpty',
                 'placeholder',
+                'placeholderReply',
                 'aiAssistant',
                 'needPerson',
                 'productChips',
