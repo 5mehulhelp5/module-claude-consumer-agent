@@ -36,6 +36,10 @@ class Orchestrator
 
     private const EXCERPT_MAX_CHARS = 1200;
 
+    private const ROUND_RETRY_DELAY_SECONDS = 0.75;
+
+    private const RETRYABLE_STREAM_ERROR_TYPES = ['overloaded_error', 'api_error'];
+
     public function __construct(
         private readonly \MageOS\ClaudeConsumerAgent\Api\Client\MessagesClientInterface $client,
         private readonly \MageOS\ClaudeConsumerAgent\Api\StorefrontBackendInterface $backend,
@@ -51,7 +55,8 @@ class Orchestrator
         private readonly \MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig $storeConfig,
         private readonly \Psr\Log\LoggerInterface $logger,
         private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Turn\StreamedRoundFactory $streamedRoundFactory,
-        private readonly \MageOS\ClaudeConsumerAgent\Api\Turn\TurnLogInterface $turnLog
+        private readonly \MageOS\ClaudeConsumerAgent\Api\Turn\TurnLogInterface $turnLog,
+        private readonly \MageOS\ClaudeConsumerAgent\Model\Client\Sleeper $sleeper
     ) {
     }
 
@@ -149,63 +154,85 @@ class Orchestrator
                     $config->thinkingEffort
                 );
 
-                $streamed = $this->streamedRoundFactory->create();
                 $callStart = microtime(true);
                 $aborted = false;
                 $rounds++;
-                try {
-                    foreach ($this->client->stream($request, $onWaiting, $context->storeId) as $rawEvent) {
-                        foreach ($streamed->feed($rawEvent) as $item) {
-                            if ($item instanceof TextDelta) {
-                                yield Event::textDelta($item->text);
-                                continue;
-                            }
-                            if ($item instanceof ToolUseClosed) {
-                                $outcome = $executor->dispatch($item->name, $item->input, $item->id);
-                                $settled[$item->id] = $outcome;
-                                yield Event::toolCall($item->name, $item->id, $outcome->argumentsShown, $outcome->label);
-                                foreach ($outcome->events as $event) {
-                                    yield $event;
+                $retried = false;
+                while (true) {
+                    $streamed = $this->streamedRoundFactory->create();
+                    $emitted = false;
+                    try {
+                        foreach ($this->client->stream($request, $onWaiting, $context->storeId) as $rawEvent) {
+                            foreach ($streamed->feed($rawEvent) as $item) {
+                                $emitted = true;
+                                if ($item instanceof TextDelta) {
+                                    yield Event::textDelta($item->text);
+                                    continue;
                                 }
-                                yield $this->toolResultEvent($item->name, $item->id, $outcome);
-                                continue;
-                            }
-                            if ($item instanceof UnreadableToolInput) {
-                                $outcome = ToolOutcome::error(self::UNREADABLE_INPUT_TEXT);
-                                $settled[$item->id] = $outcome;
-                                yield $this->toolResultEvent($item->name, $item->id, $outcome);
+                                if ($item instanceof ToolUseClosed) {
+                                    $outcome = $executor->dispatch($item->name, $item->input, $item->id);
+                                    $settled[$item->id] = $outcome;
+                                    yield Event::toolCall(
+                                        $item->name,
+                                        $item->id,
+                                        $outcome->argumentsShown,
+                                        $outcome->label
+                                    );
+                                    foreach ($outcome->events as $event) {
+                                        yield $event;
+                                    }
+                                    yield $this->toolResultEvent($item->name, $item->id, $outcome);
+                                    continue;
+                                }
+                                if ($item instanceof UnreadableToolInput) {
+                                    $outcome = ToolOutcome::error(self::UNREADABLE_INPUT_TEXT);
+                                    $settled[$item->id] = $outcome;
+                                    yield $this->toolResultEvent($item->name, $item->id, $outcome);
+                                }
                             }
                         }
+                    } catch (Unauthorized|BadRequest $exception) {
+                        $this->logger->error(sprintf(
+                            'model call failed session=%s round=%d error=%s',
+                            $this->digest($binding->sessionId),
+                            $round,
+                            $this->describe($exception)
+                        ));
+                        yield Event::error(self::UNAVAILABLE_MESSAGE);
+                        $stopReason = 'error';
+                        $aborted = true;
+                    } catch (RateLimited $exception) {
+                        $this->logger->warning(sprintf(
+                            'model call rate limited session=%s round=%d',
+                            $this->digest($binding->sessionId),
+                            $round
+                        ));
+                        yield Event::error(self::BUSY_MESSAGE, $exception->getRetryAfter());
+                        $stopReason = 'error';
+                        $aborted = true;
+                    } catch (ServerError|Transport|ApiStreamError $exception) {
+                        if (!$retried && !$emitted && $this->isWorthRetrying($exception)) {
+                            $this->logger->warning(sprintf(
+                                'model call retried session=%s round=%d error=%s',
+                                $this->digest($binding->sessionId),
+                                $round,
+                                $this->describe($exception)
+                            ));
+                            $retried = true;
+                            $this->sleeper->sleep(self::ROUND_RETRY_DELAY_SECONDS);
+                            continue;
+                        }
+                        $this->logger->warning(sprintf(
+                            'model call failed session=%s round=%d error=%s',
+                            $this->digest($binding->sessionId),
+                            $round,
+                            $this->describe($exception)
+                        ));
+                        yield Event::error(self::BUSY_MESSAGE);
+                        $stopReason = 'error';
+                        $aborted = true;
                     }
-                } catch (Unauthorized|BadRequest $exception) {
-                    $this->logger->error(sprintf(
-                        'model call failed session=%s round=%d error=%s',
-                        $this->digest($binding->sessionId),
-                        $round,
-                        $exception->getMessage()
-                    ));
-                    yield Event::error(self::UNAVAILABLE_MESSAGE);
-                    $stopReason = 'error';
-                    $aborted = true;
-                } catch (RateLimited $exception) {
-                    $this->logger->warning(sprintf(
-                        'model call rate limited session=%s round=%d',
-                        $this->digest($binding->sessionId),
-                        $round
-                    ));
-                    yield Event::error(self::BUSY_MESSAGE, $exception->getRetryAfter());
-                    $stopReason = 'error';
-                    $aborted = true;
-                } catch (ServerError|Transport|ApiStreamError $exception) {
-                    $this->logger->warning(sprintf(
-                        'model call failed session=%s round=%d error=%s',
-                        $this->digest($binding->sessionId),
-                        $round,
-                        $exception->getMessage()
-                    ));
-                    yield Event::error(self::BUSY_MESSAGE);
-                    $stopReason = 'error';
-                    $aborted = true;
+                    break;
                 }
 
                 $roundUsage = $streamed->usage();
@@ -317,6 +344,23 @@ class Orchestrator
     public function interrupt(Binding $binding): void
     {
         $this->logger->info(sprintf('turn interrupted session=%s', $this->digest($binding->sessionId)));
+    }
+
+    private function isWorthRetrying(\Throwable $exception): bool
+    {
+        if ($exception instanceof Transport) {
+            return true;
+        }
+        return $exception instanceof ApiStreamError
+            && in_array($exception->getApiType(), self::RETRYABLE_STREAM_ERROR_TYPES, true);
+    }
+
+    private function describe(\Throwable $exception): string
+    {
+        if ($exception instanceof ApiStreamError) {
+            return $exception->getApiType() . ': ' . $exception->getMessage();
+        }
+        return $exception->getMessage();
     }
 
     private function accumulateUsage(array $totals, array $roundUsage): array

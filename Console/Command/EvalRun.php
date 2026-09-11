@@ -34,6 +34,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Registry as ToolRegistry;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Turn\Orchestrator;
 use MageOS\ClaudeConsumerAgent\Model\Client\FakeClient;
 use MageOS\ClaudeConsumerAgent\Model\Client\RawEvent;
+use MageOS\ClaudeConsumerAgent\Model\Client\Sleeper;
 use MageOS\ClaudeConsumerAgent\Model\Client\SseLineReader;
 use MageOS\ClaudeConsumerAgent\Model\Data\PageContext;
 use MageOS\ClaudeConsumerAgent\Model\Session\Binding;
@@ -349,6 +350,7 @@ class EvalRun extends Command
             'logger' => $this->logger,
             'streamedRoundFactory' => $this->toolkit->streamedRoundFactory(),
             'turnLog' => new InMemoryTurnLog(),
+            'sleeper' => new Sleeper(),
         ]);
     }
 

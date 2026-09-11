@@ -55,12 +55,15 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Skill\Registry as SkillRegistry;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Definition;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Registry as ToolRegistry;
 use MageOS\ClaudeConsumerAgent\Model\Agent\ToolOutcome;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Turn\Exception\ApiStreamError;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Turn\Orchestrator;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Turn\StreamedRoundFactory;
 use MageOS\ClaudeConsumerAgent\Model\Client\Exception\ServerError;
+use MageOS\ClaudeConsumerAgent\Model\Client\Exception\Transport;
 use MageOS\ClaudeConsumerAgent\Model\Client\FakeClient;
 use MageOS\ClaudeConsumerAgent\Model\Client\Fixtures;
 use MageOS\ClaudeConsumerAgent\Model\Client\RawEvent;
+use MageOS\ClaudeConsumerAgent\Model\Client\Sleeper;
 use MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig;
 use MageOS\ClaudeConsumerAgent\Model\Data\PageContext;
 use MageOS\ClaudeConsumerAgent\Model\Session\Binding;
@@ -516,6 +519,142 @@ final class OrchestratorTest extends TestCase
         $this->assertSame(1, $captured['rounds']);
     }
 
+    public function testAStreamThatEndsBeforeAnyOutputIsRetriedOnceAndThenCompletes(): void
+    {
+        $client = new class implements MessagesClientInterface {
+            public int $calls = 0;
+
+            public function stream(array $request, ?callable $onWaiting = null, ?int $storeId = null): \Generator
+            {
+                $this->calls++;
+                if ($this->calls === 1) {
+                    yield new RawEvent('message_start', ['message' => ['id' => 'msg_x', 'usage' => []]]);
+                    throw new Transport('The model stream ended before message_stop.');
+                }
+                yield from FakeClient::textRound('Here you go.', 'end_turn');
+            }
+        };
+        [$orchestrator, , $turnLog, , , $sleeper] = $this->buildOrchestrator($client, []);
+        $sleeper->expects($this->once())->method('sleep');
+        $captured = null;
+        $turnLog->method('record')->with(
+            $this->callback(static function (array $row) use (&$captured): bool {
+                $captured = $row;
+                return true;
+            })
+        );
+        $binding = $this->binding();
+
+        $events = iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
+
+        $this->assertSame(2, $client->calls);
+        $types = array_map(static fn ($event): string => $event->type, $events);
+        $this->assertNotContains('error', $types);
+        $last = $events[count($events) - 1];
+        $this->assertSame('turn_complete', $last->type);
+        $this->assertSame('end_turn', $last->data['stop_reason']);
+        $this->assertSame(1, $captured['rounds']);
+    }
+
+    public function testAnOverloadedStreamErrorIsRetriedOnceAndItsTypeReachesTheLog(): void
+    {
+        $client = new class implements MessagesClientInterface {
+            public int $calls = 0;
+
+            public function stream(array $request, ?callable $onWaiting = null, ?int $storeId = null): \Generator
+            {
+                $this->calls++;
+                yield new RawEvent('message_start', ['message' => ['id' => 'msg_x', 'usage' => []]]);
+                throw new ApiStreamError('overloaded_error', 'Overloaded');
+            }
+        };
+        [$orchestrator, , , , $logger, $sleeper] = $this->buildOrchestrator($client, []);
+        $sleeper->expects($this->once())->method('sleep');
+        $warnings = [];
+        $logger->method('warning')->willReturnCallback(
+            static function (string $message) use (&$warnings): void {
+                $warnings[] = $message;
+            }
+        );
+        $binding = $this->binding();
+
+        $events = iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
+
+        $this->assertSame(2, $client->calls);
+        $retried = array_values(array_filter(
+            $warnings,
+            static fn (string $line): bool => str_contains($line, 'model call retried')
+        ));
+        $failed = array_values(array_filter(
+            $warnings,
+            static fn (string $line): bool => str_contains($line, 'model call failed')
+        ));
+        $this->assertCount(1, $retried);
+        $this->assertStringContainsString('error=overloaded_error: Overloaded', $retried[0]);
+        $this->assertCount(1, $failed);
+        $this->assertStringContainsString('error=overloaded_error: Overloaded', $failed[0]);
+        $errorEvents = array_values(array_filter($events, static fn ($event): bool => $event->type === 'error'));
+        $this->assertSame(
+            'The assistant is busy. Please try again in a few seconds.',
+            $errorEvents[0]->data['message']
+        );
+    }
+
+    public function testAStreamErrorTypeOutsideTheRetryListIsNotRetried(): void
+    {
+        $client = new class implements MessagesClientInterface {
+            public int $calls = 0;
+
+            public function stream(array $request, ?callable $onWaiting = null, ?int $storeId = null): \Generator
+            {
+                $this->calls++;
+                yield new RawEvent('message_start', ['message' => ['id' => 'msg_x', 'usage' => []]]);
+                throw new ApiStreamError('invalid_request_error', 'Bad input');
+            }
+        };
+        [$orchestrator, , , , , $sleeper] = $this->buildOrchestrator($client, []);
+        $sleeper->expects($this->never())->method('sleep');
+        $binding = $this->binding();
+
+        $events = iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
+
+        $this->assertSame(1, $client->calls);
+        $errorEvents = array_values(array_filter($events, static fn ($event): bool => $event->type === 'error'));
+        $this->assertCount(1, $errorEvents);
+    }
+
+    public function testARoundThatAlreadyStreamedTextIsNotRetried(): void
+    {
+        $client = new class implements MessagesClientInterface {
+            public int $calls = 0;
+
+            public function stream(array $request, ?callable $onWaiting = null, ?int $storeId = null): \Generator
+            {
+                $this->calls++;
+                yield new RawEvent('message_start', ['message' => ['id' => 'msg_x', 'usage' => []]]);
+                yield new RawEvent('content_block_start', [
+                    'index' => 0,
+                    'content_block' => ['type' => 'text', 'text' => ''],
+                ]);
+                yield new RawEvent('content_block_delta', [
+                    'index' => 0,
+                    'delta' => ['type' => 'text_delta', 'text' => 'Half a sen'],
+                ]);
+                throw new Transport('The model stream ended before message_stop.');
+            }
+        };
+        [$orchestrator, , , , , $sleeper] = $this->buildOrchestrator($client, []);
+        $sleeper->expects($this->never())->method('sleep');
+        $binding = $this->binding();
+
+        $events = iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
+
+        $this->assertSame(1, $client->calls);
+        $textEvents = array_values(array_filter($events, static fn ($event): bool => $event->type === 'text_delta'));
+        $this->assertCount(1, $textEvents);
+        $this->assertSame('Half a sen', $textEvents[0]->data['text']);
+    }
+
     private function findToolResultMessage(array $messages): ?array
     {
         foreach ($messages as $message) {
@@ -655,6 +794,7 @@ final class OrchestratorTest extends TestCase
 
         $logger = $this->createMock(LoggerInterface::class);
         $turnLog = $this->createMock(TurnLogInterface::class);
+        $sleeper = $this->createMock(Sleeper::class);
 
         $orchestrator = new Orchestrator(
             $client,
@@ -671,10 +811,11 @@ final class OrchestratorTest extends TestCase
             $storeConfig,
             $logger,
             new StreamedRoundFactory(),
-            $turnLog
+            $turnLog,
+            $sleeper
         );
 
-        return [$orchestrator, $messageResource, $turnLog, $sessions, $logger];
+        return [$orchestrator, $messageResource, $turnLog, $sessions, $logger, $sleeper];
     }
 
     private function storeConfig(array $valueOverrides = []): StoreConfig
