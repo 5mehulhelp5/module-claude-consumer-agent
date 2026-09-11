@@ -247,10 +247,7 @@ function initAiAgentDrawer() {
             ['@ai-agent:open.window'](event) {
                 const store = Alpine.store('aiAgent');
                 if (event.detail.page) {
-                    store.page = Object.assign(
-                        {type: '', productId: '', categoryId: '', categoryName: '', query: ''},
-                        event.detail.page
-                    );
+                    store.page = Object.assign({}, store.page, event.detail.page);
                 }
                 this.$dispatch('toggle-cart', { isOpen: true });
                 this.view = event.detail.view || 'chat';
@@ -313,10 +310,7 @@ function initAiAgentOverlay() {
                     return;
                 }
                 if (event.detail.page) {
-                    store.page = Object.assign(
-                        {type: '', productId: '', categoryId: '', categoryName: '', query: ''},
-                        event.detail.page
-                    );
+                    store.page = Object.assign({}, store.page, event.detail.page);
                 }
                 this.show();
             },
