@@ -505,13 +505,41 @@ function initAiAgentTranscript() {
             this.m.retryAfter = null;
             Alpine.store('aiAgent').send(text);
         },
+        lastMessageActivity() {
+            const messages = this.messages();
+            const last = messages[messages.length - 1];
+            if (!last) {
+                return 0;
+            }
+            const textLength = last.text ? last.text.length : 0;
+            const cardCount = Array.isArray(last.cards) ? last.cards.length : 0;
+            return textLength + cardCount;
+        },
+        scrollToLatest() {
+            this.$refs.scroller.scrollTop = this.$refs.scroller.scrollHeight;
+        },
         init() {
             this.$watch(
                 () => Alpine.store('aiAgent').transcript.length,
                 () => {
-                    this.$refs.scroller.scrollTop = this.$refs.scroller.scrollHeight;
+                    this.scrollToLatest();
                 }
             );
+            this.$watch(
+                () => this.lastMessageActivity(),
+                () => {
+                    this.$nextTick(() => {
+                        this.scrollToLatest();
+                    });
+                }
+            );
+        },
+        listeners: {
+            ['@ai-agent:transcript-restored.window']() {
+                this.$nextTick(() => {
+                    this.scrollToLatest();
+                });
+            }
         }
     };
 }

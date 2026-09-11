@@ -208,6 +208,7 @@ $configJson = json_encode(
                     return Object.assign({}, message, {cards: cards});
                 });
                 this.suggestions = suggestions;
+                window.dispatchEvent(new CustomEvent('ai-agent:transcript-restored'));
             },
             send(text) {
                 if (!this.ready) {
