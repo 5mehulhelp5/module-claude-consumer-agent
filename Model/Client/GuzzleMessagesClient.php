@@ -8,6 +8,11 @@ use MageOS\ClaudeConsumerAgent\Api\Client\MessagesClientInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 
+/**
+ * The Messages response arrives chunked, so PHP attaches its dechunk read filter. On a filtered
+ * stream a read timeout surfaces as fread() returning false rather than an empty string, which
+ * is why the reader below separates a timed-out read from a genuine read failure.
+ */
 final class GuzzleMessagesClient implements MessagesClientInterface
 {
     public const ENDPOINT = 'https://api.anthropic.com/v1/messages';
@@ -156,7 +161,10 @@ final class GuzzleMessagesClient implements MessagesClientInterface
             }
             $chunk = fread($resource, self::READ_CHUNK_BYTES);
             if ($chunk === false) {
-                return;
+                if (!$this->readTimedOut($resource)) {
+                    throw new Exception\Transport('The model stream could not be read to the end.');
+                }
+                $chunk = '';
             }
             if ($chunk !== '') {
                 $lastData = time();
@@ -167,6 +175,12 @@ final class GuzzleMessagesClient implements MessagesClientInterface
                 throw new Exception\Transport('The model stream went silent for ' . $requestTimeout . ' seconds.');
             }
         }
+    }
+
+    private function readTimedOut($resource): bool
+    {
+        $meta = stream_get_meta_data($resource);
+        return (bool)($meta['timed_out'] ?? false);
     }
 
     private function retryAfterFromHeader(ResponseInterface $response): ?float

@@ -471,4 +471,74 @@ final class GuzzleMessagesClientTest extends TestCase
             $this->assertSame('The configured API key is not a valid header value.', $exception->getMessage());
         }
     }
+
+    public function testATimedOutReadOnAChunkedStreamKeepsWaitingInsteadOfEndingTheStream(): void
+    {
+        $pair = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, 0);
+        $this->assertIsArray($pair);
+        [$peer, $reader] = $pair;
+        stream_filter_append($reader, 'dechunk', STREAM_FILTER_READ);
+        $this->writeChunk($peer, "event: message_start\ndata: {\"type\":\"message_start\"}\n\n");
+
+        $history = [];
+        $mockHandler = new MockHandler([new Response(200, [], \GuzzleHttp\Psr7\Utils::streamFor($reader))]);
+        $http = $this->buildClientWithHandler($mockHandler, $history);
+        $sleeper = $this->createMock(Sleeper::class);
+        $client = new GuzzleMessagesClient(
+            $http,
+            $this->buildStoreConfig(),
+            $this->createMock(LoggerInterface::class),
+            $sleeper
+        );
+
+        $waits = 0;
+        $onWaiting = function () use (&$waits, $peer): void {
+            $waits++;
+            if ($waits !== 3) {
+                return;
+            }
+            $this->writeChunk($peer, "event: message_stop\ndata: {\"type\":\"message_stop\"}\n\n");
+            fwrite($peer, "0\r\n\r\n");
+            fclose($peer);
+        };
+
+        $events = iterator_to_array($client->stream(['messages' => []], $onWaiting), false);
+
+        $types = array_map(static fn ($event) => $event->type, $events);
+        $this->assertSame(['message_start', 'message_stop'], $types);
+    }
+
+    public function testAReadFailureThatIsNotATimeoutThrowsTransport(): void
+    {
+        $wrapper = 'aiagentreadfail';
+        if (in_array($wrapper, stream_get_wrappers(), true)) {
+            stream_wrapper_unregister($wrapper);
+        }
+        stream_wrapper_register($wrapper, ReadFailStreamWrapper::class);
+
+        try {
+            $resource = fopen($wrapper . '://stream', 'r');
+            $this->assertIsResource($resource);
+            $history = [];
+            $mockHandler = new MockHandler([new Response(200, [], \GuzzleHttp\Psr7\Utils::streamFor($resource))]);
+            $http = $this->buildClientWithHandler($mockHandler, $history);
+            $client = new GuzzleMessagesClient(
+                $http,
+                $this->buildStoreConfig(),
+                $this->createMock(LoggerInterface::class),
+                $this->createMock(Sleeper::class)
+            );
+
+            $this->expectException(Transport::class);
+            $this->expectExceptionMessage('The model stream could not be read to the end.');
+            iterator_to_array($client->stream(['messages' => []]), false);
+        } finally {
+            stream_wrapper_unregister($wrapper);
+        }
+    }
+
+    private function writeChunk($resource, string $payload): void
+    {
+        fwrite($resource, dechex(strlen($payload)) . "\r\n" . $payload . "\r\n");
+    }
 }
