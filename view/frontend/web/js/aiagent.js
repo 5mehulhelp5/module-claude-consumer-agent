@@ -636,11 +636,7 @@ function initAiAgentCardProducts() {
             return this.card.payload.title || Alpine.store('aiAgent').config.i18n.products;
         },
         layoutClasses() {
-            const count = (this.card.payload.items || []).length;
-            return {
-                'max-w-sm': count <= 1,
-                'max-w-2xl': count > 1
-            };
+            return {};
         },
         itemsLayoutClasses() {
             return {
