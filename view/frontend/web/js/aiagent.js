@@ -164,25 +164,11 @@ function initAiAgentDrawer() {
             } else {
                 this.view = 'cart';
             }
-            this.syncDrawerHeight();
             this.$watch(() => Alpine.store('aiAgent').turn.id, () => {
                 if (this.view === 'cart') {
                     this.showChat();
                 }
             });
-        },
-        destroy() {
-            const cartDrawer = this.$el.closest('#cart-drawer');
-            if (cartDrawer) {
-                cartDrawer.classList.remove('ai-agent-drawer-chat');
-            }
-        },
-        syncDrawerHeight() {
-            const cartDrawer = this.$el.closest('#cart-drawer');
-            if (!cartDrawer) {
-                return;
-            }
-            cartDrawer.classList.toggle('ai-agent-drawer-chat', this.view === 'chat');
         },
         isChatView() {
             return this.view === 'chat';
@@ -213,12 +199,10 @@ function initAiAgentDrawer() {
             Alpine.store('aiAgent').surface.view = 'chat';
             this.ensureStarted();
             this.focusComposer();
-            this.syncDrawerHeight();
         },
         showCart() {
             this.view = 'cart';
             Alpine.store('aiAgent').surface.view = 'cart';
-            this.syncDrawerHeight();
         },
         close() {
             this.$dispatch('toggle-cart', { isOpen: false });
@@ -252,7 +236,6 @@ function initAiAgentDrawer() {
                 this.$dispatch('toggle-cart', { isOpen: true });
                 this.view = event.detail.view || 'chat';
                 this.ensureStarted();
-                this.syncDrawerHeight();
             },
             ['@toggle-cart.window'](event) {
                 if (event.detail && event.detail.isOpen === true && !event.detail.fromAgent) {
