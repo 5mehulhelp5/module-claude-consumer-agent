@@ -15,7 +15,8 @@ final class ProductMapper
 {
     public function __construct(
         private readonly \Magento\Store\Model\StoreManagerInterface $storeManager,
-        private readonly \Magento\Catalog\Helper\Image $imageHelper,
+        private readonly \MageOS\ClaudeConsumerAgent\Api\Backend\ProductImageUrlInterface $productImageUrl,
+        private readonly \MageOS\ClaudeConsumerAgent\Model\Backend\Provider\HelperImageUrl $helperImageUrl,
         private readonly \MageOS\ClaudeConsumerAgent\Model\Backend\Salability $salability,
         private readonly \MageOS\ClaudeConsumerAgent\Api\Backend\ProductOptionsProviderInterface $optionsProvider,
         private readonly \Magento\UrlRewrite\Model\UrlFinderInterface $urlFinder
@@ -34,7 +35,8 @@ final class ProductMapper
             'currency' => $this->currency($ctx),
             'rating' => null,
             'review_count' => null,
-            'image_url' => $this->imageHelper->init($p, 'category_page_grid')->getUrl(),
+            'image_url' => $this->productImageUrl->forProduct($p, 'category_page_grid', $ctx->storeId)
+                ?? $this->helperImageUrl->forProduct($p, 'category_page_grid', $ctx->storeId),
             'url' => $p->getProductUrl(),
             'category' => null,
             'labels' => [],

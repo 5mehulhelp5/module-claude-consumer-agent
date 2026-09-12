@@ -47,7 +47,8 @@ final class MagentoStorefront implements StorefrontBackendInterface
         private readonly \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder,
         private readonly \Magento\Framework\Api\SortOrderBuilder $sortOrderBuilder,
         private readonly \Magento\Store\Model\StoreManagerInterface $storeManager,
-        private readonly \Magento\Catalog\Helper\Image $imageHelper,
+        private readonly \MageOS\ClaudeConsumerAgent\Api\Backend\ProductImageUrlInterface $productImageUrl,
+        private readonly \MageOS\ClaudeConsumerAgent\Model\Backend\Provider\HelperImageUrl $helperImageUrl,
         private readonly \Magento\Catalog\Helper\Product\Configuration $productConfiguration,
         private readonly \MageOS\ClaudeConsumerAgent\Api\Backend\SearchProviderInterface $searchProvider,
         private readonly \MageOS\ClaudeConsumerAgent\Model\Backend\ProductMapper $productMapper,
@@ -306,7 +307,8 @@ final class MagentoStorefront implements StorefrontBackendInterface
                 (string)$item->getName(),
                 $this->itemPrice($item),
                 (int)$item->getQty(),
-                $this->imageHelper->init($purchasable, 'product_thumbnail_image')->getUrl(),
+                $this->productImageUrl->forProduct($purchasable, 'product_thumbnail_image', $ctx->storeId)
+                    ?? $this->helperImageUrl->forProduct($purchasable, 'product_thumbnail_image', $ctx->storeId),
                 $this->itemOptionValues($item, $isConfigurable, $purchasable),
                 $isConfigurable ? (string)$item->getProduct()->getId() : null,
                 (int)$item->getId()

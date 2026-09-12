@@ -6,6 +6,7 @@
     <preference for="MageOS\ClaudeConsumerAgent\Api\Backend\CatalogMapProviderInterface" type="MageOS\ClaudeConsumerAgent\Model\Backend\Provider\CategoryTree"/>
     <preference for="MageOS\ClaudeConsumerAgent\Api\Backend\CategorySearchProviderInterface" type="MageOS\ClaudeConsumerAgent\Model\Backend\Provider\CategoryNameSearch"/>
     <preference for="MageOS\ClaudeConsumerAgent\Api\Backend\ProductOptionsProviderInterface" type="MageOS\ClaudeConsumerAgent\Model\Backend\Provider\CoreOptions"/>
+    <preference for="MageOS\ClaudeConsumerAgent\Api\Backend\ProductImageUrlInterface" type="MageOS\ClaudeConsumerAgent\Model\Backend\Provider\HelperImageUrl"/>
     <preference for="MageOS\ClaudeConsumerAgent\Api\Backend\FulfillmentProviderInterface" type="MageOS\ClaudeConsumerAgent\Model\Backend\Provider\FulfillmentAggregator"/>
     <preference for="MageOS\ClaudeConsumerAgent\Api\Backend\PolicySourceInterface" type="MageOS\ClaudeConsumerAgent\Model\Backend\Provider\CmsPagePolicySource"/>
     <preference for="MageOS\ClaudeConsumerAgent\Api\Backend\StoreFactTitleResolverInterface" type="MageOS\ClaudeConsumerAgent\Model\Backend\Provider\StoreFactTitleResolver"/>

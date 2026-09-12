@@ -7,7 +7,6 @@ use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
 use Magento\Catalog\Api\Data\ProductCustomOptionValuesInterface;
 use Magento\Catalog\Api\Data\ProductSearchResultsInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
-use Magento\Catalog\Helper\Image as ImageHelper;
 use Magento\Catalog\Helper\Product\Configuration as ProductConfigurationHelper;
 use Magento\Catalog\Model\Category;
 use Magento\Catalog\Model\Product as MagentoProduct;
@@ -61,6 +60,7 @@ use MageOS\ClaudeConsumerAgent\Api\Backend\CategorySearchProviderInterface;
 use MageOS\ClaudeConsumerAgent\Api\Backend\FulfillmentProviderInterface;
 use MageOS\ClaudeConsumerAgent\Api\Backend\OrderStatusMapperInterface;
 use MageOS\ClaudeConsumerAgent\Api\Backend\PolicySourceInterface;
+use MageOS\ClaudeConsumerAgent\Api\Backend\ProductImageUrlInterface;
 use MageOS\ClaudeConsumerAgent\Api\Backend\SearchProviderInterface;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Exception\NotOffered;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Exception\SignInRequired;
@@ -70,6 +70,7 @@ use MageOS\ClaudeConsumerAgent\Model\Backend\BuyRequestBuilder;
 use MageOS\ClaudeConsumerAgent\Model\Backend\MagentoStorefront;
 use MageOS\ClaudeConsumerAgent\Model\Backend\Provider\AllowedCategories;
 use MageOS\ClaudeConsumerAgent\Model\Backend\Provider\CoreOptions;
+use MageOS\ClaudeConsumerAgent\Model\Backend\Provider\HelperImageUrl;
 use MageOS\ClaudeConsumerAgent\Model\Backend\ProductMapper;
 use MageOS\ClaudeConsumerAgent\Model\Backend\Salability;
 use MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig;
@@ -104,12 +105,19 @@ final class MagentoStorefrontTest extends TestCase
         return $storeManager;
     }
 
-    private function imageHelper(): ImageHelper&MockObject
+    private function productImageUrl(): ProductImageUrlInterface&MockObject
     {
-        $imageHelper = $this->createMock(ImageHelper::class);
+        $productImageUrl = $this->createMock(ProductImageUrlInterface::class);
+        $productImageUrl->method('forProduct')->willReturn('https://example.test/img.jpg');
+        return $productImageUrl;
+    }
+
+    private function helperImageUrl(): HelperImageUrl
+    {
+        $imageHelper = $this->createMock(\Magento\Catalog\Helper\Image::class);
         $imageHelper->method('init')->willReturnSelf();
-        $imageHelper->method('getUrl')->willReturn('https://example.test/img.jpg');
-        return $imageHelper;
+        $imageHelper->method('getUrl')->willReturn('https://example.test/placeholder.jpg');
+        return new HelperImageUrl($imageHelper);
     }
 
     private function priceInfo(float $value): PriceInfoInterface&MockObject
@@ -185,7 +193,8 @@ final class MagentoStorefrontTest extends TestCase
     {
         return new ProductMapper(
             $this->storeManager(),
-            $this->imageHelper(),
+            $this->productImageUrl(),
+            $this->helperImageUrl(),
             $this->salability(true),
             new CoreOptions(),
             $this->urlFinder()
@@ -296,7 +305,8 @@ final class MagentoStorefrontTest extends TestCase
             'searchCriteriaBuilder' => $this->searchCriteriaBuilder(),
             'sortOrderBuilder' => $this->sortOrderBuilder(),
             'storeManager' => $this->storeManager(),
-            'imageHelper' => $this->imageHelper(),
+            'productImageUrl' => $this->productImageUrl(),
+            'helperImageUrl' => $this->helperImageUrl(),
             'productConfiguration' => $this->createMock(ProductConfigurationHelper::class),
             'searchProvider' => $this->createMock(SearchProviderInterface::class),
             'productMapper' => $this->productMapper(),
@@ -418,6 +428,47 @@ final class MagentoStorefrontTest extends TestCase
         $this->assertSame(['Color' => 'Red'], $cartItem->getOptionValues());
         $this->assertSame(2, $cartItem->getQuantity());
         $this->assertSame(77, $cartItem->getItemId());
+    }
+
+    public function testGetCartFallsBackToTheHelperImageWhenTheProviderHasNoUrl(): void
+    {
+        $product = $this->magentoProduct(600, 'Lamp', 40.0);
+
+        $item = $this->getMockBuilder(QuoteItem::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getProductType', 'getProduct', 'getName', 'getQty', 'getId', 'getPrice'])
+            ->addMethods(['getPriceInclTax'])
+            ->getMock();
+        $item->method('getProductType')->willReturn('simple');
+        $item->method('getProduct')->willReturn($product);
+        $item->method('getName')->willReturn('Lamp');
+        $item->method('getQty')->willReturn(1.0);
+        $item->method('getId')->willReturn(88);
+        $item->method('getPriceInclTax')->willReturn(40.0);
+        $item->method('getPrice')->willReturn(40.0);
+
+        $quote = $this->createMock(Quote::class);
+        $quote->method('getAllVisibleItems')->willReturn([$item]);
+
+        $cartRepository = $this->createMock(CartRepositoryInterface::class);
+        $cartRepository->method('get')->willReturn($quote);
+
+        $productConfiguration = $this->createMock(ProductConfigurationHelper::class);
+        $productConfiguration->method('getOptions')->willReturn([]);
+
+        $productImageUrl = $this->createMock(ProductImageUrlInterface::class);
+        $productImageUrl->method('forProduct')->willReturn(null);
+
+        $storefront = $this->buildStorefront([
+            'cartRepository' => $cartRepository,
+            'productConfiguration' => $productConfiguration,
+            'productImageUrl' => $productImageUrl,
+            'helperImageUrl' => $this->helperImageUrl(),
+        ]);
+
+        $cart = $storefront->getCart($this->context());
+
+        $this->assertSame('https://example.test/placeholder.jpg', $cart->getItems()[0]->getImageUrl());
     }
 
     public function testAddToCartRaisesUnavailableWithSiblingIds(): void
@@ -887,7 +938,8 @@ final class MagentoStorefrontTest extends TestCase
 
         $productMapper = new ProductMapper(
             $this->storeManager(),
-            $this->imageHelper(),
+            $this->productImageUrl(),
+            $this->helperImageUrl(),
             $this->salability(true),
             new CoreOptions(),
             $urlFinder

@@ -362,7 +362,18 @@ preference on a base concrete class.
    fallback. Override by path in a child theme under
    `MageOS_ClaudeConsumerAgent/templates/`.
 
-8. Config. `Model\Config\StoreConfig::agent()` resolves every field at store
+8. Product image URLs. `Api\Backend\ProductImageUrlInterface::forProduct()`
+   resolves the image URL for a product card or cart item. The default
+   `Model\Backend\Provider\HelperImageUrl` calls the core image helper;
+   replace it with a preference to source URLs from elsewhere (a CDN, a
+   partial media mirror). Returning null falls back to the helper result:
+
+   ```xml
+   <preference for="MageOS\ClaudeConsumerAgent\Api\Backend\ProductImageUrlInterface"
+               type="Vendor\Store\Model\Backend\Provider\StoreImageUrl"/>
+   ```
+
+9. Config. `Model\Config\StoreConfig::agent()` resolves every field at store
    view scope. A store layer adds fields under its own section and reads them
    itself.
 

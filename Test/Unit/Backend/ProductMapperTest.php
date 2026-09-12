@@ -5,7 +5,6 @@ namespace MageOS\ClaudeConsumerAgent\Test\Unit\Backend;
 
 use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
 use Magento\Catalog\Api\Data\ProductCustomOptionValuesInterface;
-use Magento\Catalog\Helper\Image as ImageHelper;
 use Magento\Catalog\Model\Product as MagentoProduct;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator;
@@ -22,8 +21,10 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Model\Website;
 use Magento\UrlRewrite\Model\UrlFinderInterface;
 use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
+use MageOS\ClaudeConsumerAgent\Api\Backend\ProductImageUrlInterface;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Backend\Provider\CoreOptions;
+use MageOS\ClaudeConsumerAgent\Model\Backend\Provider\HelperImageUrl;
 use MageOS\ClaudeConsumerAgent\Model\Backend\ProductMapper;
 use MageOS\ClaudeConsumerAgent\Model\Backend\Salability;
 use MageOS\ClaudeConsumerAgent\Model\Data\PageContext;
@@ -46,12 +47,20 @@ final class ProductMapperTest extends TestCase
         return $storeManager;
     }
 
-    private function imageHelper(string $url = 'https://example.test/img.jpg'): ImageHelper&MockObject
+    private function productImageUrl(string $url = 'https://example.test/img.jpg'): ProductImageUrlInterface&MockObject
     {
-        $imageHelper = $this->createMock(ImageHelper::class);
-        $imageHelper->method('init')->with($this->anything(), 'category_page_grid')->willReturnSelf();
+        $productImageUrl = $this->createMock(ProductImageUrlInterface::class);
+        $productImageUrl->method('forProduct')->with($this->anything(), 'category_page_grid', $this->anything())
+            ->willReturn($url);
+        return $productImageUrl;
+    }
+
+    private function helperImageUrl(string $url = 'https://example.test/placeholder.jpg'): HelperImageUrl
+    {
+        $imageHelper = $this->createMock(\Magento\Catalog\Helper\Image::class);
+        $imageHelper->method('init')->willReturnSelf();
         $imageHelper->method('getUrl')->willReturn($url);
-        return $imageHelper;
+        return new HelperImageUrl($imageHelper);
     }
 
     private function salability(bool $result): Salability
@@ -120,7 +129,8 @@ final class ProductMapperTest extends TestCase
 
         $mapper = new ProductMapper(
             $this->storeManager(),
-            $this->imageHelper(),
+            $this->productImageUrl(),
+            $this->helperImageUrl(),
             $this->salability(true),
             new CoreOptions(),
             $this->urlFinder()
@@ -165,7 +175,8 @@ final class ProductMapperTest extends TestCase
 
         $mapper = new ProductMapper(
             $this->storeManager(),
-            $this->imageHelper(),
+            $this->productImageUrl(),
+            $this->helperImageUrl(),
             $this->salability(true),
             new CoreOptions(),
             $this->urlFinder()
@@ -193,7 +204,8 @@ final class ProductMapperTest extends TestCase
 
         $mapper = new ProductMapper(
             $this->storeManager(),
-            $this->imageHelper(),
+            $this->productImageUrl(),
+            $this->helperImageUrl(),
             $this->salability(true),
             new CoreOptions(),
             $this->urlFinder()
@@ -229,7 +241,8 @@ final class ProductMapperTest extends TestCase
 
         $mapper = new ProductMapper(
             $this->storeManager(),
-            $this->imageHelper(),
+            $this->productImageUrl(),
+            $this->helperImageUrl(),
             $this->salability(true),
             new CoreOptions(),
             $this->urlFinder()
@@ -275,7 +288,8 @@ final class ProductMapperTest extends TestCase
 
         $mapper = new ProductMapper(
             $this->storeManager(),
-            $this->imageHelper(),
+            $this->productImageUrl(),
+            $this->helperImageUrl(),
             $this->salability(true),
             new CoreOptions(),
             $this->urlFinder()
@@ -310,7 +324,8 @@ final class ProductMapperTest extends TestCase
 
         $mapper = new ProductMapper(
             $this->storeManager(),
-            $this->imageHelper(),
+            $this->productImageUrl(),
+            $this->helperImageUrl(),
             $this->salability(false),
             new CoreOptions(),
             $this->urlFinder()
@@ -339,7 +354,8 @@ final class ProductMapperTest extends TestCase
 
         $mapper = new ProductMapper(
             $this->storeManager(),
-            $this->imageHelper(),
+            $this->productImageUrl(),
+            $this->helperImageUrl(),
             $this->salability(true),
             new CoreOptions(),
             $urlFinder
@@ -371,7 +387,8 @@ final class ProductMapperTest extends TestCase
 
         $mapper = new ProductMapper(
             $this->storeManager(),
-            $this->imageHelper(),
+            $this->productImageUrl(),
+            $this->helperImageUrl(),
             $salability,
             new CoreOptions(),
             $this->urlFinder()
@@ -380,5 +397,31 @@ final class ProductMapperTest extends TestCase
         $result = $mapper->toProduct($product, $this->context(), false);
 
         $this->assertFalse($result->isInStock());
+    }
+
+    public function testFallsBackToTheHelperImageWhenTheProviderHasNoUrl(): void
+    {
+        $product = $this->product();
+        $product->method('getId')->willReturn(77);
+        $product->method('getName')->willReturn('No Selection');
+        $product->method('getTypeId')->willReturn('simple');
+        $product->method('getPriceInfo')->willReturn($this->priceInfo(10.0));
+        $product->method('getProductUrl')->willReturn(null);
+
+        $productImageUrl = $this->createMock(ProductImageUrlInterface::class);
+        $productImageUrl->method('forProduct')->willReturn(null);
+
+        $mapper = new ProductMapper(
+            $this->storeManager(),
+            $productImageUrl,
+            $this->helperImageUrl('https://example.test/placeholder.jpg'),
+            $this->salability(true),
+            new CoreOptions(),
+            $this->urlFinder()
+        );
+
+        $result = $mapper->toProduct($product, $this->context());
+
+        $this->assertSame('https://example.test/placeholder.jpg', $result->getImageUrl());
     }
 }
