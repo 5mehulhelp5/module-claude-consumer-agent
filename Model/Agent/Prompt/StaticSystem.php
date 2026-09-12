@@ -119,6 +119,9 @@ final class StaticSystem
                 . "\n- When a retrieved policy splits a term by plan, tier, or segment, keep the "
                 . "split: state the variants, or scope the figure to the customer's own plan by "
                 . "name."
+                . "\n- When a policy lists exceptions by category, an item the list does not name is "
+                . "unresolved, not allowed: say which categories the policy names, say the item is "
+                . "not named, and tell the customer to confirm with the store before relying on it."
             : '';
 
         $confirmedWrites = $cart

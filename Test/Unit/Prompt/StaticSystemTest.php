@@ -149,6 +149,8 @@ final class StaticSystemTest extends TestCase
         $withoutPolicies = $this->assemble($this->buildConfig(['enablePolicies' => false]), $index);
         $this->assertNotSame($baseline, $withoutPolicies);
         $this->assertStringContainsString("Answer questions about the store's terms", $baseline);
+        $this->assertStringContainsString("an item the list does not name is unresolved, not allowed", $baseline);
+        $this->assertStringNotContainsString("unresolved, not allowed", $withoutPolicies);
         $this->assertStringNotContainsString("Answer questions about the store's terms", $withoutPolicies);
         $this->assertStringContainsString("This store has no a lookup of the store's terms", $withoutPolicies);
     }
