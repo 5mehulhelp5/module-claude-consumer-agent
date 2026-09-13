@@ -885,6 +885,7 @@ final class MagentoStorefrontTest extends TestCase
         $parent->method('getOptions')->willReturn([]);
         $parent->method('getAttributeText')->willReturn(false);
         $parent->method('getTypeInstance')->willReturn($typeInstance);
+        $parent->method('getWebsiteIds')->willReturn([1]);
         $parent->method('getStatus')->willReturn(Status::STATUS_ENABLED);
         $parent->method('getVisibility')->willReturn(Visibility::VISIBILITY_BOTH);
         $parent->method('getAttributes')->willReturn([]);
@@ -924,6 +925,7 @@ final class MagentoStorefrontTest extends TestCase
         $parent->method('getOptions')->willReturn([]);
         $parent->method('getAttributeText')->willReturn(false);
         $parent->method('getTypeInstance')->willReturn($typeInstance);
+        $parent->method('getWebsiteIds')->willReturn([1]);
         $parent->method('getStatus')->willReturn(Status::STATUS_ENABLED);
         $parent->method('getVisibility')->willReturn(Visibility::VISIBILITY_BOTH);
         $parent->method('getAttributes')->willReturn([]);
@@ -987,6 +989,26 @@ final class MagentoStorefrontTest extends TestCase
         ]);
 
         $this->assertNull($storefront->getProductDetails($this->context(), '700'));
+    }
+
+    public function testGetProductDetailsReturnsNullForAProductOutsideTheCurrentWebsite(): void
+    {
+        $product = $this->createMock(MagentoProduct::class);
+        $product->method('getId')->willReturn(702);
+        $product->method('getStatus')->willReturn(Status::STATUS_ENABLED);
+        $product->method('getVisibility')->willReturn(Visibility::VISIBILITY_BOTH);
+        $product->method('getCategoryIds')->willReturn([55]);
+        $product->method('getWebsiteIds')->willReturn([2]);
+
+        $productRepository = $this->createMock(ProductRepositoryInterface::class);
+        $productRepository->method('getById')->willReturn($product);
+
+        $storefront = $this->buildStorefront([
+            'productRepository' => $productRepository,
+            'allowedCategories' => $this->allowedCategories([10], [$this->category(55, '1/2/10/55')]),
+        ]);
+
+        $this->assertNull($storefront->getProductDetails($this->context(), '702'));
     }
 
     public function testGetProductDetailsReturnsAProductUnderAnAllowedCategory(): void

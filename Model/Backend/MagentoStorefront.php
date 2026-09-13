@@ -134,6 +134,9 @@ final class MagentoStorefront implements StorefrontBackendInterface
         if (!$this->allowedCategories->permits((array)$product->getCategoryIds(), $ctx->storeId)) {
             return null;
         }
+        if (!$this->assignedToWebsite($product, $ctx->storeId)) {
+            return null;
+        }
 
         $family = $this->productMapper->toProduct($product, $ctx);
         $details = ProductDetails::fromProduct(
@@ -233,6 +236,13 @@ final class MagentoStorefront implements StorefrontBackendInterface
             }
         }
         return null;
+    }
+
+    private function assignedToWebsite(MagentoProductInterface $product, int $storeId): bool
+    {
+        $currentWebsiteId = (int)$this->storeManager->getStore($storeId)->getWebsiteId();
+        $websiteIds = array_map('intval', (array)$product->getWebsiteIds());
+        return in_array($currentWebsiteId, $websiteIds, true);
     }
 
     private function loadByIdOrSku(string $productId, int $storeId): ?MagentoProductInterface
@@ -371,9 +381,7 @@ final class MagentoStorefront implements StorefrontBackendInterface
             throw new Unavailable($productId . ' is not available in this store');
         }
 
-        $currentWebsiteId = (int)$this->storeManager->getStore($ctx->storeId)->getWebsiteId();
-        $websiteIds = array_map('intval', (array)$product->getWebsiteIds());
-        if (!in_array($currentWebsiteId, $websiteIds, true)) {
+        if (!$this->assignedToWebsite($product, $ctx->storeId)) {
             throw new Unavailable($productId . ' is not available in this store');
         }
 
