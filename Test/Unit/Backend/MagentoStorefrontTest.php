@@ -393,8 +393,7 @@ final class MagentoStorefrontTest extends TestCase
 
         $item = $this->getMockBuilder(QuoteItem::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getProductType', 'getOptionByCode', 'getProduct', 'getName', 'getQty', 'getId', 'getPrice'])
-            ->addMethods(['getPriceInclTax'])
+            ->onlyMethods(['getProductType', 'getOptionByCode', 'getProduct', 'getName', 'getQty', 'getId', 'getPrice', '__call'])
             ->getMock();
         $item->method('getProductType')->willReturn(Configurable::TYPE_CODE);
         $item->method('getOptionByCode')->with('simple_product')->willReturn($option);
@@ -402,7 +401,7 @@ final class MagentoStorefrontTest extends TestCase
         $item->method('getName')->willReturn('Red Shirt - M');
         $item->method('getQty')->willReturn(2.0);
         $item->method('getId')->willReturn(77);
-        $item->method('getPriceInclTax')->willReturn(25.0);
+        $item->method('__call')->willReturnCallback(static fn (string $name) => $name === 'getPriceInclTax' ? 25.0 : null);
         $item->method('getPrice')->willReturn(25.0);
 
         $quote = $this->createMock(Quote::class);
@@ -436,15 +435,14 @@ final class MagentoStorefrontTest extends TestCase
 
         $item = $this->getMockBuilder(QuoteItem::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getProductType', 'getProduct', 'getName', 'getQty', 'getId', 'getPrice'])
-            ->addMethods(['getPriceInclTax'])
+            ->onlyMethods(['getProductType', 'getProduct', 'getName', 'getQty', 'getId', 'getPrice', '__call'])
             ->getMock();
         $item->method('getProductType')->willReturn('simple');
         $item->method('getProduct')->willReturn($product);
         $item->method('getName')->willReturn('Lamp');
         $item->method('getQty')->willReturn(1.0);
         $item->method('getId')->willReturn(88);
-        $item->method('getPriceInclTax')->willReturn(40.0);
+        $item->method('__call')->willReturnCallback(static fn (string $name) => $name === 'getPriceInclTax' ? 40.0 : null);
         $item->method('getPrice')->willReturn(40.0);
 
         $quote = $this->createMock(Quote::class);
@@ -582,9 +580,9 @@ final class MagentoStorefrontTest extends TestCase
 
         $shippingAddress = $this->getMockBuilder(QuoteAddress::class)
             ->disableOriginalConstructor()
-            ->addMethods(['setCollectShippingRates'])
+            ->onlyMethods(['__call'])
             ->getMock();
-        $shippingAddress->expects($this->once())->method('setCollectShippingRates')->with(true);
+        $shippingAddress->expects($this->once())->method('__call')->with('setCollectShippingRates', [true]);
 
         $quote = $this->createMock(Quote::class);
         $quote->expects($this->once())->method('addProduct')->with(
@@ -653,7 +651,7 @@ final class MagentoStorefrontTest extends TestCase
     {
         $shippingAddress = $this->getMockBuilder(QuoteAddress::class)
             ->disableOriginalConstructor()
-            ->addMethods(['setCollectShippingRates'])
+            ->onlyMethods(['__call'])
             ->getMock();
 
         $quote = $this->createMock(Quote::class);

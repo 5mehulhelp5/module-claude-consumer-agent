@@ -36,14 +36,14 @@ final class SlotLockTest extends TestCase
 
     public function testAcquireReturnsFirstFreeSlot(): void
     {
+        $lockCalls = [];
         $lockManager = $this->createMock(LockManagerInterface::class);
         $lockManager->expects($this->exactly(2))
             ->method('lock')
-            ->withConsecutive(
-                ['aiagent:turn:1:1', 0],
-                ['aiagent:turn:1:2', 0]
-            )
-            ->willReturnOnConsecutiveCalls(false, true);
+            ->willReturnCallback(static function (string $name, int $timeout) use (&$lockCalls): bool {
+                $lockCalls[] = [$name, $timeout];
+                return count($lockCalls) === 2;
+            });
         $lockManager->expects($this->once())->method('unlock')->with('aiagent:turn:1:2');
         $logger = $this->createMock(LoggerInterface::class);
         $slotLock = new SlotLock($lockManager, $this->buildStoreConfig(4), $logger);
@@ -51,6 +51,7 @@ final class SlotLockTest extends TestCase
         $handle = $slotLock->acquire(1);
 
         $this->assertInstanceOf(SlotHandle::class, $handle);
+        $this->assertSame([['aiagent:turn:1:1', 0], ['aiagent:turn:1:2', 0]], $lockCalls);
         $handle->release();
     }
 
