@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace MageOS\ClaudeConsumerAgent\Model\Backend;
 
 use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Framework\DataObject;
 use Magento\CatalogInventory\Api\Data\StockStatusInterface;
 use Magento\InventorySalesApi\Api\AreProductsSalableInterface;
 use Magento\InventorySalesApi\Api\Data\SalesChannelInterface;
@@ -48,7 +49,7 @@ final class Salability
             if ($stockId === null) {
                 return null;
             }
-            return $isProductSalable->execute((string)$p->getSku(), $stockId);
+            return $isProductSalable->execute($this->canonicalSku($p), $stockId);
         } catch (\Throwable $exception) {
             return null;
         }
@@ -87,7 +88,7 @@ final class Salability
 
             $skusByProductId = [];
             foreach ($products as $product) {
-                $skusByProductId[(int)$product->getId()] = (string)$product->getSku();
+                $skusByProductId[(int)$product->getId()] = $this->canonicalSku($product);
             }
 
             $results = $areProductsSalable->execute(array_values($skusByProductId), $stockId);
@@ -121,5 +122,13 @@ final class Salability
             $map[$productId] = $stockStatus === StockStatusInterface::STATUS_IN_STOCK;
         }
         return $map;
+    }
+
+    private function canonicalSku(ProductInterface $product): string
+    {
+        if ($product instanceof DataObject) {
+            return (string)$product->getData('sku');
+        }
+        return (string)$product->getSku();
     }
 }

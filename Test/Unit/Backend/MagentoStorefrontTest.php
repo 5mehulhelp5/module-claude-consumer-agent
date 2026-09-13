@@ -475,11 +475,14 @@ final class MagentoStorefrontTest extends TestCase
     {
         $child = $this->magentoProduct(201, 'Blue Shirt - S', 20.0);
         $child->method('getSku')->willReturn('SHIRT-BLUE-S');
+        $child->method('getData')->willReturnCallback(static fn (string $key) => $key === 'sku' ? 'SHIRT-BLUE-S' : null);
 
         $sibling1 = $this->magentoProduct(202, 'Blue Shirt - M', 20.0);
         $sibling1->method('getSku')->willReturn('SHIRT-BLUE-M');
+        $sibling1->method('getData')->willReturnCallback(static fn (string $key) => $key === 'sku' ? 'SHIRT-BLUE-M' : null);
         $sibling2 = $this->magentoProduct(203, 'Blue Shirt - L', 20.0);
         $sibling2->method('getSku')->willReturn('SHIRT-BLUE-L');
+        $sibling2->method('getData')->willReturnCallback(static fn (string $key) => $key === 'sku' ? 'SHIRT-BLUE-L' : null);
 
         $parentTypeInstance = $this->createMock(Configurable::class);
         $parentTypeInstance->method('getUsedProducts')->willReturn([$child, $sibling1, $sibling2]);
