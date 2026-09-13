@@ -18,7 +18,7 @@ final class Serializer
         . 'different product as the requested one. Search matches product text, not ids; resolve a '
         . 'product id with get_product_details.';
 
-    private const VARIANT_ALWAYS = ['product_id', 'option_values', 'price', 'in_stock'];
+    private const VARIANT_ALWAYS = ['product_id', 'option_values', 'price', 'original_price', 'in_stock'];
 
     private const UNSETTABLE_CUSTOM_OPTION_TYPES = ['file', 'date', 'date_time', 'time'];
 
@@ -37,6 +37,7 @@ final class Serializer
             'in_stock' => (bool)($record['in_stock'] ?? true),
         ];
         $optional = [
+            'original_price' => $record['original_price'] ?? null,
             'brand' => $record['brand'] ?? null,
             'rating' => $record['rating'] ?? null,
             'review_count' => $record['review_count'] ?? null,

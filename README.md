@@ -223,6 +223,13 @@ when a category is saved, deleted or moved.
 takes `price_asc`, `price_desc` or `best_sellers`. Best sellers rank by units
 sold over the last two years (`Api\Backend\BestsellerRankInterface`).
 
+### Sale pricing
+
+A product record carries `price`, what the customer pays now, and an
+optional `original_price` when the item is marked down: the regular price,
+present only when it is at least 0.01 higher than `price`. A record without
+`original_price` is not on sale.
+
 ### Custom options
 
 Core Magento custom options are part of every product record

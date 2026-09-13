@@ -192,6 +192,18 @@ final class StaticSystemTest extends TestCase
         );
     }
 
+    public function testOriginalPriceGroundingRuleIsPresent(): void
+    {
+        $text = $this->assemble($this->buildConfig(), $this->realSkillRegistry()->indexBlock());
+        $this->assertStringContainsString(
+            'A record with an original_price is on sale: the price field is what the customer '
+                . 'pays now and original_price is what it was, so a discount is the difference '
+                . 'between them; a record without original_price is not on sale, and you must not '
+                . 'infer a discount from anything else.',
+            $text
+        );
+    }
+
     public function testCurrentPageCategoryRuleIsPresent(): void
     {
         $text = $this->assemble($this->buildConfig(), $this->realSkillRegistry()->indexBlock());

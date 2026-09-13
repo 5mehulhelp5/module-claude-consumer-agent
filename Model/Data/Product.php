@@ -11,6 +11,7 @@ final class Product implements ProductInterface
         private readonly string $productId,
         private readonly string $title,
         private readonly float $price,
+        private readonly ?float $originalPrice = null,
         private readonly string $currency = 'USD',
         private readonly ?string $brand = null,
         private readonly ?float $rating = null,
@@ -36,6 +37,7 @@ final class Product implements ProductInterface
             productId: (string)($data['product_id'] ?? ''),
             title: (string)($data['title'] ?? ''),
             price: (float)($data['price'] ?? 0.0),
+            originalPrice: isset($data['original_price']) ? (float)$data['original_price'] : null,
             currency: (string)($data['currency'] ?? 'USD'),
             brand: isset($data['brand']) ? (string)$data['brand'] : null,
             rating: isset($data['rating']) ? (float)$data['rating'] : null,
@@ -73,6 +75,11 @@ final class Product implements ProductInterface
     public function getPrice(): float
     {
         return $this->price;
+    }
+
+    public function getOriginalPrice(): ?float
+    {
+        return $this->originalPrice;
     }
 
     public function getCurrency(): string
@@ -157,6 +164,7 @@ final class Product implements ProductInterface
             'title' => $this->title,
             'brand' => $this->brand,
             'price' => $this->price,
+            'original_price' => $this->originalPrice,
             'currency' => $this->currency,
             'rating' => $this->rating,
             'review_count' => $this->reviewCount,

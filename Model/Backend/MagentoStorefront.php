@@ -291,8 +291,13 @@ final class MagentoStorefront implements StorefrontBackendInterface
     {
         $stripped = strip_tags($text);
         $collapsed = preg_replace('/\s+/', ' ', $stripped) ?? '';
-        $trimmed = trim($collapsed);
+        $trimmed = trim($this->collapseDoubledQuotes($collapsed));
         return $trimmed !== '' ? $trimmed : null;
+    }
+
+    private function collapseDoubledQuotes(string $text): string
+    {
+        return str_replace(['""', "''"], ['"', "'"], $text);
     }
 
     public function searchCategories(SessionContext $ctx, string $keywords, int $limit): array

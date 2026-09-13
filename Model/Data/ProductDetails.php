@@ -12,6 +12,7 @@ final class ProductDetails implements ProductDetailsInterface
         private readonly string $productId,
         private readonly string $title,
         private readonly float $price,
+        private readonly ?float $originalPrice = null,
         private readonly string $currency = 'USD',
         private readonly ?string $brand = null,
         private readonly ?float $rating = null,
@@ -46,6 +47,7 @@ final class ProductDetails implements ProductDetailsInterface
             productId: $product->getProductId(),
             title: $product->getTitle(),
             price: $product->getPrice(),
+            originalPrice: $product->getOriginalPrice(),
             currency: $product->getCurrency(),
             brand: $product->getBrand(),
             rating: $product->getRating(),
@@ -92,6 +94,7 @@ final class ProductDetails implements ProductDetailsInterface
             productId: $this->productId,
             title: $this->title,
             price: $this->price,
+            originalPrice: $this->originalPrice,
             currency: $this->currency,
             brand: $this->brand,
             rating: $this->rating,
@@ -121,6 +124,7 @@ final class ProductDetails implements ProductDetailsInterface
             productId: $this->productId,
             title: $this->title,
             price: $price,
+            originalPrice: $this->originalPrice,
             currency: $this->currency,
             brand: $this->brand,
             rating: $this->rating,
@@ -150,6 +154,7 @@ final class ProductDetails implements ProductDetailsInterface
             productId: $this->productId,
             title: $this->title,
             price: $this->price,
+            originalPrice: $this->originalPrice,
             currency: $this->currency,
             brand: $this->brand,
             rating: $this->rating,
@@ -179,6 +184,7 @@ final class ProductDetails implements ProductDetailsInterface
             productId: $this->productId,
             title: $this->title,
             price: $this->price,
+            originalPrice: $this->originalPrice,
             currency: $this->currency,
             brand: $this->brand,
             rating: $this->rating,
@@ -220,6 +226,11 @@ final class ProductDetails implements ProductDetailsInterface
     public function getPrice(): float
     {
         return $this->price;
+    }
+
+    public function getOriginalPrice(): ?float
+    {
+        return $this->originalPrice;
     }
 
     public function getCurrency(): string
@@ -324,6 +335,7 @@ final class ProductDetails implements ProductDetailsInterface
             'title' => $this->title,
             'brand' => $this->brand,
             'price' => $this->price,
+            'original_price' => $this->originalPrice,
             'currency' => $this->currency,
             'rating' => $this->rating,
             'review_count' => $this->reviewCount,

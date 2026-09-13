@@ -6,11 +6,12 @@ namespace MageOS\ClaudeConsumerAgent\Test\Unit\Backend;
 use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
 use Magento\Catalog\Api\Data\ProductCustomOptionValuesInterface;
 use Magento\Catalog\Model\Product as MagentoProduct;
+use Magento\Catalog\Pricing\Price\FinalPrice;
+use Magento\Catalog\Pricing\Price\RegularPrice;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Framework\ObjectManagerInterface;
-use Magento\Framework\Pricing\Amount\AmountInterface;
 use Magento\Framework\Pricing\Price\PriceInterface;
 use Magento\Framework\Pricing\PriceInfoInterface;
 use Magento\InventoryApi\Api\Data\StockInterface;
@@ -94,12 +95,25 @@ final class ProductMapperTest extends TestCase
 
     private function priceInfo(float $value): PriceInfoInterface&MockObject
     {
-        $amount = $this->createMock(AmountInterface::class);
-        $amount->method('getValue')->willReturn($value);
         $price = $this->createMock(PriceInterface::class);
-        $price->method('getAmount')->willReturn($amount);
+        $price->method('getValue')->willReturn($value);
         $priceInfo = $this->createMock(PriceInfoInterface::class);
         $priceInfo->method('getPrice')->willReturn($price);
+        return $priceInfo;
+    }
+
+    private function salePriceInfo(float $regularValue, float $finalValue): PriceInfoInterface&MockObject
+    {
+        $regularPrice = $this->createMock(PriceInterface::class);
+        $regularPrice->method('getValue')->willReturn($regularValue);
+        $finalPrice = $this->createMock(PriceInterface::class);
+        $finalPrice->method('getValue')->willReturn($finalValue);
+
+        $priceInfo = $this->createMock(PriceInfoInterface::class);
+        $priceInfo->method('getPrice')->willReturnMap([
+            [RegularPrice::PRICE_CODE, $regularPrice],
+            [FinalPrice::PRICE_CODE, $finalPrice],
+        ]);
         return $priceInfo;
     }
 
@@ -423,5 +437,131 @@ final class ProductMapperTest extends TestCase
         $result = $mapper->toProduct($product, $this->context());
 
         $this->assertSame('https://example.test/placeholder.jpg', $result->getImageUrl());
+    }
+
+    public function testMarkedDownProductCarriesTheRegularPriceAsOriginalPrice(): void
+    {
+        $product = $this->product();
+        $product->method('getId')->willReturn(201);
+        $product->method('getName')->willReturn('Clearance Lamp');
+        $product->method('getTypeId')->willReturn('simple');
+        $product->method('getPriceInfo')->willReturn($this->salePriceInfo(140.5, 119.4));
+        $product->method('getProductUrl')->willReturn(null);
+
+        $mapper = new ProductMapper(
+            $this->storeManager(),
+            $this->productImageUrl(),
+            $this->helperImageUrl(),
+            $this->salability(true),
+            new CoreOptions(),
+            $this->urlFinder()
+        );
+
+        $result = $mapper->toProduct($product, $this->context());
+
+        $this->assertSame(119.4, $result->getPrice());
+        $this->assertSame(140.5, $result->getOriginalPrice());
+    }
+
+    public function testFullPriceProductHasNoOriginalPrice(): void
+    {
+        $product = $this->product();
+        $product->method('getId')->willReturn(202);
+        $product->method('getName')->willReturn('Full Price Lamp');
+        $product->method('getTypeId')->willReturn('simple');
+        $product->method('getPriceInfo')->willReturn($this->salePriceInfo(100.0, 100.0));
+        $product->method('getProductUrl')->willReturn(null);
+
+        $mapper = new ProductMapper(
+            $this->storeManager(),
+            $this->productImageUrl(),
+            $this->helperImageUrl(),
+            $this->salability(true),
+            new CoreOptions(),
+            $this->urlFinder()
+        );
+
+        $result = $mapper->toProduct($product, $this->context());
+
+        $this->assertSame(100.0, $result->getPrice());
+        $this->assertNull($result->getOriginalPrice());
+    }
+
+    public function testAMarkdownUnderOneCentIsNotTreatedAsAnOriginalPrice(): void
+    {
+        $product = $this->product();
+        $product->method('getId')->willReturn(203);
+        $product->method('getName')->willReturn('Rounded Lamp');
+        $product->method('getTypeId')->willReturn('simple');
+        $product->method('getPriceInfo')->willReturn($this->salePriceInfo(100.005, 100.0));
+        $product->method('getProductUrl')->willReturn(null);
+
+        $mapper = new ProductMapper(
+            $this->storeManager(),
+            $this->productImageUrl(),
+            $this->helperImageUrl(),
+            $this->salability(true),
+            new CoreOptions(),
+            $this->urlFinder()
+        );
+
+        $result = $mapper->toProduct($product, $this->context());
+
+        $this->assertNull($result->getOriginalPrice());
+    }
+
+    public function testAPriceInfoExceptionFallsBackToAZeroPriceAndNoOriginalPrice(): void
+    {
+        $product = $this->product();
+        $product->method('getId')->willReturn(204);
+        $product->method('getName')->willReturn('No Price Info');
+        $product->method('getTypeId')->willReturn('simple');
+        $product->method('getPriceInfo')->willThrowException(new \RuntimeException('no price info'));
+        $product->method('getProductUrl')->willReturn(null);
+
+        $mapper = new ProductMapper(
+            $this->storeManager(),
+            $this->productImageUrl(),
+            $this->helperImageUrl(),
+            $this->salability(true),
+            new CoreOptions(),
+            $this->urlFinder()
+        );
+
+        $result = $mapper->toProduct($product, $this->context());
+
+        $this->assertSame(0.0, $result->getPrice());
+        $this->assertNull($result->getOriginalPrice());
+    }
+
+    public function testShortDescriptionCollapsesDoubledQuotesAndApostrophes(): void
+    {
+        $product = $this->product();
+        $product->method('getId')->willReturn(205);
+        $product->method('getName')->willReturn('Bistro Chair');
+        $product->method('getTypeId')->willReturn('simple');
+        $product->method('getPriceInfo')->willReturn($this->priceInfo(45.0));
+        $product->method('getProductUrl')->willReturn(null);
+        $product->method('getData')->willReturnCallback(
+            static fn (string $key = ''): ?string => $key === 'short_description'
+                ? 'the ""slum of legs"" found under chairs, a woman\'\'s favourite'
+                : null
+        );
+
+        $mapper = new ProductMapper(
+            $this->storeManager(),
+            $this->productImageUrl(),
+            $this->helperImageUrl(),
+            $this->salability(true),
+            new CoreOptions(),
+            $this->urlFinder()
+        );
+
+        $result = $mapper->toProduct($product, $this->context());
+
+        $this->assertSame(
+            'the "slum of legs" found under chairs, a woman\'s favourite',
+            $result->getShortDescription()
+        );
     }
 }

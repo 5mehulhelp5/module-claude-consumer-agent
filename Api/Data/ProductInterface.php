@@ -13,6 +13,8 @@ interface ProductInterface
 
     public function getPrice(): float;
 
+    public function getOriginalPrice(): ?float;
+
     public function getCurrency(): string;
 
     public function getRating(): ?float;

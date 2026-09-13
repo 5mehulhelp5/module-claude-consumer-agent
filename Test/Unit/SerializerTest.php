@@ -42,11 +42,24 @@ final class SerializerTest extends TestCase
         $product = Product::fromArray(['product_id' => 'AR-0002', 'title' => 'Camp Mug', 'price' => 9.0]);
         $compact = $this->serializer->compactProduct($product->toArray());
         foreach (
-            ['attributes', 'labels', 'brand', 'rating', 'options', 'option_values', 'variant_of', 'custom_options']
+            ['attributes', 'labels', 'brand', 'rating', 'options', 'option_values', 'variant_of', 'custom_options',
+                'original_price']
             as $absent
         ) {
             $this->assertArrayNotHasKey($absent, $compact);
         }
+    }
+
+    public function testCompactProductCarriesOriginalPriceWhenTheProductIsOnSale(): void
+    {
+        $product = Product::fromArray([
+            'product_id' => 'AR-0095',
+            'title' => 'Clearance Lamp',
+            'price' => 119.4,
+            'original_price' => 140.5,
+        ]);
+        $compact = $this->serializer->compactProduct($product->toArray());
+        $this->assertSame(140.5, $compact['original_price']);
     }
 
     public function testCompactProductAddsNeedsPageChoicesForRequiredCustomOptions(): void
@@ -204,6 +217,26 @@ final class SerializerTest extends TestCase
         $row = $this->serializer->variantRow($variant->toArray(), $family);
         $this->assertSame(['color' => 'moss'], $row['attributes']);
         $this->assertArrayNotHasKey('variant_of', $row);
+    }
+
+    public function testVariantRowAlwaysCarriesItsOwnOriginalPriceEvenWhenTheFamilyMatches(): void
+    {
+        $family = $this->serializer->compactProduct(Product::fromArray([
+            'product_id' => 'AR-0011',
+            'title' => 'Clearance Pad',
+            'price' => 59.0,
+            'original_price' => 79.0,
+        ])->toArray());
+        $variant = Product::fromArray([
+            'product_id' => 'AR-0011-L',
+            'title' => 'Clearance Pad',
+            'price' => 59.0,
+            'original_price' => 79.0,
+            'option_values' => ['length' => 'long'],
+            'variant_of' => 'AR-0011',
+        ]);
+        $row = $this->serializer->variantRow($variant->toArray(), $family);
+        $this->assertSame(79.0, $row['original_price']);
     }
 
     public function testCartAndOrderLinesCarryOptionKeysOnlyForVariants(): void

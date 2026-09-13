@@ -28,7 +28,6 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\DataObject;
 use Magento\Framework\Message\MessageInterface;
 use Magento\Framework\ObjectManagerInterface;
-use Magento\Framework\Pricing\Amount\AmountInterface;
 use Magento\Framework\Pricing\Price\PriceInterface;
 use Magento\Framework\Pricing\PriceInfoInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
@@ -122,10 +121,8 @@ final class MagentoStorefrontTest extends TestCase
 
     private function priceInfo(float $value): PriceInfoInterface&MockObject
     {
-        $amount = $this->createMock(AmountInterface::class);
-        $amount->method('getValue')->willReturn($value);
         $price = $this->createMock(PriceInterface::class);
-        $price->method('getAmount')->willReturn($amount);
+        $price->method('getValue')->willReturn($value);
         $priceInfo = $this->createMock(PriceInfoInterface::class);
         $priceInfo->method('getPrice')->willReturn($price);
         return $priceInfo;

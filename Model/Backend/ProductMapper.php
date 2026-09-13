@@ -5,6 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Backend;
 
 use Magento\Catalog\Api\Data\ProductInterface as MagentoProductInterface;
 use Magento\Catalog\Pricing\Price\FinalPrice;
+use Magento\Catalog\Pricing\Price\RegularPrice;
 use Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
@@ -26,12 +27,14 @@ final class ProductMapper
     public function toProduct(MagentoProductInterface $p, SessionContext $ctx, ?bool $inStock = null): Product
     {
         $summary = $this->optionsProvider->summarize($p);
+        $prices = $this->prices($p);
 
         $data = [
             'product_id' => (string)$p->getId(),
             'title' => (string)$p->getName(),
             'brand' => $this->brand($p),
-            'price' => $this->finalPrice($p),
+            'price' => $prices['price'],
+            'original_price' => $prices['original_price'],
             'currency' => $this->currency($ctx),
             'rating' => null,
             'review_count' => null,
@@ -95,10 +98,20 @@ final class ProductMapper
         return $attributes;
     }
 
-    private function finalPrice(MagentoProductInterface $p): float
+    private function prices(MagentoProductInterface $p): array
     {
-        $amount = $p->getPriceInfo()->getPrice(FinalPrice::PRICE_CODE)->getAmount()->getValue();
-        return $amount !== null ? (float)$amount : 0.0;
+        try {
+            $priceInfo = $p->getPriceInfo();
+            $final = (float)$priceInfo->getPrice(FinalPrice::PRICE_CODE)->getValue();
+            $regular = (float)$priceInfo->getPrice(RegularPrice::PRICE_CODE)->getValue();
+        } catch (\Throwable $exception) {
+            return ['price' => 0.0, 'original_price' => null];
+        }
+
+        return [
+            'price' => $final,
+            'original_price' => ($regular - $final) >= 0.01 ? $regular : null,
+        ];
     }
 
     private function currency(SessionContext $ctx): string
@@ -155,7 +168,12 @@ final class ProductMapper
     {
         $stripped = strip_tags($text);
         $collapsed = preg_replace('/\s+/', ' ', $stripped) ?? '';
-        $trimmed = trim($collapsed);
+        $trimmed = trim($this->collapseDoubledQuotes($collapsed));
         return $trimmed !== '' ? $trimmed : null;
+    }
+
+    private function collapseDoubledQuotes(string $text): string
+    {
+        return str_replace(['""', "''"], ['"', "'"], $text);
     }
 }
