@@ -46,6 +46,7 @@ class Start implements HttpPostActionInterface, CsrfAwareActionInterface
             return $this->badRequest();
         }
         $customerId = $this->customerSession->getCustomerId();
+        $customerId = $customerId === null ? null : (int)$customerId;
         $quote = $this->checkoutSession->getQuote();
         if ($quote->getId() === null) {
             $this->cartRepository->save($quote);

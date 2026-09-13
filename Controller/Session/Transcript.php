@@ -44,6 +44,7 @@ class Transcript implements HttpPostActionInterface, CsrfAwareActionInterface
             return $this->badRequest();
         }
         $customerId = $this->customerSession->getCustomerId();
+        $customerId = $customerId === null ? null : (int)$customerId;
         $quoteId = (int)$this->checkoutSession->getQuote()->getId();
         $page = PageContext::fromArray($body->page);
         $now = new \DateTimeImmutable('now');

@@ -285,4 +285,26 @@ final class StartTest extends TestCase
 
         $this->assertSame($jsonResult, $result);
     }
+
+    public function testNormalizesANumericStringCustomerIdBeforeBindingTheSession(): void
+    {
+        $resource = $this->createMock(SessionResource::class);
+        $resource->method('load')->willReturn(null);
+        $captured = null;
+        $resource->method('insert')->willReturnCallback(function (array $row) use (&$captured): void {
+            $captured = $row;
+        });
+        $sessionRepository = new Repository($resource, new IdGenerator(), $this->createMock(LoggerInterface::class));
+        $customerSession = $this->createMock(CustomerSession::class);
+        $customerSession->method('getCustomerId')->willReturn('7');
+
+        $start = $this->buildStart([
+            'request' => $this->requestWithBody(['session' => null]),
+            'sessionRepository' => $sessionRepository,
+            'customerSession' => $customerSession,
+        ]);
+        $start->execute();
+
+        $this->assertSame(7, $captured['customer_id']);
+    }
 }
