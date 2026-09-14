@@ -1,5 +1,5 @@
 {
-    "name": "mageos/module-claude-consumer-agent",
+    "name": "mage-os/module-claude-consumer-agent",
     "description": "AI shopping assistant for Hyva storefronts, backed by the Claude Messages API.",
     "type": "magento2-module",
     "license": "OSL-3.0",
