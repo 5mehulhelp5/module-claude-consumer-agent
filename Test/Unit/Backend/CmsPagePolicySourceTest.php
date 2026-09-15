@@ -41,10 +41,10 @@ final class CmsPagePolicySourceTest extends TestCase
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
             static function (string $path) use ($policyPages, $storeFacts): ?string {
-                if ($path === 'aiagent/content/policy_pages') {
+                if ($path === 'ai_integration/aiagent/content/policy_pages') {
                     return implode(',', $policyPages);
                 }
-                if ($path === 'aiagent/content/store_facts') {
+                if ($path === 'ai_integration/aiagent/content/store_facts') {
                     return $storeFacts !== [] ? (string)json_encode($storeFacts) : null;
                 }
                 return null;

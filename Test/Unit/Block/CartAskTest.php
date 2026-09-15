@@ -49,7 +49,7 @@ final class CartAskTest extends TestCase
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->expects($this->once())
             ->method('isSetFlag')
-            ->with('aiagent/general/enabled', ScopeInterface::SCOPE_STORE, 1)
+            ->with('ai_integration/aiagent/general/enabled', ScopeInterface::SCOPE_STORE, 1)
             ->willReturn(true);
         $block = $this->buildBlock($scopeConfig);
         $this->invokeToHtml($block);

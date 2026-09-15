@@ -19,7 +19,7 @@ final class RetentionTest extends TestCase
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
             static function (string $path, string $scopeType = '', $storeId = null) use ($retentionDaysByStoreId) {
-                if ($path === 'aiagent/privacy/retention_days') {
+                if ($path === 'ai_integration/aiagent/privacy/retention_days') {
                     return $retentionDaysByStoreId((int)$storeId);
                 }
                 return null;

@@ -5,7 +5,7 @@
             <block name="aiagent.cart.ask"
                    class="MageOS\ClaudeConsumerAgent\Block\CartAsk"
                    template="MageOS_ClaudeConsumerAgent::cart/ask.phtml"
-                   ifconfig="aiagent/general/enabled"/>
+                   ifconfig="ai_integration/aiagent/general/enabled"/>
         </referenceContainer>
     </body>
 </page>

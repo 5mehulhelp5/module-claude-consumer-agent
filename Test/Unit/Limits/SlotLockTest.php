@@ -20,7 +20,7 @@ final class SlotLockTest extends TestCase
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
             static function (string $path) use ($concurrentTurns) {
-                if ($path === 'aiagent/limits/concurrent_turns') {
+                if ($path === 'ai_integration/aiagent/limits/concurrent_turns') {
                     return $concurrentTurns;
                 }
                 return null;
