@@ -340,7 +340,7 @@ final class StaticSystemTest extends TestCase
 
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
-            static fn (string $path) => $path === 'aiagent/content/catalog_map_depth' ? '0' : null
+            static fn (string $path) => $path === 'ai_integration/aiagent/content/catalog_map_depth' ? '0' : null
         );
         $scopeConfig->method('isSetFlag')->willReturn(false);
 
@@ -412,10 +412,10 @@ final class StaticSystemTest extends TestCase
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
             static function (string $path) use ($facts): ?string {
-                if ($path === 'aiagent/content/store_facts') {
+                if ($path === 'ai_integration/aiagent/content/store_facts') {
                     return (string)json_encode($facts);
                 }
-                if ($path === 'aiagent/content/include_core_facts') {
+                if ($path === 'ai_integration/aiagent/content/include_core_facts') {
                     return '0';
                 }
                 return null;

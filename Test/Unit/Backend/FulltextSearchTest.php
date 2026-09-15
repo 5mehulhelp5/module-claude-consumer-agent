@@ -48,7 +48,7 @@ final class FulltextSearchTest extends TestCase
     {
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
-            static fn (string $path): ?string => $path === 'aiagent/content/allowed_categories'
+            static fn (string $path): ?string => $path === 'ai_integration/aiagent/content/allowed_categories'
                 ? implode(',', $allowedCategories)
                 : null
         );

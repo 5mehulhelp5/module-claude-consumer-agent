@@ -6,7 +6,7 @@
                 <resource id="Magento_Backend::stores">
                     <resource id="Magento_Backend::stores_settings">
                         <resource id="Magento_Config::config">
-                            <resource id="MageOS_ClaudeConsumerAgent::config" title="Shopping Assistant Section" translate="title" sortOrder="150"/>
+                            <resource id="Magento_Backend::ai_integration" title="AI Integration Section" translate="title" sortOrder="150"/>
                         </resource>
                     </resource>
                 </resource>

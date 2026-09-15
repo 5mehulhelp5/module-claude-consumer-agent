@@ -253,7 +253,7 @@ final class OrchestratorTest extends TestCase
             FakeClient::textRound('Wrapping up.'),
         ]);
         $definitions = [$this->definitionForHandler('tool_a', ToolOutcome::ok('a done'))];
-        [$orchestrator] = $this->buildOrchestrator($client, $definitions, ['aiagent/limits/max_tool_iterations' => '1']);
+        [$orchestrator] = $this->buildOrchestrator($client, $definitions, ['ai_integration/aiagent/limits/max_tool_iterations' => '1']);
         $binding = $this->binding();
 
         $events = iterator_to_array($orchestrator->streamTurn($binding, 'go', $binding->context), false);

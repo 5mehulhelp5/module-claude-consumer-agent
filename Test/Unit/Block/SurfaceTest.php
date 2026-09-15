@@ -27,12 +27,12 @@ final class SurfaceTest extends TestCase
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
             static function (string $path) use ($surfaceMode) {
-                return $path === 'aiagent/general/surface_mode' ? $surfaceMode : null;
+                return $path === 'ai_integration/aiagent/general/surface_mode' ? $surfaceMode : null;
             }
         );
         $scopeConfig->method('isSetFlag')->willReturnCallback(
             static function (string $path) use ($enabled) {
-                return $path === 'aiagent/general/enabled' ? $enabled : false;
+                return $path === 'ai_integration/aiagent/general/enabled' ? $enabled : false;
             }
         );
         $store = $this->createMock(StoreInterface::class);

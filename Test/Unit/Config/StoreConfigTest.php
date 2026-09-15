@@ -66,10 +66,10 @@ final class StoreConfigTest extends TestCase
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
             static function (string $path) {
-                if ($path === 'aiagent/cards/products_price') {
+                if ($path === 'ai_integration/aiagent/cards/products_price') {
                     return '0';
                 }
-                if ($path === 'aiagent/cards/products_reason') {
+                if ($path === 'ai_integration/aiagent/cards/products_reason') {
                     return '0';
                 }
                 return null;
@@ -77,10 +77,10 @@ final class StoreConfigTest extends TestCase
         );
         $scopeConfig->method('isSetFlag')->willReturnCallback(
             static function (string $path) {
-                if ($path === 'aiagent/cards/products_price') {
+                if ($path === 'ai_integration/aiagent/cards/products_price') {
                     return false;
                 }
-                if ($path === 'aiagent/cards/products_reason') {
+                if ($path === 'ai_integration/aiagent/cards/products_reason') {
                     return false;
                 }
                 return true;
@@ -108,7 +108,7 @@ final class StoreConfigTest extends TestCase
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
             static function (string $path) {
-                if ($path === 'aiagent/voice/starters') {
+                if ($path === 'ai_integration/aiagent/voice/starters') {
                     return "  Find a gift  \n\nFind a gift\nWhat is new?\n";
                 }
                 return null;
@@ -127,13 +127,13 @@ final class StoreConfigTest extends TestCase
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
             static function (string $path) {
-                if ($path === 'aiagent/content/policy_pages') {
+                if ($path === 'ai_integration/aiagent/content/policy_pages') {
                     return 'returns, shipping ,returns';
                 }
-                if ($path === 'aiagent/content/allowed_categories') {
+                if ($path === 'ai_integration/aiagent/content/allowed_categories') {
                     return '12, 34,56';
                 }
-                if ($path === 'aiagent/content/catalog_map_roots') {
+                if ($path === 'ai_integration/aiagent/content/catalog_map_roots') {
                     return '175,176';
                 }
                 return null;
@@ -154,10 +154,10 @@ final class StoreConfigTest extends TestCase
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
             static function (string $path) {
-                if ($path === 'aiagent/content/catalog_map_depth') {
+                if ($path === 'ai_integration/aiagent/content/catalog_map_depth') {
                     return '3';
                 }
-                if ($path === 'aiagent/content/catalog_map_max_chars') {
+                if ($path === 'ai_integration/aiagent/content/catalog_map_max_chars') {
                     return '8000';
                 }
                 return null;
@@ -220,7 +220,7 @@ final class StoreConfigTest extends TestCase
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
             static function (string $path) {
-                if ($path === 'aiagent/voice/brand_name') {
+                if ($path === 'ai_integration/aiagent/voice/brand_name') {
                     return 'Configured Brand';
                 }
                 return null;
@@ -239,7 +239,7 @@ final class StoreConfigTest extends TestCase
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
             static function (string $path) {
-                if ($path === 'aiagent/model/max_tokens') {
+                if ($path === 'ai_integration/aiagent/model/max_tokens') {
                     return '4096';
                 }
                 return null;
@@ -280,7 +280,7 @@ final class StoreConfigTest extends TestCase
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('isSetFlag')->willReturnCallback(
             static function (string $path) {
-                return $path === 'aiagent/general/enabled';
+                return $path === 'ai_integration/aiagent/general/enabled';
             }
         );
         $storeConfig = $this->buildStoreConfig($scopeConfig);
@@ -293,7 +293,7 @@ final class StoreConfigTest extends TestCase
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
             static function (string $path) {
-                if ($path === 'aiagent/model/api_key') {
+                if ($path === 'ai_integration/aiagent/model/api_key') {
                     return '  configured-key  ';
                 }
                 return null;
@@ -311,7 +311,7 @@ final class StoreConfigTest extends TestCase
         ];
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
-            static fn (string $path) => $path === 'aiagent/content/store_facts' ? json_encode($rows) : null
+            static fn (string $path) => $path === 'ai_integration/aiagent/content/store_facts' ? json_encode($rows) : null
         );
         $scopeConfig->method('isSetFlag')->willReturn(false);
         $storeConfig = $this->buildStoreConfig($scopeConfig);
@@ -339,7 +339,7 @@ final class StoreConfigTest extends TestCase
         ];
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
-            static fn (string $path) => $path === 'aiagent/content/store_facts' ? json_encode($rows) : null
+            static fn (string $path) => $path === 'ai_integration/aiagent/content/store_facts' ? json_encode($rows) : null
         );
         $scopeConfig->method('isSetFlag')->willReturn(false);
         $storeConfig = $this->buildStoreConfig($scopeConfig);
@@ -357,7 +357,7 @@ final class StoreConfigTest extends TestCase
         ];
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
-            static fn (string $path) => $path === 'aiagent/content/store_facts' ? json_encode($rows) : null
+            static fn (string $path) => $path === 'ai_integration/aiagent/content/store_facts' ? json_encode($rows) : null
         );
         $scopeConfig->method('isSetFlag')->willReturn(false);
         $storeConfig = $this->buildStoreConfig($scopeConfig);
@@ -384,7 +384,7 @@ final class StoreConfigTest extends TestCase
         ];
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
-            static fn (string $path) => $path === 'aiagent/content/store_facts' ? json_encode($rows) : null
+            static fn (string $path) => $path === 'ai_integration/aiagent/content/store_facts' ? json_encode($rows) : null
         );
         $scopeConfig->method('isSetFlag')->willReturn(false);
         $storeConfig = $this->buildStoreConfig($scopeConfig);
@@ -396,7 +396,7 @@ final class StoreConfigTest extends TestCase
     {
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
-            static fn (string $path) => $path === 'aiagent/content/include_core_facts' ? '0' : null
+            static fn (string $path) => $path === 'ai_integration/aiagent/content/include_core_facts' ? '0' : null
         );
         $scopeConfig->method('isSetFlag')->willReturn(false);
         $storeConfig = $this->buildStoreConfig($scopeConfig);

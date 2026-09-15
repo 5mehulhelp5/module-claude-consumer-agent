@@ -19,7 +19,7 @@ final class ResolverTest extends TestCase
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
             static function (string $path) use ($surfaceMode) {
-                if ($path === 'aiagent/general/surface_mode') {
+                if ($path === 'ai_integration/aiagent/general/surface_mode') {
                     return $surfaceMode;
                 }
                 return null;

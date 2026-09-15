@@ -76,8 +76,9 @@ Finish with `bin/magento cache:flush`. In production mode also run
 
 ## Configuration
 
-Stores > Configuration > Sales > Shopping Assistant. Every field has default,
-website and store view scope. Config paths start with `aiagent/`.
+Stores > Configuration > Services > AI Integration > Shopping Assistant. Every
+field has default, website and store view scope. Config paths start with
+`ai_integration/aiagent/`.
 
 ### General
 
@@ -170,10 +171,10 @@ with `bin/magento config:set`.
 
 | Path | Default | Meaning |
 |---|---|---|
-| `aiagent/runtime/first_byte_threshold` | 4 | Seconds the browser waits for the first streamed byte before it switches the session to JSON replies |
-| `aiagent/runtime/heartbeat_seconds` | 10 | Interval of `: ping` comments while a model call runs |
-| `aiagent/lexicon/policy_intent_terms` | word list | Words that force the policy tool |
-| `aiagent/lexicon/order_intent_terms` | word list | Words that force the order lookup |
+| `ai_integration/aiagent/runtime/first_byte_threshold` | 4 | Seconds the browser waits for the first streamed byte before it switches the session to JSON replies |
+| `ai_integration/aiagent/runtime/heartbeat_seconds` | 10 | Interval of `: ping` comments while a model call runs |
+| `ai_integration/aiagent/lexicon/policy_intent_terms` | word list | Words that force the policy tool |
+| `ai_integration/aiagent/lexicon/order_intent_terms` | word list | Words that force the order lookup |
 
 ## How a turn works
 

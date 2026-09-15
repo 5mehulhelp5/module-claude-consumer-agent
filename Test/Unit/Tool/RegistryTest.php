@@ -48,7 +48,7 @@ final class RegistryTest extends TestCase
     {
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
-            static fn (string $path): ?string => $path === 'aiagent/content/policy_pages' ? $policyPages : null
+            static fn (string $path): ?string => $path === 'ai_integration/aiagent/content/policy_pages' ? $policyPages : null
         );
         $storeManager = $this->createMock(StoreManagerInterface::class);
         $storeManager->method('getStore')->willThrowException(new NoSuchEntityException());

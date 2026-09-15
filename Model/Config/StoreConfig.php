@@ -12,59 +12,59 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\AgentConfig;
  */
 final class StoreConfig
 {
-    private const PATH_GENERAL_ENABLED = 'aiagent/general/enabled';
-    private const PATH_GENERAL_SURFACE_MODE = 'aiagent/general/surface_mode';
-    private const PATH_GENERAL_LAUNCHER_ENABLED = 'aiagent/general/launcher_enabled';
-    private const PATH_GENERAL_PRODUCT_BLOCK_ENABLED = 'aiagent/general/product_block_enabled';
-    private const PATH_GENERAL_HEADER_ICON_VIEW = 'aiagent/general/header_icon_view';
-    private const PATH_MODEL_API_KEY = 'aiagent/model/api_key';
-    private const PATH_MODEL_MODEL_ID = 'aiagent/model/model_id';
-    private const PATH_MODEL_MAX_TOKENS = 'aiagent/model/max_tokens';
-    private const PATH_MODEL_THINKING_EFFORT = 'aiagent/model/thinking_effort';
-    private const PATH_MODEL_REQUEST_TIMEOUT = 'aiagent/model/request_timeout';
-    private const PATH_MODEL_CONNECT_TIMEOUT = 'aiagent/model/connect_timeout';
+    private const PATH_GENERAL_ENABLED = 'ai_integration/aiagent/general/enabled';
+    private const PATH_GENERAL_SURFACE_MODE = 'ai_integration/aiagent/general/surface_mode';
+    private const PATH_GENERAL_LAUNCHER_ENABLED = 'ai_integration/aiagent/general/launcher_enabled';
+    private const PATH_GENERAL_PRODUCT_BLOCK_ENABLED = 'ai_integration/aiagent/general/product_block_enabled';
+    private const PATH_GENERAL_HEADER_ICON_VIEW = 'ai_integration/aiagent/general/header_icon_view';
+    private const PATH_MODEL_API_KEY = 'ai_integration/aiagent/model/api_key';
+    private const PATH_MODEL_MODEL_ID = 'ai_integration/aiagent/model/model_id';
+    private const PATH_MODEL_MAX_TOKENS = 'ai_integration/aiagent/model/max_tokens';
+    private const PATH_MODEL_THINKING_EFFORT = 'ai_integration/aiagent/model/thinking_effort';
+    private const PATH_MODEL_REQUEST_TIMEOUT = 'ai_integration/aiagent/model/request_timeout';
+    private const PATH_MODEL_CONNECT_TIMEOUT = 'ai_integration/aiagent/model/connect_timeout';
     private const PATH_STORE_INFORMATION_NAME = 'general/store_information/name';
-    private const PATH_VOICE_BRAND_NAME = 'aiagent/voice/brand_name';
-    private const PATH_VOICE_ASSISTANT_NAME = 'aiagent/voice/assistant_name';
-    private const PATH_VOICE_BRAND_VOICE = 'aiagent/voice/brand_voice';
-    private const PATH_VOICE_GREETING = 'aiagent/voice/greeting';
-    private const PATH_VOICE_STARTERS = 'aiagent/voice/starters';
-    private const PATH_VOICE_DOMAIN_SEARCH_NOTES = 'aiagent/voice/domain_search_notes';
-    private const PATH_CONTENT_POLICY_PAGES = 'aiagent/content/policy_pages';
-    private const PATH_CONTENT_ALLOWED_CATEGORIES = 'aiagent/content/allowed_categories';
-    private const PATH_CONTENT_CATALOG_MAP_DEPTH = 'aiagent/content/catalog_map_depth';
-    private const PATH_CONTENT_CATALOG_MAP_ROOTS = 'aiagent/content/catalog_map_roots';
-    private const PATH_CONTENT_CATALOG_MAP_MAX_CHARS = 'aiagent/content/catalog_map_max_chars';
-    private const PATH_CONTENT_STORE_FACTS = 'aiagent/content/store_facts';
-    private const PATH_CONTENT_INCLUDE_CORE_FACTS = 'aiagent/content/include_core_facts';
-    private const PATH_CARDS_PRODUCTS_IMAGE = 'aiagent/cards/products_image';
-    private const PATH_CARDS_PRODUCTS_PRICE = 'aiagent/cards/products_price';
-    private const PATH_CARDS_PRODUCTS_DESCRIPTION = 'aiagent/cards/products_description';
-    private const PATH_CARDS_PRODUCTS_STOCK = 'aiagent/cards/products_stock';
-    private const PATH_CARDS_PRODUCTS_ADD_TO_CART = 'aiagent/cards/products_add_to_cart';
-    private const PATH_CARDS_PRODUCTS_REASON = 'aiagent/cards/products_reason';
-    private const PATH_LIMITS_CONCURRENT_TURNS = 'aiagent/limits/concurrent_turns';
-    private const PATH_LIMITS_TURNS_PER_SESSION = 'aiagent/limits/turns_per_session';
-    private const PATH_LIMITS_TURNS_PER_SESSION_WINDOW = 'aiagent/limits/turns_per_session_window';
-    private const PATH_LIMITS_TURNS_PER_IP_MINUTE = 'aiagent/limits/turns_per_ip_minute';
-    private const PATH_LIMITS_MAX_TOOL_ITERATIONS = 'aiagent/limits/max_tool_iterations';
-    private const PATH_LIMITS_MAX_QUANTITY_PER_ITEM = 'aiagent/limits/max_quantity_per_item';
-    private const PATH_LIMITS_MAX_CART_LINES = 'aiagent/limits/max_cart_lines';
-    private const PATH_LIMITS_MAX_MESSAGE_LENGTH = 'aiagent/limits/max_message_length';
-    private const PATH_LIMITS_TURN_WALL_CLOCK = 'aiagent/limits/turn_wall_clock';
-    private const PATH_LIMITS_MAX_SEARCH_RESULTS = 'aiagent/limits/max_search_results';
-    private const PATH_LIMITS_MAX_FENCED_CHARS = 'aiagent/limits/max_fenced_chars';
-    private const PATH_LIMITS_COMPACT_ABOVE_TOKENS = 'aiagent/limits/compact_above_tokens';
-    private const PATH_RUNTIME_STREAMING = 'aiagent/runtime/streaming';
-    private const PATH_RUNTIME_FIRST_BYTE_THRESHOLD = 'aiagent/runtime/first_byte_threshold';
-    private const PATH_RUNTIME_HEARTBEAT_SECONDS = 'aiagent/runtime/heartbeat_seconds';
-    private const PATH_LEXICON_POLICY_INTENT_TERMS = 'aiagent/lexicon/policy_intent_terms';
-    private const PATH_LEXICON_ORDER_INTENT_TERMS = 'aiagent/lexicon/order_intent_terms';
-    private const PATH_PRIVACY_RETENTION_DAYS = 'aiagent/privacy/retention_days';
-    private const PATH_PRIVACY_SHOW_AI_LABEL = 'aiagent/privacy/show_ai_label';
-    private const PATH_PRIVACY_CONTACT_URL = 'aiagent/privacy/contact_url';
-    private const PATH_PRIVACY_CONTACT_LABEL = 'aiagent/privacy/contact_label';
-    private const PATH_PRIVACY_DEBUG_LOG = 'aiagent/privacy/debug_log';
+    private const PATH_VOICE_BRAND_NAME = 'ai_integration/aiagent/voice/brand_name';
+    private const PATH_VOICE_ASSISTANT_NAME = 'ai_integration/aiagent/voice/assistant_name';
+    private const PATH_VOICE_BRAND_VOICE = 'ai_integration/aiagent/voice/brand_voice';
+    private const PATH_VOICE_GREETING = 'ai_integration/aiagent/voice/greeting';
+    private const PATH_VOICE_STARTERS = 'ai_integration/aiagent/voice/starters';
+    private const PATH_VOICE_DOMAIN_SEARCH_NOTES = 'ai_integration/aiagent/voice/domain_search_notes';
+    private const PATH_CONTENT_POLICY_PAGES = 'ai_integration/aiagent/content/policy_pages';
+    private const PATH_CONTENT_ALLOWED_CATEGORIES = 'ai_integration/aiagent/content/allowed_categories';
+    private const PATH_CONTENT_CATALOG_MAP_DEPTH = 'ai_integration/aiagent/content/catalog_map_depth';
+    private const PATH_CONTENT_CATALOG_MAP_ROOTS = 'ai_integration/aiagent/content/catalog_map_roots';
+    private const PATH_CONTENT_CATALOG_MAP_MAX_CHARS = 'ai_integration/aiagent/content/catalog_map_max_chars';
+    private const PATH_CONTENT_STORE_FACTS = 'ai_integration/aiagent/content/store_facts';
+    private const PATH_CONTENT_INCLUDE_CORE_FACTS = 'ai_integration/aiagent/content/include_core_facts';
+    private const PATH_CARDS_PRODUCTS_IMAGE = 'ai_integration/aiagent/cards/products_image';
+    private const PATH_CARDS_PRODUCTS_PRICE = 'ai_integration/aiagent/cards/products_price';
+    private const PATH_CARDS_PRODUCTS_DESCRIPTION = 'ai_integration/aiagent/cards/products_description';
+    private const PATH_CARDS_PRODUCTS_STOCK = 'ai_integration/aiagent/cards/products_stock';
+    private const PATH_CARDS_PRODUCTS_ADD_TO_CART = 'ai_integration/aiagent/cards/products_add_to_cart';
+    private const PATH_CARDS_PRODUCTS_REASON = 'ai_integration/aiagent/cards/products_reason';
+    private const PATH_LIMITS_CONCURRENT_TURNS = 'ai_integration/aiagent/limits/concurrent_turns';
+    private const PATH_LIMITS_TURNS_PER_SESSION = 'ai_integration/aiagent/limits/turns_per_session';
+    private const PATH_LIMITS_TURNS_PER_SESSION_WINDOW = 'ai_integration/aiagent/limits/turns_per_session_window';
+    private const PATH_LIMITS_TURNS_PER_IP_MINUTE = 'ai_integration/aiagent/limits/turns_per_ip_minute';
+    private const PATH_LIMITS_MAX_TOOL_ITERATIONS = 'ai_integration/aiagent/limits/max_tool_iterations';
+    private const PATH_LIMITS_MAX_QUANTITY_PER_ITEM = 'ai_integration/aiagent/limits/max_quantity_per_item';
+    private const PATH_LIMITS_MAX_CART_LINES = 'ai_integration/aiagent/limits/max_cart_lines';
+    private const PATH_LIMITS_MAX_MESSAGE_LENGTH = 'ai_integration/aiagent/limits/max_message_length';
+    private const PATH_LIMITS_TURN_WALL_CLOCK = 'ai_integration/aiagent/limits/turn_wall_clock';
+    private const PATH_LIMITS_MAX_SEARCH_RESULTS = 'ai_integration/aiagent/limits/max_search_results';
+    private const PATH_LIMITS_MAX_FENCED_CHARS = 'ai_integration/aiagent/limits/max_fenced_chars';
+    private const PATH_LIMITS_COMPACT_ABOVE_TOKENS = 'ai_integration/aiagent/limits/compact_above_tokens';
+    private const PATH_GENERAL_STREAMING = 'ai_integration/aiagent/general/streaming';
+    private const PATH_RUNTIME_FIRST_BYTE_THRESHOLD = 'ai_integration/aiagent/runtime/first_byte_threshold';
+    private const PATH_RUNTIME_HEARTBEAT_SECONDS = 'ai_integration/aiagent/runtime/heartbeat_seconds';
+    private const PATH_LEXICON_POLICY_INTENT_TERMS = 'ai_integration/aiagent/lexicon/policy_intent_terms';
+    private const PATH_LEXICON_ORDER_INTENT_TERMS = 'ai_integration/aiagent/lexicon/order_intent_terms';
+    private const PATH_PRIVACY_RETENTION_DAYS = 'ai_integration/aiagent/privacy/retention_days';
+    private const PATH_PRIVACY_SHOW_AI_LABEL = 'ai_integration/aiagent/privacy/show_ai_label';
+    private const PATH_PRIVACY_CONTACT_URL = 'ai_integration/aiagent/privacy/contact_url';
+    private const PATH_PRIVACY_CONTACT_LABEL = 'ai_integration/aiagent/privacy/contact_label';
+    private const PATH_PRIVACY_DEBUG_LOG = 'ai_integration/aiagent/privacy/debug_log';
 
     private array $agentCache = [];
 
@@ -203,7 +203,7 @@ final class StoreConfig
                 $storeId,
                 $defaults->compactAboveTokens
             ),
-            streaming: $this->readString(self::PATH_RUNTIME_STREAMING, $storeId, $defaults->streaming),
+            streaming: $this->readString(self::PATH_GENERAL_STREAMING, $storeId, $defaults->streaming),
             firstByteThreshold: $this->readInt(
                 self::PATH_RUNTIME_FIRST_BYTE_THRESHOLD,
                 $storeId,

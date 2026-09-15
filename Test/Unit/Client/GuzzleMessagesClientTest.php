@@ -47,7 +47,7 @@ final class GuzzleMessagesClientTest extends TestCase
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
         $scopeConfig->method('getValue')->willReturnCallback(
             static function (string $path) use ($apiKey) {
-                if ($path === 'aiagent/model/api_key') {
+                if ($path === 'ai_integration/aiagent/model/api_key') {
                     return $apiKey;
                 }
                 return null;
