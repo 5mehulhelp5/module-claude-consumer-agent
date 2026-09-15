@@ -248,10 +248,10 @@ class EvalRun extends Command
 
         $values = [];
         if (array_key_exists('store_facts', $overrides)) {
-            $values['aiagent/content/store_facts'] = (string)json_encode($overrides['store_facts']);
+            $values['ai_integration/aiagent/content/store_facts'] = (string)json_encode($overrides['store_facts']);
         }
         if (array_key_exists('include_core_facts', $overrides)) {
-            $values['aiagent/content/include_core_facts'] = $overrides['include_core_facts'] ? '1' : '0';
+            $values['ai_integration/aiagent/content/include_core_facts'] = $overrides['include_core_facts'] ? '1' : '0';
         }
 
         return new \MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig(
