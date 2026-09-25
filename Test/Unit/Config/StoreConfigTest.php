@@ -431,4 +431,18 @@ final class StoreConfigTest extends TestCase
 
         $this->assertSame('', $storeConfig->apiKey(1));
     }
+
+    public function testTheAiServiceIdIsReadAtStoreScopeAndTrimmed(): void
+    {
+        $scopeConfig = $this->createMock(ScopeConfigInterface::class);
+        $scopeConfig->method('getValue')->willReturnCallback(
+            static fn (string $path, string $scope, int $storeId): ?string =>
+                $path === 'ai_integration/aiagent/model/ai_service' && $scope === 'store' && $storeId === 1
+                    ? ' _row_1 '
+                    : null
+        );
+        $storeConfig = $this->buildStoreConfig($scopeConfig);
+
+        $this->assertSame('_row_1', $storeConfig->aiServiceId(1));
+    }
 }

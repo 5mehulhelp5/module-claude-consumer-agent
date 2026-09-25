@@ -18,6 +18,7 @@ final class StoreConfig
     private const PATH_GENERAL_KEEP_OPEN = 'ai_integration/aiagent/general/keep_open';
     private const PATH_GENERAL_PRODUCT_BLOCK_ENABLED = 'ai_integration/aiagent/general/product_block_enabled';
     private const PATH_GENERAL_HEADER_ICON_VIEW = 'ai_integration/aiagent/general/header_icon_view';
+    private const PATH_MODEL_AI_SERVICE = 'ai_integration/aiagent/model/ai_service';
     private const PATH_MODEL_API_KEY = 'ai_integration/aiagent/model/api_key';
     private const PATH_MODEL_MODEL_ID = 'ai_integration/aiagent/model/model_id';
     private const PATH_MODEL_MAX_TOKENS = 'ai_integration/aiagent/model/max_tokens';
@@ -260,6 +261,11 @@ final class StoreConfig
             return '';
         }
         return trim((string)$value);
+    }
+
+    public function aiServiceId(int $storeId): string
+    {
+        return trim($this->readString(self::PATH_MODEL_AI_SERVICE, $storeId, ''));
     }
 
     private function readString(string $path, int $storeId, string $default): string

@@ -13,6 +13,7 @@
                     <streaming>auto</streaming>
                 </general>
                 <model>
+                    <ai_service></ai_service>
                     <api_key backend_model="Magento\Config\Model\Config\Backend\Encrypted"></api_key>
                     <model_id>claude-sonnet-5</model_id>
                     <max_tokens>2048</max_tokens>
