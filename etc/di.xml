@@ -224,7 +224,8 @@
             <argument name="skuMatcher" xsi:type="object">MageOS\AiShoppingAssistant\Api\Backend\SkuMatcherInterface\Proxy</argument>
             <argument name="lockManager" xsi:type="object">Magento\Framework\Lock\LockManagerInterface\Proxy</argument>
             <argument name="resourceConnection" xsi:type="object">Magento\Framework\App\ResourceConnection\Proxy</argument>
-            <argument name="liveClient" xsi:type="object">MageOS\AiShoppingAssistant\Api\Client\MessagesClientInterface\Proxy</argument>
+            <argument name="liveClients" xsi:type="object">MageOS\AiShoppingAssistant\Api\Client\ClientResolverInterface\Proxy</argument>
+            <argument name="clientFactory" xsi:type="object">MageOS\AiBase\Api\AiClientFactoryInterface\Proxy</argument>
             <argument name="liveBackend" xsi:type="object">MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface\Proxy</argument>
             <argument name="cartManagement" xsi:type="object">Magento\Quote\Api\CartManagementInterface\Proxy</argument>
         </arguments>

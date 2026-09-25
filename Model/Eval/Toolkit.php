@@ -10,12 +10,12 @@ use MageOS\AiShoppingAssistant\Model\Agent\Gate\Provenance;
 use MageOS\AiShoppingAssistant\Model\Agent\Grounding\SkuCandidates;
 use MageOS\AiShoppingAssistant\Model\Agent\Lexicon;
 use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Registry as PresentationRegistry;
-use MageOS\AiShoppingAssistant\Model\Agent\Prompt\Assembly;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\DynamicContext;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\StaticSystem;
 use MageOS\AiShoppingAssistant\Model\Agent\Schema\Validator;
 use MageOS\AiShoppingAssistant\Model\Agent\Serializer;
 use MageOS\AiShoppingAssistant\Model\Agent\Skill\Registry as SkillRegistry;
+use MageOS\AiShoppingAssistant\Model\Agent\Turn\RequestMapper;
 use MageOS\AiShoppingAssistant\Model\Agent\Turn\StreamedRoundFactory;
 use MageOS\AiShoppingAssistant\Model\Config\StoreConfig;
 
@@ -25,7 +25,7 @@ class Toolkit
         private readonly \MageOS\AiShoppingAssistant\Model\Config\StoreConfig $storeConfig,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Prompt\StaticSystem $staticSystem,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Prompt\DynamicContext $dynamicContext,
-        private readonly \MageOS\AiShoppingAssistant\Model\Agent\Prompt\Assembly $assembly,
+        private readonly \MageOS\AiShoppingAssistant\Model\Agent\Turn\RequestMapper $requestMapper,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Lexicon $lexicon,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Grounding\SkuCandidates $skuCandidates,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Turn\StreamedRoundFactory $streamedRoundFactory,
@@ -55,9 +55,9 @@ class Toolkit
         return $this->dynamicContext;
     }
 
-    public function assembly(): Assembly
+    public function requestMapper(): RequestMapper
     {
-        return $this->assembly;
+        return $this->requestMapper;
     }
 
     public function lexicon(): Lexicon
