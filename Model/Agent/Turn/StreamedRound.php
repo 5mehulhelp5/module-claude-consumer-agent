@@ -3,6 +3,12 @@ declare(strict_types=1);
 
 namespace MageOS\AiShoppingAssistant\Model\Agent\Turn;
 
+use Generator;
+use MageOS\AiBase\Api\Data\ChatResponseInterface;
+use MageOS\AiBase\Api\Data\FinishReason;
+use MageOS\AiBase\Api\Data\StreamChunkInterface;
+use MageOS\AiBase\Api\Data\StreamChunkType;
+use MageOS\AiBase\Api\Data\TokenUsageInterface;
 use MageOS\AiShoppingAssistant\Model\Agent\Turn\Exception\ApiStreamError;
 use MageOS\AiShoppingAssistant\Model\Agent\Turn\Item\TextDelta;
 use MageOS\AiShoppingAssistant\Model\Agent\Turn\Item\ToolUseClosed;
@@ -24,6 +30,16 @@ final class StreamedRound
 
     private ?string $messageId = null;
 
+    private bool $consumed = false;
+
+    private string $text = '';
+
+    private array $toolUses = [];
+
+    private ?TokenUsageInterface $chunkUsage = null;
+
+    private ?ChatResponseInterface $response = null;
+
     public function feed(RawEvent $raw): array
     {
         return match ($raw->type) {
@@ -37,8 +53,38 @@ final class StreamedRound
         };
     }
 
+    public function consume(Generator $stream, ?callable $onWaiting = null): Generator
+    {
+        $this->consumed = true;
+        foreach ($stream as $chunk) {
+            if ($onWaiting !== null) {
+                $onWaiting();
+            }
+            if (!$chunk instanceof StreamChunkInterface) {
+                continue;
+            }
+            $this->chunkUsage = $chunk->getUsage() ?? $this->chunkUsage;
+            if ($chunk->getType() === StreamChunkType::Text && $chunk->getText() !== '') {
+                $this->text .= $chunk->getText();
+                yield new TextDelta($chunk->getText());
+                continue;
+            }
+            $call = $chunk->getType() === StreamChunkType::ToolCall ? $chunk->getToolCall() : null;
+            if ($call === null) {
+                continue;
+            }
+            $this->toolUses[] = ['id' => $call->getId(), 'name' => $call->getName(), 'input' => $call->getArguments()];
+            yield new ToolUseClosed($call->getId(), $call->getName(), $call->getArguments());
+        }
+        $response = $stream->getReturn();
+        $this->response = $response instanceof ChatResponseInterface ? $response : null;
+    }
+
     public function assistantMessage(): ?array
     {
+        if ($this->consumed) {
+            return $this->consumedAssistantMessage();
+        }
         $content = [];
         foreach ($this->blocks as $block) {
             if ($block['type'] === 'thinking' && ($block['signature'] ?? '') !== '') {
@@ -67,6 +113,9 @@ final class StreamedRound
 
     public function toolUses(): array
     {
+        if ($this->consumed) {
+            return $this->toolUses;
+        }
         $uses = [];
         foreach ($this->blocks as $block) {
             if ($block['type'] === 'tool_use') {
@@ -82,17 +131,69 @@ final class StreamedRound
 
     public function usage(): array
     {
-        return $this->usage;
+        if (!$this->consumed) {
+            return $this->usage;
+        }
+        $usage = $this->tokenUsage();
+        $read = $usage?->getCacheReadTokens() ?? 0;
+        $write = $usage?->getCacheWriteTokens() ?? 0;
+        return [
+            'input_tokens' => max(0, $this->promptTokens() - $read - $write),
+            'output_tokens' => $usage?->getCompletionTokens() ?? 0,
+            'cache_read_input_tokens' => $read,
+            'cache_creation_input_tokens' => $write,
+        ];
+    }
+
+    public function promptTokens(): int
+    {
+        return $this->tokenUsage()?->getPromptTokens() ?? 0;
     }
 
     public function stopReason(): ?string
     {
-        return $this->stopReason;
+        if (!$this->consumed) {
+            return $this->stopReason;
+        }
+        if ($this->response === null) {
+            return null;
+        }
+        return match ($this->response->getFinishReason()) {
+            FinishReason::Length => 'max_tokens',
+            FinishReason::ContentFilter => 'refusal',
+            FinishReason::ToolCall => 'tool_use',
+            FinishReason::Stop, FinishReason::StopSequence => 'end_turn',
+            default => ($this->toolUses !== [] || $this->response->hasToolCalls()) ? 'tool_use' : 'end_turn',
+        };
     }
 
     public function messageId(): ?string
     {
         return $this->messageId;
+    }
+
+    private function consumedAssistantMessage(): ?array
+    {
+        $content = [];
+        foreach ($this->response?->getReasoning() ?? [] as $reasoning) {
+            $signature = (string)$reasoning->getSignature();
+            if ($signature === '') {
+                continue;
+            }
+            $content[] = ['type' => 'thinking', 'thinking' => $reasoning->getText(), 'signature' => $signature];
+        }
+        if ($this->text !== '') {
+            $content[] = ['type' => 'text', 'text' => $this->text];
+        }
+        foreach ($this->toolUses as $toolUse) {
+            $content[] = ['type' => 'tool_use'] + $toolUse;
+        }
+        return $content !== [] ? ['role' => 'assistant', 'content' => $content] : null;
+    }
+
+    private function tokenUsage(): ?TokenUsageInterface
+    {
+        return $this->response?->getUsage() ?? $this->chunkUsage;
     }
 
     private function onMessageStart(array $data): array
