@@ -384,7 +384,7 @@ final class CoreToolProviderTest extends TestCase
     {
         $encoded = json_encode(
             array_map(
-                static fn (Definition $d): array => $d->apiDefinition(),
+                static fn (Definition $d): array => [$d->getDescription(), $d->getParameters()],
                 $this->buildProvider()->getTools($this->config())
             )
         );
@@ -396,7 +396,7 @@ final class CoreToolProviderTest extends TestCase
     public function testApiDefinitionPropertiesAlwaysEncodeAsAJsonObject(): void
     {
         foreach ($this->buildProvider()->getTools($this->config()) as $definition) {
-            $encoded = json_encode($definition->apiDefinition());
+            $encoded = json_encode($definition->getParameters());
             $this->assertIsString($encoded);
             $this->assertStringContainsString('"properties":{', $encoded, $definition->getName());
             $this->assertStringNotContainsString('"properties":[', $encoded, $definition->getName());

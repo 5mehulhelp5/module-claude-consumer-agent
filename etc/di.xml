@@ -13,7 +13,6 @@
     <preference for="MageOS\AiShoppingAssistant\Api\Backend\OrderStatusMapperInterface" type="MageOS\AiShoppingAssistant\Model\Backend\Provider\OrderStatusMapper"/>
     <preference for="MageOS\AiShoppingAssistant\Api\Backend\SkuMatcherInterface" type="MageOS\AiShoppingAssistant\Model\Backend\Provider\SkuMatcher"/>
     <preference for="MageOS\AiShoppingAssistant\Api\Cart\BuyRequestBuilderInterface" type="MageOS\AiShoppingAssistant\Model\Backend\BuyRequestBuilder"/>
-    <preference for="MageOS\AiShoppingAssistant\Api\Client\MessagesClientInterface" type="MageOS\AiShoppingAssistant\Model\Client\GuzzleMessagesClient"/>
     <preference for="MageOS\AiShoppingAssistant\Api\Client\ClientResolverInterface" type="MageOS\AiShoppingAssistant\Model\Client\ConfiguredClientResolver"/>
     <preference for="MageOS\AiShoppingAssistant\Api\Session\SessionRepositoryInterface" type="MageOS\AiShoppingAssistant\Model\Session\Repository"/>
     <preference for="MageOS\AiShoppingAssistant\Api\Turn\TurnLogInterface" type="MageOS\AiShoppingAssistant\Model\Session\TurnLog"/>
@@ -132,21 +131,6 @@
 
     <type name="MageOS\AiShoppingAssistant\Model\Agent\Turn\Orchestrator">
         <arguments>
-            <argument name="logger" xsi:type="object">MageOS\AiShoppingAssistant\Logger\VirtualLogger</argument>
-        </arguments>
-    </type>
-
-    <virtualType name="MageOS\AiShoppingAssistant\Model\Client\GuzzleHttpClient" type="GuzzleHttp\Client">
-        <arguments>
-            <argument name="config" xsi:type="array">
-                <item name="handler" xsi:type="object">GuzzleHttp\Handler\StreamHandler</item>
-            </argument>
-        </arguments>
-    </virtualType>
-
-    <type name="MageOS\AiShoppingAssistant\Model\Client\GuzzleMessagesClient">
-        <arguments>
-            <argument name="http" xsi:type="object">MageOS\AiShoppingAssistant\Model\Client\GuzzleHttpClient</argument>
             <argument name="logger" xsi:type="object">MageOS\AiShoppingAssistant\Logger\VirtualLogger</argument>
         </arguments>
     </type>

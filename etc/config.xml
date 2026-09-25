@@ -14,12 +14,9 @@
                 </general>
                 <model>
                     <ai_service></ai_service>
-                    <api_key backend_model="Magento\Config\Model\Config\Backend\Encrypted"></api_key>
-                    <model_id>claude-sonnet-5</model_id>
+                    <model_id></model_id>
                     <max_tokens>2048</max_tokens>
                     <thinking_effort>low</thinking_effort>
-                    <request_timeout>120</request_timeout>
-                    <connect_timeout>10</connect_timeout>
                 </model>
                 <voice>
                     <brand_name></brand_name>

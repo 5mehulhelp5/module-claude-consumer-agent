@@ -87,13 +87,4 @@ final class Definition implements \MageOS\AiBase\Api\Data\ToolDefinitionInterfac
         $inputSchema['properties'] = $properties === [] ? new \stdClass() : $properties;
         return $inputSchema;
     }
-
-    public function apiDefinition(): array
-    {
-        return [
-            'name' => $this->name,
-            'description' => $this->description,
-            'input_schema' => $this->getParameters(),
-        ];
-    }
 }

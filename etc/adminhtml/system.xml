@@ -73,22 +73,16 @@
                 <group id="model" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1"
                        showInStore="1">
                     <label>Model</label>
-                    <field id="ai_service" translate="label comment" type="select" sortOrder="5" showInDefault="1"
+                    <field id="ai_service" translate="label comment" type="select" sortOrder="10" showInDefault="1"
                            showInWebsite="1" showInStore="1">
                         <label>AI Service</label>
                         <source_model>MageOS\AiBase\Model\Config\Source\ConfiguredServiceWithAutomatic</source_model>
                         <comment>Configure services under Stores &gt; Configuration &gt; Mage-OS &gt; AI Configuration. Automatic uses the first usable one.</comment>
                     </field>
-                    <field id="api_key" translate="label comment" type="obscure" sortOrder="10" showInDefault="1"
-                           showInWebsite="1" showInStore="1">
-                        <label>API Key</label>
-                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
-                        <comment>Anthropic API key. Stored encrypted; never sent to the browser.</comment>
-                    </field>
                     <field id="model_id" translate="label comment" type="text" sortOrder="20" showInDefault="1"
                            showInWebsite="1" showInStore="1">
-                        <label>Model</label>
-                        <comment>Model id. Changing it resets the prompt cache.</comment>
+                        <label>Model Override</label>
+                        <comment>Leave empty to use the model of the AI service. A name here must be valid for that provider.</comment>
                     </field>
                     <field id="max_tokens" translate="label comment" type="text" sortOrder="30" showInDefault="1"
                            showInWebsite="1" showInStore="1">
@@ -98,21 +92,9 @@
                     </field>
                     <field id="thinking_effort" translate="label comment" type="select" sortOrder="40"
                            showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>Thinking Effort</label>
+                        <label>Reasoning Effort</label>
                         <source_model>MageOS\AiShoppingAssistant\Model\Config\Source\ThinkingEffort</source_model>
-                        <comment>Adaptive thinking effort; Off sends thinking disabled.</comment>
-                    </field>
-                    <field id="request_timeout" translate="label comment" type="text" sortOrder="50" showInDefault="1"
-                           showInWebsite="1" showInStore="1">
-                        <label>Request Timeout</label>
-                        <validate>validate-digits</validate>
-                        <comment>Seconds per model call.</comment>
-                    </field>
-                    <field id="connect_timeout" translate="label comment" type="text" sortOrder="60" showInDefault="1"
-                           showInWebsite="1" showInStore="1">
-                        <label>Connect Timeout</label>
-                        <validate>validate-digits</validate>
-                        <comment>Connection seconds.</comment>
+                        <comment>Translated per provider by AI Base. Off turns reasoning off where the provider allows it.</comment>
                     </field>
                 </group>
                 <group id="voice" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1"

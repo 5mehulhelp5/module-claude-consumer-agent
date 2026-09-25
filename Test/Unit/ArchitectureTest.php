@@ -43,6 +43,23 @@ class ArchitectureTest extends TestCase
         $this->assertSame([], $violations, 'Magento repository dependency found under Model\\Agent: ' . implode(', ', $violations));
     }
 
+    public function testNoProductionCodeTalksToAProviderDirectly(): void
+    {
+        $moduleRoot = dirname(__DIR__, 2);
+        $offending = [];
+        foreach (['Api', 'Block', 'Console', 'Controller', 'Cron', 'Model', 'Observer', 'ViewModel'] as $dir) {
+            foreach ($this->phpFilesUnder($moduleRoot . '/' . $dir) as $file) {
+                $source = (string)file_get_contents($file);
+                foreach (['api.anthropic.com', 'cache_control', 'x-api-key', 'GuzzleHttp'] as $needle) {
+                    if (str_contains($source, $needle)) {
+                        $offending[] = substr($file, strlen($moduleRoot) + 1) . ': ' . $needle;
+                    }
+                }
+            }
+        }
+        $this->assertSame([], $offending);
+    }
+
     /**
      * @return string[]
      */

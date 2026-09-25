@@ -289,22 +289,6 @@ final class StoreConfigTest extends TestCase
         $this->assertTrue($storeConfig->isEnabled(1));
     }
 
-    public function testApiKeyReturnsConfiguredValueTrimmed(): void
-    {
-        $scopeConfig = $this->createMock(ScopeConfigInterface::class);
-        $scopeConfig->method('getValue')->willReturnCallback(
-            static function (string $path) {
-                if ($path === 'ai_integration/aiagent/model/api_key') {
-                    return '  configured-key  ';
-                }
-                return null;
-            }
-        );
-        $storeConfig = $this->buildStoreConfig($scopeConfig);
-
-        $this->assertSame('configured-key', $storeConfig->apiKey(1));
-    }
-
     public function testStoreFactsRowsAreParsedKeywordsLowercasedAndTrimmed(): void
     {
         $rows = [
@@ -415,21 +399,6 @@ final class StoreConfigTest extends TestCase
         $storeConfig = $this->buildStoreConfig($scopeConfig);
 
         $this->assertFalse($storeConfig->agent(1)->keepOpen);
-    }
-
-    public function testApiKeyReturnsEmptyStringWhenValueIsNullOrEmpty(): void
-    {
-        $scopeConfig = $this->createMock(ScopeConfigInterface::class);
-        $scopeConfig->method('getValue')->willReturn(null);
-        $storeConfig = $this->buildStoreConfig($scopeConfig);
-
-        $this->assertSame('', $storeConfig->apiKey(1));
-
-        $scopeConfig = $this->createMock(ScopeConfigInterface::class);
-        $scopeConfig->method('getValue')->willReturn('');
-        $storeConfig = $this->buildStoreConfig($scopeConfig);
-
-        $this->assertSame('', $storeConfig->apiKey(1));
     }
 
     public function testTheAiServiceIdIsReadAtStoreScopeAndTrimmed(): void

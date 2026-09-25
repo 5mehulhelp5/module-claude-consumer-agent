@@ -21,8 +21,7 @@
         "magento/module-offline-shipping": "*",
         "magento/module-search": "*",
         "magento/module-payment": "*",
-        "magento/module-shipping": "*",
-        "guzzlehttp/guzzle": "^7.5"
+        "magento/module-shipping": "*"
     },
     "replace": {
         "mage-os/module-claude-consumer-agent": "*"

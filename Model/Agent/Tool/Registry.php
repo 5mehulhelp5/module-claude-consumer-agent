@@ -33,14 +33,6 @@ final class Registry
         return $this->definitionsByStore[$storeId] ??= $this->buildDefinitions($storeId);
     }
 
-    public function apiDefinitions(int $storeId): array
-    {
-        return array_map(
-            static fn (Definition $definition): array => $definition->apiDefinition(),
-            $this->definitions($storeId)
-        );
-    }
-
     public function byName(int $storeId, string $name): ?Definition
     {
         if (!isset($this->byNameByStore[$storeId])) {

@@ -108,7 +108,7 @@ final class OrchestratorTest extends TestCase
         $options = $client->calls[0]['options'];
         $this->assertSame(2048, $options['max_tokens']);
         $this->assertSame('low', $options['reasoning_effort']);
-        $this->assertSame('claude-sonnet-5', $options['model']);
+        $this->assertArrayNotHasKey('model', $options);
     }
 
     public function testStreamTurnRemembersTheCustomerMessageBeforeTheRounds(): void
@@ -400,7 +400,7 @@ final class OrchestratorTest extends TestCase
         $this->assertSame('sess-1', $captured['session_id']);
         $this->assertSame(1, $captured['store_id']);
         $this->assertSame(5, $captured['turn_no']);
-        $this->assertSame('claude-sonnet-5', $captured['model_id']);
+        $this->assertSame('scripted-model', $captured['model_id']);
         $this->assertSame(1, $captured['rounds']);
         $this->assertArrayHasKey('input_tokens', $captured);
         $this->assertArrayHasKey('output_tokens', $captured);

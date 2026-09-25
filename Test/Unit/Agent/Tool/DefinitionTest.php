@@ -39,10 +39,8 @@ final class DefinitionTest extends TestCase
     public function testApiDefinitionShape(): void
     {
         $definition = $this->buildDefinition(false, ['type' => 'object', 'properties' => []]);
-        $apiDefinition = $definition->apiDefinition();
-        $this->assertSame(['name', 'description', 'input_schema'], array_keys($apiDefinition));
-        $this->assertSame('search_products', $apiDefinition['name']);
-        $this->assertSame('Search the catalog', $apiDefinition['description']);
+        $this->assertSame('search_products', $definition->getName());
+        $this->assertSame('Search the catalog', $definition->getDescription());
     }
 
     public function testApiDefinitionPrependsStatusWhenTakesStatus(): void
@@ -51,8 +49,7 @@ final class DefinitionTest extends TestCase
             true,
             ['type' => 'object', 'properties' => ['query' => ['type' => 'string']]]
         );
-        $apiDefinition = $definition->apiDefinition();
-        $properties = $apiDefinition['input_schema']['properties'];
+        $properties = $definition->getParameters()['properties'];
         $this->assertSame(['status', 'query'], array_keys($properties));
         $this->assertSame(
             [
@@ -70,8 +67,7 @@ final class DefinitionTest extends TestCase
             false,
             ['type' => 'object', 'properties' => ['query' => ['type' => 'string']]]
         );
-        $apiDefinition = $definition->apiDefinition();
-        $this->assertArrayNotHasKey('status', $apiDefinition['input_schema']['properties']);
+        $this->assertArrayNotHasKey('status', $definition->getParameters()['properties']);
     }
 
     public function testStatusIsNeverRequired(): void
@@ -80,16 +76,14 @@ final class DefinitionTest extends TestCase
             true,
             ['type' => 'object', 'properties' => ['query' => ['type' => 'string']], 'required' => ['query']]
         );
-        $apiDefinition = $definition->apiDefinition();
-        $this->assertSame(['query'], $apiDefinition['input_schema']['required']);
-        $this->assertNotContains('status', $apiDefinition['input_schema']['required']);
+        $this->assertSame(['query'], $definition->getParameters()['required']);
+        $this->assertNotContains('status', $definition->getParameters()['required']);
     }
 
     public function testApiDefinitionNormalizesEmptyPropertiesToAnObjectForJsonEncoding(): void
     {
         $definition = $this->buildDefinition(false, ['type' => 'object', 'properties' => []]);
-        $apiDefinition = $definition->apiDefinition();
-        $encoded = json_encode($apiDefinition);
+        $encoded = json_encode($definition->getParameters());
         $this->assertIsString($encoded);
         $this->assertStringContainsString('"properties":{}', $encoded);
     }
@@ -97,8 +91,7 @@ final class DefinitionTest extends TestCase
     public function testApiDefinitionMergesStatusIntoStdClassProperties(): void
     {
         $definition = $this->buildDefinition(true, ['type' => 'object', 'properties' => new \stdClass()]);
-        $apiDefinition = $definition->apiDefinition();
-        $this->assertArrayHasKey('status', $apiDefinition['input_schema']['properties']);
+        $this->assertArrayHasKey('status', $definition->getParameters()['properties']);
     }
 
     public function testItIsAnAiBaseToolDefinitionWithTheStatusProperty(): void
@@ -109,7 +102,6 @@ final class DefinitionTest extends TestCase
         );
 
         $this->assertInstanceOf(\MageOS\AiBase\Api\Data\ToolDefinitionInterface::class, $definition);
-        $this->assertSame($definition->apiDefinition()['input_schema'], $definition->getParameters());
         $this->assertArrayHasKey('status', $definition->getParameters()['properties']);
     }
 }

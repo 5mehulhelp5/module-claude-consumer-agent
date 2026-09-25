@@ -8,7 +8,7 @@ use Magento\Store\Model\ScopeInterface;
 use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
 
 /**
- * The API key path carries the Encrypted backend model in config.xml, so scope config already returns it decrypted.
+ * The AI service itself is configured in Mage-OS AI Base; this class stores which row the assistant uses.
  */
 final class StoreConfig
 {
@@ -19,12 +19,9 @@ final class StoreConfig
     private const PATH_GENERAL_PRODUCT_BLOCK_ENABLED = 'ai_integration/aiagent/general/product_block_enabled';
     private const PATH_GENERAL_HEADER_ICON_VIEW = 'ai_integration/aiagent/general/header_icon_view';
     private const PATH_MODEL_AI_SERVICE = 'ai_integration/aiagent/model/ai_service';
-    private const PATH_MODEL_API_KEY = 'ai_integration/aiagent/model/api_key';
     private const PATH_MODEL_MODEL_ID = 'ai_integration/aiagent/model/model_id';
     private const PATH_MODEL_MAX_TOKENS = 'ai_integration/aiagent/model/max_tokens';
     private const PATH_MODEL_THINKING_EFFORT = 'ai_integration/aiagent/model/thinking_effort';
-    private const PATH_MODEL_REQUEST_TIMEOUT = 'ai_integration/aiagent/model/request_timeout';
-    private const PATH_MODEL_CONNECT_TIMEOUT = 'ai_integration/aiagent/model/connect_timeout';
     private const PATH_STORE_INFORMATION_NAME = 'general/store_information/name';
     private const PATH_VOICE_BRAND_NAME = 'ai_integration/aiagent/voice/brand_name';
     private const PATH_VOICE_ASSISTANT_NAME = 'ai_integration/aiagent/voice/assistant_name';
@@ -92,8 +89,6 @@ final class StoreConfig
             modelId: $this->readString(self::PATH_MODEL_MODEL_ID, $storeId, $defaults->modelId),
             maxTokens: $this->readInt(self::PATH_MODEL_MAX_TOKENS, $storeId, $defaults->maxTokens),
             thinkingEffort: $this->readString(self::PATH_MODEL_THINKING_EFFORT, $storeId, $defaults->thinkingEffort),
-            requestTimeout: $this->readInt(self::PATH_MODEL_REQUEST_TIMEOUT, $storeId, $defaults->requestTimeout),
-            connectTimeout: $this->readInt(self::PATH_MODEL_CONNECT_TIMEOUT, $storeId, $defaults->connectTimeout),
             brandName: $this->readBrandName($storeId, $defaults->brandName),
             assistantName: $this->readString(self::PATH_VOICE_ASSISTANT_NAME, $storeId, $defaults->assistantName),
             brandVoice: $this->readString(self::PATH_VOICE_BRAND_VOICE, $storeId, $defaults->brandVoice),
@@ -252,15 +247,6 @@ final class StoreConfig
         );
         $this->agentCache[$storeId] = $config;
         return $config;
-    }
-
-    public function apiKey(int $storeId): string
-    {
-        $value = $this->scopeConfig->getValue(self::PATH_MODEL_API_KEY, ScopeInterface::SCOPE_STORE, $storeId);
-        if ($value === null || $value === '') {
-            return '';
-        }
-        return trim((string)$value);
     }
 
     public function aiServiceId(int $storeId): string
