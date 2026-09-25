@@ -100,4 +100,16 @@ final class DefinitionTest extends TestCase
         $apiDefinition = $definition->apiDefinition();
         $this->assertArrayHasKey('status', $apiDefinition['input_schema']['properties']);
     }
+
+    public function testItIsAnAiBaseToolDefinitionWithTheStatusProperty(): void
+    {
+        $definition = $this->buildDefinition(
+            true,
+            ['type' => 'object', 'properties' => ['query' => ['type' => 'string']]]
+        );
+
+        $this->assertInstanceOf(\MageOS\AiBase\Api\Data\ToolDefinitionInterface::class, $definition);
+        $this->assertSame($definition->apiDefinition()['input_schema'], $definition->getParameters());
+        $this->assertArrayHasKey('status', $definition->getParameters()['properties']);
+    }
 }

@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Agent\Tool;
 
 use MageOS\AiShoppingAssistant\Api\Tool\HandlerInterface;
 
-final class Definition
+final class Definition implements \MageOS\AiBase\Api\Data\ToolDefinitionInterface
 {
     public const STATUS_MAX_LENGTH = 60;
     public const STATUS_DESCRIPTION = 'A few plain words the customer sees while this runs';
@@ -68,7 +68,7 @@ final class Definition
         return $this->sortOrder;
     }
 
-    public function apiDefinition(): array
+    public function getParameters(): array
     {
         $inputSchema = $this->inputSchema;
         $properties = $inputSchema['properties'] ?? [];
@@ -85,10 +85,15 @@ final class Definition
             ] + $properties;
         }
         $inputSchema['properties'] = $properties === [] ? new \stdClass() : $properties;
+        return $inputSchema;
+    }
+
+    public function apiDefinition(): array
+    {
         return [
             'name' => $this->name,
             'description' => $this->description,
-            'input_schema' => $inputSchema,
+            'input_schema' => $this->getParameters(),
         ];
     }
 }
