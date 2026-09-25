@@ -1,10 +1,11 @@
 {
     "name": "mage-os/module-ai-shopping-assistant",
-    "description": "AI shopping assistant for Hyva and Luma storefronts, backed by the Claude Messages API.",
+    "description": "AI shopping assistant for Hyva and Luma storefronts, on any AI service configured in Mage-OS AI Base.",
     "type": "magento2-module",
     "license": "OSL-3.0",
     "require": {
-        "php": "~8.1.0 || ~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
+        "php": "~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
+        "mage-os/module-ai-base": "dev-main",
         "ext-intl": "*",
         "ext-json": "*",
         "magento/framework": "*",
