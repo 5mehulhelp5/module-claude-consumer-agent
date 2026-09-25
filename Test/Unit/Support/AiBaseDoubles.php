@@ -44,6 +44,15 @@ trait AiBaseDoubles
         return $builderFactory;
     }
 
+    private function chatMessageFactory(): ChatMessageInterfaceFactory
+    {
+        $factory = $this->createMock(ChatMessageInterfaceFactory::class);
+        $factory->method('create')->willReturnCallback(
+            static fn (array $data = []): ChatMessage => new ChatMessage(...$data)
+        );
+        return $factory;
+    }
+
     private function chatResponseFactory(): ChatResponseInterfaceFactory
     {
         $factory = $this->createMock(ChatResponseInterfaceFactory::class);

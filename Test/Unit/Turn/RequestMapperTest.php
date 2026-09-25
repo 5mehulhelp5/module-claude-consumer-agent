@@ -3,9 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\AiShoppingAssistant\Test\Unit\Turn;
 
-use MageOS\AiBase\Api\Data\ChatMessageInterfaceFactory;
 use MageOS\AiBase\Api\Data\MessageRole;
-use MageOS\AiBase\Model\Chat\ChatMessage;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Definition;
 use MageOS\AiShoppingAssistant\Model\Agent\Turn\RequestMapper;
 use MageOS\AiShoppingAssistant\Test\Unit\Support\AiBaseDoubles;
@@ -123,13 +121,9 @@ class RequestMapperTest extends TestCase
 
     private function mapper(): RequestMapper
     {
-        $messageFactory = $this->createMock(ChatMessageInterfaceFactory::class);
-        $messageFactory->method('create')->willReturnCallback(
-            static fn (array $data = []): ChatMessage => new ChatMessage(...$data)
-        );
         return new RequestMapper(
             $this->chatRequestBuilderFactory(),
-            $messageFactory,
+            $this->chatMessageFactory(),
             $this->chatResponseFactory(),
             $this->toolCallFactory()
         );

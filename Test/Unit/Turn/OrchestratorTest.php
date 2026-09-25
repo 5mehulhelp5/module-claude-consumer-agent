@@ -8,14 +8,21 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Component\ComponentRegistrarInterface;
 use Magento\Framework\DB\Adapter\AdapterInterface;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem\Driver\File;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use MageOS\AiBase\Api\Data\FinishReason;
+use MageOS\AiBase\Api\Data\MessageRole;
+use MageOS\AiBase\Model\Client\AiContentFilteredException;
+use MageOS\AiBase\Model\Client\AiRateLimitedException;
+use MageOS\AiBase\Model\Client\AiServiceException;
+use MageOS\AiBase\Model\Client\AiTransientException;
 use MageOS\AiShoppingAssistant\Api\Backend\CatalogMapProviderInterface;
 use MageOS\AiShoppingAssistant\Api\Backend\SkuMatcherInterface;
 use MageOS\AiShoppingAssistant\Api\Backend\StoreFactTitleResolverInterface;
-use MageOS\AiShoppingAssistant\Api\Client\MessagesClientInterface;
+use MageOS\AiShoppingAssistant\Api\Client\ClientResolverInterface;
 use MageOS\AiShoppingAssistant\Api\Data\PageContextInterface;
 use MageOS\AiShoppingAssistant\Api\Session\SessionRepositoryInterface;
 use MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface;
@@ -23,6 +30,7 @@ use MageOS\AiShoppingAssistant\Api\Tool\HandlerInterface;
 use MageOS\AiShoppingAssistant\Api\Turn\TurnLogInterface;
 use MageOS\AiShoppingAssistant\Api\Tool\ToolProviderInterface;
 use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
+use MageOS\AiShoppingAssistant\Model\Agent\Event;
 use MageOS\AiShoppingAssistant\Model\Agent\ExecutorFactory;
 use MageOS\AiShoppingAssistant\Model\Agent\Executor;
 use MageOS\AiShoppingAssistant\Model\Agent\Fencing\Fence;
@@ -38,7 +46,6 @@ use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\Products;
 use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\Suggestions;
 use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Registry as PresentationRegistry;
 use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Runner;
-use MageOS\AiShoppingAssistant\Model\Agent\Prompt\Assembly;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\CatalogMap;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\CoreFacts;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\DynamicContext;
@@ -55,29 +62,29 @@ use MageOS\AiShoppingAssistant\Model\Agent\Skill\Registry as SkillRegistry;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Definition;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Registry as ToolRegistry;
 use MageOS\AiShoppingAssistant\Model\Agent\ToolOutcome;
-use MageOS\AiShoppingAssistant\Model\Agent\Turn\Exception\ApiStreamError;
 use MageOS\AiShoppingAssistant\Model\Agent\Turn\Orchestrator;
+use MageOS\AiShoppingAssistant\Model\Agent\Turn\RequestMapper;
 use MageOS\AiShoppingAssistant\Model\Agent\Turn\StreamedRoundFactory;
-use MageOS\AiShoppingAssistant\Model\Client\Exception\ServerError;
-use MageOS\AiShoppingAssistant\Model\Client\Exception\Transport;
-use MageOS\AiShoppingAssistant\Model\Client\FakeClient;
-use MageOS\AiShoppingAssistant\Model\Client\Fixtures;
-use MageOS\AiShoppingAssistant\Model\Client\RawEvent;
 use MageOS\AiShoppingAssistant\Model\Client\Sleeper;
 use MageOS\AiShoppingAssistant\Model\Config\StoreConfig;
 use MageOS\AiShoppingAssistant\Model\Data\PageContext;
+use MageOS\AiShoppingAssistant\Model\Eval\FixedClientResolver;
+use MageOS\AiShoppingAssistant\Model\Eval\ScriptedAiClient;
 use MageOS\AiShoppingAssistant\Model\Session\Binding;
 use MageOS\AiShoppingAssistant\Model\Session\ResourceModel\Message as MessageResource;
 use MageOS\AiShoppingAssistant\Model\Session\TranscriptRepository;
+use MageOS\AiShoppingAssistant\Test\Unit\Support\AiBaseDoubles;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 
 final class OrchestratorTest extends TestCase
 {
+    use AiBaseDoubles;
+
     public function testTextTurnYieldsTextDeltaThenTurnComplete(): void
     {
-        $client = new FakeClient([FakeClient::textRound('Hello there.', 'end_turn')]);
+        $client = $this->scriptedClient()->addTextRound('Hello there.');
         [$orchestrator] = $this->buildOrchestrator($client, []);
         $binding = $this->binding();
 
@@ -90,14 +97,18 @@ final class OrchestratorTest extends TestCase
         $this->assertSame('end_turn', $last->data['stop_reason']);
         $this->assertSame('sess-1', $last->data['session']);
 
-        $system = $client->calls[0]['system'];
-        $this->assertSame(['type' => 'ephemeral'], $system[0]['cache_control']);
-        $this->assertArrayNotHasKey('cache_control', $system[1]);
+        $messages = $client->calls[0]['request']->getMessages();
+        $this->assertSame(MessageRole::System, $messages[0]->getRole());
+        $this->assertSame(MessageRole::System, $messages[1]->getRole());
+        $options = $client->calls[0]['options'];
+        $this->assertSame(2048, $options['max_tokens']);
+        $this->assertSame('low', $options['reasoning_effort']);
+        $this->assertSame('claude-sonnet-5', $options['model']);
     }
 
     public function testStreamTurnRemembersTheCustomerMessageBeforeTheRounds(): void
     {
-        $client = new FakeClient([FakeClient::textRound('Hello there.', 'end_turn')]);
+        $client = $this->scriptedClient()->addTextRound('Hello there.');
         [$orchestrator] = $this->buildOrchestrator($client, []);
         $binding = $this->binding();
 
@@ -108,7 +119,7 @@ final class OrchestratorTest extends TestCase
 
     public function testPageChangeAppendsANoteBeforeTheCustomerTextInTheFirstUserMessage(): void
     {
-        $client = new FakeClient([FakeClient::textRound('Sure.', 'end_turn')]);
+        $client = $this->scriptedClient()->addTextRound('Sure.');
         [$orchestrator, $resource] = $this->buildOrchestrator($client, []);
         $page = PageContext::fromArray([
             'page_type' => 'product',
@@ -142,7 +153,7 @@ final class OrchestratorTest extends TestCase
 
     public function testNoNoteIsAppendedWhenThePageHasNotChanged(): void
     {
-        $client = new FakeClient([FakeClient::textRound('Sure.', 'end_turn')]);
+        $client = $this->scriptedClient()->addTextRound('Sure.');
         [$orchestrator, $resource] = $this->buildOrchestrator($client, []);
         $page = PageContext::fromArray(['page_type' => 'product', 'product_id' => 'BK-2']);
         $binding = $this->binding($page);
@@ -166,7 +177,7 @@ final class OrchestratorTest extends TestCase
 
     public function testLastPageIsWrittenAfterEveryTurn(): void
     {
-        $client = new FakeClient([FakeClient::textRound('Sure.', 'end_turn')]);
+        $client = $this->scriptedClient()->addTextRound('Sure.');
         [$orchestrator] = $this->buildOrchestrator($client, []);
         $page = PageContext::fromArray(['page_type' => 'product', 'product_id' => 'BK-2']);
         $binding = $this->binding($page);
@@ -182,10 +193,7 @@ final class OrchestratorTest extends TestCase
             ['id' => 'tu1', 'name' => 'tool_a', 'input' => ['x' => 1]],
             ['id' => 'tu2', 'name' => 'tool_b', 'input' => ['y' => 2]],
         ];
-        $client = new FakeClient([
-            FakeClient::toolRound($toolUses),
-            FakeClient::textRound('Done.', 'end_turn'),
-        ]);
+        $client = $this->scriptedClient()->addToolRound($toolUses)->addTextRound('Done.');
         $definitions = [
             $this->definitionForHandler('tool_a', ToolOutcome::ok('a done')),
             $this->definitionForHandler('tool_b', ToolOutcome::ok('b done')),
@@ -213,23 +221,21 @@ final class OrchestratorTest extends TestCase
         $this->assertSame('turn_complete', $events[count($events) - 1]->type);
         $this->assertCount(2, $client->calls);
 
-        $tools = $client->calls[0]['tools'];
-        $this->assertArrayNotHasKey('cache_control', $tools[0]);
-        $this->assertSame(['type' => 'ephemeral'], $tools[1]['cache_control']);
+        $this->assertCount(count($definitions), $client->calls[0]['request']->getTools());
 
-        $secondCallMessages = $client->calls[1]['messages'];
-        $this->assertGreaterThanOrEqual(2, count($secondCallMessages));
-        $lastMessage = $secondCallMessages[count($secondCallMessages) - 1];
-        $lastBlock = $lastMessage['content'][count($lastMessage['content']) - 1];
-        $this->assertSame(['type' => 'ephemeral'], $lastBlock['cache_control']);
+        $secondCallMessages = $client->calls[1]['request']->getMessages();
+        $lastTwo = array_slice($secondCallMessages, -2);
+        $this->assertSame(MessageRole::Tool, $lastTwo[0]->getRole());
+        $this->assertSame(MessageRole::Tool, $lastTwo[1]->getRole());
+        $this->assertSame('tu1', $lastTwo[0]->getToolCallId());
+        $this->assertSame('tu2', $lastTwo[1]->getToolCallId());
     }
 
     public function testForcedFirstToolSetsToolChoiceTypeTool(): void
     {
-        $client = new FakeClient([
-            FakeClient::toolRound([['id' => 'tu1', 'name' => 'get_product_details', 'input' => ['product_id' => 'SKU-1']]]),
-            FakeClient::textRound('Here it is.'),
-        ]);
+        $client = $this->scriptedClient()
+            ->addToolRound([['id' => 'tu1', 'name' => 'get_product_details', 'input' => ['product_id' => 'SKU-1']]])
+            ->addTextRound('Here it is.');
         $definitions = [$this->definitionForHandler('get_product_details', ToolOutcome::ok('details'))];
         [$orchestrator] = $this->buildOrchestrator($client, $definitions);
         $page = new PageContext(PageContextInterface::PAGE_TYPE_PRODUCT, 'SKU-1', null);
@@ -237,21 +243,14 @@ final class OrchestratorTest extends TestCase
 
         iterator_to_array($orchestrator->streamTurn($binding, 'tell me about this', $binding->context), false);
 
-        $this->assertSame(['type' => 'tool', 'name' => 'get_product_details'], $client->calls[0]['tool_choice']);
-
-        foreach ($client->calls[0]['messages'] as $message) {
-            foreach ($message['content'] as $block) {
-                $this->assertArrayNotHasKey('cache_control', $block);
-            }
-        }
+        $this->assertSame(['tool' => 'get_product_details'], $client->calls[0]['options']['tool_choice']);
     }
 
     public function testLastRoundForcesToolChoiceNone(): void
     {
-        $client = new FakeClient([
-            FakeClient::toolRound([['id' => 'tu1', 'name' => 'tool_a', 'input' => []]]),
-            FakeClient::textRound('Wrapping up.'),
-        ]);
+        $client = $this->scriptedClient()
+            ->addToolRound([['id' => 'tu1', 'name' => 'tool_a', 'input' => []]])
+            ->addTextRound('Wrapping up.');
         $definitions = [$this->definitionForHandler('tool_a', ToolOutcome::ok('a done'))];
         [$orchestrator] = $this->buildOrchestrator($client, $definitions, ['ai_integration/aiagent/limits/max_tool_iterations' => '1']);
         $binding = $this->binding();
@@ -259,16 +258,14 @@ final class OrchestratorTest extends TestCase
         $events = iterator_to_array($orchestrator->streamTurn($binding, 'go', $binding->context), false);
 
         $this->assertCount(2, $client->calls);
-        $this->assertSame(['type' => 'none'], $client->calls[1]['tool_choice']);
+        $this->assertSame('none', $client->calls[1]['options']['tool_choice']);
         $this->assertSame('turn_complete', $events[count($events) - 1]->type);
     }
 
     public function testCloseOnPresentationEndsTheTurn(): void
     {
-        $client = new FakeClient([
-            FakeClient::toolRound([
-                ['id' => 'tu1', 'name' => 'present_suggestions', 'input' => ['suggestions' => ['Show more', 'Compare']]],
-            ]),
+        $client = $this->scriptedClient()->addToolRound([
+            ['id' => 'tu1', 'name' => 'present_suggestions', 'input' => ['suggestions' => ['Show more', 'Compare']]],
         ]);
         $definitions = [$this->presentationDefinition('present_suggestions')];
         [$orchestrator] = $this->buildOrchestrator($client, $definitions);
@@ -288,7 +285,7 @@ final class OrchestratorTest extends TestCase
 
     public function testMaxTokensEndsTheTurn(): void
     {
-        $client = new FakeClient([Fixtures::load('max-tokens')]);
+        $client = $this->scriptedClient()->addTextRound('Partial', FinishReason::Length);
         [$orchestrator] = $this->buildOrchestrator($client, []);
         $binding = $this->binding();
 
@@ -302,7 +299,7 @@ final class OrchestratorTest extends TestCase
 
     public function testRefusalYieldsError(): void
     {
-        $client = new FakeClient([Fixtures::load('refusal')]);
+        $client = $this->scriptedClient()->addTextRound('', FinishReason::ContentFilter);
         [$orchestrator] = $this->buildOrchestrator($client, []);
         $binding = $this->binding();
 
@@ -318,40 +315,12 @@ final class OrchestratorTest extends TestCase
 
     public function testClientExceptionMidTurnLeavesEveryToolUseAnsweredAndStillYieldsTurnComplete(): void
     {
-        $client = new class implements MessagesClientInterface {
-            public function stream(array $request, ?callable $onWaiting = null, ?int $storeId = null): \Generator
-            {
-                yield new RawEvent('message_start', [
-                    'message' => [
-                        'id' => 'msg_x',
-                        'usage' => [
-                            'input_tokens' => 10,
-                            'output_tokens' => 1,
-                            'cache_read_input_tokens' => 0,
-                            'cache_creation_input_tokens' => 0,
-                        ],
-                    ],
-                ]);
-                yield new RawEvent('content_block_start', [
-                    'index' => 0,
-                    'content_block' => ['type' => 'tool_use', 'id' => 't1', 'name' => 'tool_a'],
-                ]);
-                yield new RawEvent('content_block_delta', [
-                    'index' => 0,
-                    'delta' => ['type' => 'input_json_delta', 'partial_json' => '{}'],
-                ]);
-                yield new RawEvent('content_block_stop', ['index' => 0]);
-                yield new RawEvent('content_block_start', [
-                    'index' => 1,
-                    'content_block' => ['type' => 'tool_use', 'id' => 't2', 'name' => 'tool_b'],
-                ]);
-                yield new RawEvent('content_block_delta', [
-                    'index' => 1,
-                    'delta' => ['type' => 'input_json_delta', 'partial_json' => '{}'],
-                ]);
-                throw new ServerError('boom');
-            }
-        };
+        $client = $this->scriptedClient()
+            ->addToolRound([
+                ['id' => 't1', 'name' => 'tool_a', 'input' => []],
+                ['id' => 't2', 'name' => 'tool_b', 'input' => []],
+            ])
+            ->addFailure(new AiServiceException(__('down')));
         $definitions = [$this->definitionForHandler('tool_a', ToolOutcome::ok('a done'))];
         [$orchestrator, $resource] = $this->buildOrchestrator($client, $definitions);
         $binding = $this->binding();
@@ -388,26 +357,27 @@ final class OrchestratorTest extends TestCase
         }
         $this->assertSame('a done', $byId['t1']['content']);
         $this->assertFalse($byId['t1']['is_error']);
-        $this->assertSame('Interrupted before this tool finished.', $byId['t2']['content']);
+        $this->assertSame('Unknown tool: tool_b', $byId['t2']['content']);
         $this->assertTrue($byId['t2']['is_error']);
+        $this->assertSame('error', $last->data['stop_reason']);
     }
 
-    public function testScriptExhaustionOfFakeClientFailsTheTestRatherThanLooping(): void
+    public function testScriptExhaustionOfTheScriptedClientFailsTheTestRatherThanLooping(): void
     {
-        $client = new FakeClient([FakeClient::toolRound([['id' => 'tu1', 'name' => 'tool_a', 'input' => []]])]);
+        $client = $this->scriptedClient()->addToolRound([['id' => 'tu1', 'name' => 'tool_a', 'input' => []]]);
         $definitions = [$this->definitionForHandler('tool_a', ToolOutcome::ok('a done'))];
         [$orchestrator] = $this->buildOrchestrator($client, $definitions);
         $binding = $this->binding();
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('FakeClient script exhausted');
+        $this->expectExceptionMessage('ScriptedAiClient script exhausted');
 
         iterator_to_array($orchestrator->streamTurn($binding, 'go', $binding->context), false);
     }
 
     public function testTurnLogRecordsSummedUsageAndTheIncrementedTurnNumber(): void
     {
-        $client = new FakeClient([FakeClient::textRound('Hello there.', 'end_turn')]);
+        $client = $this->scriptedClient()->addTextRound('Hello there.');
         [$orchestrator, , $turnLog] = $this->buildOrchestrator($client, []);
         $binding = $this->binding();
         $binding->state->turnCounter = 4;
@@ -437,7 +407,7 @@ final class OrchestratorTest extends TestCase
 
     public function testSessionSaveFailureLogsAWarningAndKeepsThePriorTurnNumber(): void
     {
-        $client = new FakeClient([FakeClient::textRound('Hello there.', 'end_turn')]);
+        $client = $this->scriptedClient()->addTextRound('Hello there.');
         [$orchestrator, , $turnLog, , $logger] = $this->buildOrchestrator($client, [], [], false);
         $binding = $this->binding();
         $binding->state->turnCounter = 4;
@@ -462,10 +432,7 @@ final class OrchestratorTest extends TestCase
     public function testTurnLogRoundsCountsEveryModelCall(): void
     {
         $toolUses = [['id' => 'tu1', 'name' => 'tool_a', 'input' => []]];
-        $client = new FakeClient([
-            FakeClient::toolRound($toolUses),
-            FakeClient::textRound('Done.', 'end_turn'),
-        ]);
+        $client = $this->scriptedClient()->addToolRound($toolUses)->addTextRound('Done.');
         $definitions = [$this->definitionForHandler('tool_a', ToolOutcome::ok('a done'))];
         [$orchestrator, , $turnLog] = $this->buildOrchestrator($client, $definitions);
         $binding = $this->binding();
@@ -485,23 +452,7 @@ final class OrchestratorTest extends TestCase
 
     public function testTurnLogIsRecordedOnceWhenTheClientFailsMidTurn(): void
     {
-        $client = new class implements MessagesClientInterface {
-            public function stream(array $request, ?callable $onWaiting = null, ?int $storeId = null): \Generator
-            {
-                yield new RawEvent('message_start', [
-                    'message' => [
-                        'id' => 'msg_x',
-                        'usage' => [
-                            'input_tokens' => 10,
-                            'output_tokens' => 1,
-                            'cache_read_input_tokens' => 0,
-                            'cache_creation_input_tokens' => 0,
-                        ],
-                    ],
-                ]);
-                throw new ServerError('boom');
-            }
-        };
+        $client = $this->scriptedClient()->addFailure(new AiServiceException(__('boom')));
         [$orchestrator, , $turnLog] = $this->buildOrchestrator($client, []);
         $binding = $this->binding();
 
@@ -521,19 +472,9 @@ final class OrchestratorTest extends TestCase
 
     public function testAStreamThatEndsBeforeAnyOutputIsRetriedOnceAndThenCompletes(): void
     {
-        $client = new class implements MessagesClientInterface {
-            public int $calls = 0;
-
-            public function stream(array $request, ?callable $onWaiting = null, ?int $storeId = null): \Generator
-            {
-                $this->calls++;
-                if ($this->calls === 1) {
-                    yield new RawEvent('message_start', ['message' => ['id' => 'msg_x', 'usage' => []]]);
-                    throw new Transport('The model stream ended before message_stop.');
-                }
-                yield from FakeClient::textRound('Here you go.', 'end_turn');
-            }
-        };
+        $client = $this->scriptedClient()
+            ->addFailure(new AiTransientException(__('Stream ended before completion.')))
+            ->addTextRound('Here you go.');
         [$orchestrator, , $turnLog, , , $sleeper] = $this->buildOrchestrator($client, []);
         $sleeper->expects($this->once())->method('sleep');
         $captured = null;
@@ -547,7 +488,7 @@ final class OrchestratorTest extends TestCase
 
         $events = iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
 
-        $this->assertSame(2, $client->calls);
+        $this->assertCount(2, $client->calls);
         $types = array_map(static fn ($event): string => $event->type, $events);
         $this->assertNotContains('error', $types);
         $last = $events[count($events) - 1];
@@ -556,18 +497,11 @@ final class OrchestratorTest extends TestCase
         $this->assertSame(1, $captured['rounds']);
     }
 
-    public function testAnOverloadedStreamErrorIsRetriedOnceAndItsTypeReachesTheLog(): void
+    public function testATransientErrorIsRetriedOnceAndItsMessageReachesTheLog(): void
     {
-        $client = new class implements MessagesClientInterface {
-            public int $calls = 0;
-
-            public function stream(array $request, ?callable $onWaiting = null, ?int $storeId = null): \Generator
-            {
-                $this->calls++;
-                yield new RawEvent('message_start', ['message' => ['id' => 'msg_x', 'usage' => []]]);
-                throw new ApiStreamError('overloaded_error', 'Overloaded');
-            }
-        };
+        $client = $this->scriptedClient()
+            ->addFailure(new AiTransientException(__('Overloaded')))
+            ->addTextRound('Here you go.');
         [$orchestrator, , , , $logger, $sleeper] = $this->buildOrchestrator($client, []);
         $sleeper->expects($this->once())->method('sleep');
         $warnings = [];
@@ -580,79 +514,138 @@ final class OrchestratorTest extends TestCase
 
         $events = iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
 
-        $this->assertSame(2, $client->calls);
+        $this->assertCount(2, $client->calls);
         $retried = array_values(array_filter(
             $warnings,
             static fn (string $line): bool => str_contains($line, 'model call retried')
         ));
-        $failed = array_values(array_filter(
-            $warnings,
-            static fn (string $line): bool => str_contains($line, 'model call failed')
-        ));
         $this->assertCount(1, $retried);
-        $this->assertStringContainsString('error=overloaded_error: Overloaded', $retried[0]);
-        $this->assertCount(1, $failed);
-        $this->assertStringContainsString('error=overloaded_error: Overloaded', $failed[0]);
+        $this->assertStringContainsString('error=Overloaded', $retried[0]);
         $errorEvents = array_values(array_filter($events, static fn ($event): bool => $event->type === 'error'));
-        $this->assertSame(
-            'The assistant is busy. Please try again in a few seconds.',
-            $errorEvents[0]->data['message']
-        );
+        $this->assertSame([], $errorEvents);
     }
 
-    public function testAStreamErrorTypeOutsideTheRetryListIsNotRetried(): void
+    public function testAnUnclassifiedServiceErrorIsNotRetried(): void
     {
-        $client = new class implements MessagesClientInterface {
-            public int $calls = 0;
-
-            public function stream(array $request, ?callable $onWaiting = null, ?int $storeId = null): \Generator
-            {
-                $this->calls++;
-                yield new RawEvent('message_start', ['message' => ['id' => 'msg_x', 'usage' => []]]);
-                throw new ApiStreamError('invalid_request_error', 'Bad input');
-            }
-        };
+        $client = $this->scriptedClient()->addFailure(new AiServiceException(__('odd')));
         [$orchestrator, , , , , $sleeper] = $this->buildOrchestrator($client, []);
         $sleeper->expects($this->never())->method('sleep');
         $binding = $this->binding();
 
         $events = iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
 
-        $this->assertSame(1, $client->calls);
+        $this->assertCount(1, $client->calls);
         $errorEvents = array_values(array_filter($events, static fn ($event): bool => $event->type === 'error'));
         $this->assertCount(1, $errorEvents);
     }
 
     public function testARoundThatAlreadyStreamedTextIsNotRetried(): void
     {
-        $client = new class implements MessagesClientInterface {
-            public int $calls = 0;
-
-            public function stream(array $request, ?callable $onWaiting = null, ?int $storeId = null): \Generator
-            {
-                $this->calls++;
-                yield new RawEvent('message_start', ['message' => ['id' => 'msg_x', 'usage' => []]]);
-                yield new RawEvent('content_block_start', [
-                    'index' => 0,
-                    'content_block' => ['type' => 'text', 'text' => ''],
-                ]);
-                yield new RawEvent('content_block_delta', [
-                    'index' => 0,
-                    'delta' => ['type' => 'text_delta', 'text' => 'Half a sen'],
-                ]);
-                throw new Transport('The model stream ended before message_stop.');
-            }
-        };
+        $client = $this->scriptedClient()->addFailure(new AiTransientException(__('dropped')), 'Partial text');
         [$orchestrator, , , , , $sleeper] = $this->buildOrchestrator($client, []);
         $sleeper->expects($this->never())->method('sleep');
         $binding = $this->binding();
 
         $events = iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
 
-        $this->assertSame(1, $client->calls);
+        $this->assertCount(1, $client->calls);
         $textEvents = array_values(array_filter($events, static fn ($event): bool => $event->type === 'text_delta'));
         $this->assertCount(1, $textEvents);
-        $this->assertSame('Half a sen', $textEvents[0]->data['text']);
+        $this->assertSame('Partial text', $textEvents[0]->data['text']);
+    }
+
+    public function testNoUsableServiceYieldsUnavailableAndStillPersistsTheTurn(): void
+    {
+        $resolver = new class implements ClientResolverInterface {
+            public function forStore(int $storeId): \MageOS\AiBase\Api\AiClientInterface
+            {
+                throw new LocalizedException(__('No AI service configured.'));
+            }
+        };
+        [$orchestrator, $messageResource, $turnLog] = $this->buildOrchestrator($resolver, []);
+        $messageResource->expects($this->once())->method('insertMany');
+        $turnLog->expects($this->once())->method('record');
+        $binding = $this->binding();
+
+        $events = iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
+
+        $this->assertSame(Event::TYPE_ERROR, $events[0]->type);
+        $this->assertSame('The assistant is not available right now.', $events[0]->data['message']);
+        $this->assertSame('error', end($events)->data['stop_reason']);
+    }
+
+    public function testAContentFilteredErrorYieldsTheRefusalMessage(): void
+    {
+        $client = $this->scriptedClient()->addFailure(new AiContentFilteredException(__('blocked')));
+        [$orchestrator] = $this->buildOrchestrator($client, []);
+        $binding = $this->binding();
+
+        $events = iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
+
+        $this->assertSame('I cannot help with that request.', $events[0]->data['message']);
+        $this->assertSame('refusal', end($events)->data['stop_reason']);
+    }
+
+    public function testARateLimitPassesTheWaitTimeToTheCustomer(): void
+    {
+        $client = $this->scriptedClient()->addFailure(new AiRateLimitedException(__('slow down'), 12));
+        [$orchestrator] = $this->buildOrchestrator($client, []);
+        $binding = $this->binding();
+
+        $events = iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
+
+        $this->assertSame(12, $events[0]->data['retry_after']);
+    }
+
+    public function testAModelOverrideIsSentAsTheModelOption(): void
+    {
+        $client = $this->scriptedClient()->addTextRound('Hi.');
+        [$orchestrator] = $this->buildOrchestrator(
+            $client,
+            [],
+            ['ai_integration/aiagent/model/model_id' => 'claude-opus-5']
+        );
+        $binding = $this->binding();
+
+        iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
+
+        $this->assertSame('claude-opus-5', $client->calls[0]['options']['model']);
+    }
+
+    public function testReasoningEffortOffIsSentAsNone(): void
+    {
+        $client = $this->scriptedClient()->addTextRound('Hi.');
+        [$orchestrator] = $this->buildOrchestrator(
+            $client,
+            [],
+            ['ai_integration/aiagent/model/thinking_effort' => 'off']
+        );
+        $binding = $this->binding();
+
+        iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
+
+        $this->assertSame('none', $client->calls[0]['options']['reasoning_effort']);
+    }
+
+    public function testAChangedServiceDropsTheStoredReasoningOnce(): void
+    {
+        $client = $this->scriptedClient()->addTextRound('Hi.');
+        [$orchestrator] = $this->buildOrchestrator($client, [], [], true, [
+            ['role' => 'user', 'content' => json_encode([['type' => 'text', 'text' => 'Earlier']])],
+            ['role' => 'assistant', 'content' => json_encode([
+                ['type' => 'thinking', 'thinking' => 'x', 'signature' => 'sig_from_another_service'],
+                ['type' => 'text', 'text' => 'Earlier answer'],
+            ])],
+        ]);
+        $binding = $this->binding();
+        $binding->state->serviceId = '_old_row';
+
+        iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
+
+        $replayed = $client->calls[0]['request']->getMessages()[3];
+        $this->assertSame(MessageRole::Assistant, $replayed->getRole());
+        $this->assertSame([], $replayed->getReasoning());
+        $this->assertSame(ScriptedAiClient::SERVICE, $binding->state->serviceId);
     }
 
     private function findToolResultMessage(array $messages): ?array
@@ -704,10 +697,11 @@ final class OrchestratorTest extends TestCase
      * @return array{0: Orchestrator, 1: MockObject, 2: MockObject}
      */
     private function buildOrchestrator(
-        MessagesClientInterface $client,
+        ScriptedAiClient|ClientResolverInterface $client,
         array $definitions,
         array $configOverrides = [],
-        bool $saveSucceeds = true
+        bool $saveSucceeds = true,
+        array $loaded = []
     ): array {
         $storeConfig = $this->storeConfig($configOverrides);
         $backend = $this->createMock(StorefrontBackendInterface::class);
@@ -776,7 +770,6 @@ final class OrchestratorTest extends TestCase
             $this->createMock(StoreFactTitleResolverInterface::class)
         );
         $dynamicContext = new DynamicContext(new Fence($sanitizer));
-        $assembly = new Assembly();
         $rules = new Rules(
             new Lexicon($storeConfig),
             new SkuCandidates(),
@@ -784,7 +777,7 @@ final class OrchestratorTest extends TestCase
         );
 
         $messageResource = $this->createMock(MessageResource::class);
-        $messageResource->method('loadBySession')->willReturn([]);
+        $messageResource->method('loadBySession')->willReturn($loaded);
         $resourceConnection = $this->createMock(ResourceConnection::class);
         $resourceConnection->method('getConnection')->willReturn($this->createMock(AdapterInterface::class));
         $transcripts = new TranscriptRepository($messageResource, $resourceConnection);
@@ -797,11 +790,16 @@ final class OrchestratorTest extends TestCase
         $sleeper = $this->createMock(Sleeper::class);
 
         $orchestrator = new Orchestrator(
-            $client,
+            $client instanceof ClientResolverInterface ? $client : new FixedClientResolver($client),
             $backend,
             $staticSystem,
             $dynamicContext,
-            $assembly,
+            new RequestMapper(
+                $this->chatRequestBuilderFactory(),
+                $this->chatMessageFactory(),
+                $this->chatResponseFactory(),
+                $this->toolCallFactory()
+            ),
             new PageNote($sanitizer),
             $toolRegistry,
             $executorFactory,
