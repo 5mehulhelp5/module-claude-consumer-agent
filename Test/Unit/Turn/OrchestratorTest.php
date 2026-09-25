@@ -15,9 +15,13 @@ use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use MageOS\AiBase\Api\Data\FinishReason;
 use MageOS\AiBase\Api\Data\MessageRole;
+use MageOS\AiBase\Model\Client\AiAuthenticationException;
 use MageOS\AiBase\Model\Client\AiContentFilteredException;
+use MageOS\AiBase\Model\Client\AiInvalidRequestException;
 use MageOS\AiBase\Model\Client\AiRateLimitedException;
+use MageOS\AiBase\Model\Client\AiRequestNotSentException;
 use MageOS\AiBase\Model\Client\AiServiceException;
+use MageOS\AiBase\Model\Client\AiToolCallException;
 use MageOS\AiBase\Model\Client\AiTransientException;
 use MageOS\AiShoppingAssistant\Api\Backend\CatalogMapProviderInterface;
 use MageOS\AiShoppingAssistant\Api\Backend\SkuMatcherInterface;
@@ -74,6 +78,7 @@ use MageOS\AiShoppingAssistant\Model\Session\Binding;
 use MageOS\AiShoppingAssistant\Model\Session\ResourceModel\Message as MessageResource;
 use MageOS\AiShoppingAssistant\Model\Session\TranscriptRepository;
 use MageOS\AiShoppingAssistant\Test\Unit\Support\AiBaseDoubles;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
@@ -313,7 +318,7 @@ final class OrchestratorTest extends TestCase
         $this->assertSame('refusal', $last->data['stop_reason']);
     }
 
-    public function testClientExceptionMidTurnLeavesEveryToolUseAnsweredAndStillYieldsTurnComplete(): void
+    public function testAFailedCallAfterACompletedToolRoundEndsWithErrorAndEveryToolUseAnswered(): void
     {
         $client = $this->scriptedClient()
             ->addToolRound([
@@ -539,6 +544,81 @@ final class OrchestratorTest extends TestCase
         $this->assertCount(1, $errorEvents);
     }
 
+    public function testAToolCallErrorBeforeAnyOutputIsRetriedOnceAndThenCompletes(): void
+    {
+        $client = $this->scriptedClient()
+            ->addFailure(new AiToolCallException(__('Tool call arguments were not valid JSON.')))
+            ->addTextRound('Here you go.');
+        [$orchestrator, , , , , $sleeper] = $this->buildOrchestrator($client, []);
+        $sleeper->expects($this->once())->method('sleep');
+        $binding = $this->binding();
+
+        $events = iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
+
+        $this->assertCount(2, $client->calls);
+        $types = array_map(static fn ($event): string => $event->type, $events);
+        $this->assertNotContains('error', $types);
+        $this->assertSame('end_turn', end($events)->data['stop_reason']);
+    }
+
+    #[DataProvider('unavailableFailures')]
+    public function testAnUnusableServiceErrorYieldsUnavailableWithoutARetry(\Throwable $failure): void
+    {
+        $client = $this->scriptedClient()->addFailure($failure);
+        [$orchestrator, , , , , $sleeper] = $this->buildOrchestrator($client, []);
+        $sleeper->expects($this->never())->method('sleep');
+        $binding = $this->binding();
+
+        $events = iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
+
+        $this->assertCount(1, $client->calls);
+        $this->assertSame(Event::TYPE_ERROR, $events[0]->type);
+        $this->assertSame('The assistant is not available right now.', $events[0]->data['message']);
+        $this->assertSame('error', end($events)->data['stop_reason']);
+    }
+
+    public static function unavailableFailures(): array
+    {
+        return [
+            'authentication' => [new AiAuthenticationException(__('bad key'))],
+            'invalid request' => [new AiInvalidRequestException(__('bad request'))],
+            'request not sent' => [new AiRequestNotSentException(__('not sent'))],
+        ];
+    }
+
+    public function testATransientErrorThatFailsTwiceYieldsBusyAfterTwoCalls(): void
+    {
+        $client = $this->scriptedClient()
+            ->addFailure(new AiTransientException(__('Overloaded')))
+            ->addFailure(new AiTransientException(__('Overloaded again')));
+        [$orchestrator, , , , $logger, $sleeper] = $this->buildOrchestrator($client, []);
+        $sleeper->expects($this->once())->method('sleep');
+        $warnings = [];
+        $logger->method('warning')->willReturnCallback(
+            static function (string $message) use (&$warnings): void {
+                $warnings[] = $message;
+            }
+        );
+        $binding = $this->binding();
+
+        $events = iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
+
+        $this->assertCount(2, $client->calls);
+        $failed = array_values(array_filter(
+            $warnings,
+            static fn (string $line): bool => str_contains($line, 'model call failed')
+        ));
+        $this->assertCount(1, $failed);
+        $this->assertStringContainsString('error=Overloaded again', $failed[0]);
+        $errorEvents = array_values(array_filter($events, static fn ($event): bool => $event->type === 'error'));
+        $this->assertCount(1, $errorEvents);
+        $this->assertSame(
+            'The assistant is busy. Please try again in a few seconds.',
+            $errorEvents[0]->data['message']
+        );
+        $this->assertSame('error', end($events)->data['stop_reason']);
+    }
+
     public function testARoundThatAlreadyStreamedTextIsNotRetried(): void
     {
         $client = $this->scriptedClient()->addFailure(new AiTransientException(__('dropped')), 'Partial text');
@@ -594,6 +674,8 @@ final class OrchestratorTest extends TestCase
 
         $events = iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
 
+        $this->assertCount(1, $client->calls);
+        $this->assertSame('The assistant is busy. Please try again in a few seconds.', $events[0]->data['message']);
         $this->assertSame(12, $events[0]->data['retry_after']);
     }
 
@@ -630,13 +712,8 @@ final class OrchestratorTest extends TestCase
     public function testAChangedServiceDropsTheStoredReasoningOnce(): void
     {
         $client = $this->scriptedClient()->addTextRound('Hi.');
-        [$orchestrator] = $this->buildOrchestrator($client, [], [], true, [
-            ['role' => 'user', 'content' => json_encode([['type' => 'text', 'text' => 'Earlier']])],
-            ['role' => 'assistant', 'content' => json_encode([
-                ['type' => 'thinking', 'thinking' => 'x', 'signature' => 'sig_from_another_service'],
-                ['type' => 'text', 'text' => 'Earlier answer'],
-            ])],
-        ]);
+        [$orchestrator, $messageResource] = $this->buildOrchestrator($client, [], [], true, $this->rowsWithThinking());
+        $messageResource->expects($this->once())->method('deleteBySession')->with('sess-1');
         $binding = $this->binding();
         $binding->state->serviceId = '_old_row';
 
@@ -646,6 +723,33 @@ final class OrchestratorTest extends TestCase
         $this->assertSame(MessageRole::Assistant, $replayed->getRole());
         $this->assertSame([], $replayed->getReasoning());
         $this->assertSame(ScriptedAiClient::SERVICE, $binding->state->serviceId);
+    }
+
+    public function testASessionWithoutAStoredServiceKeepsItsReasoning(): void
+    {
+        $client = $this->scriptedClient()->addTextRound('Hi.');
+        [$orchestrator, $messageResource] = $this->buildOrchestrator($client, [], [], true, $this->rowsWithThinking());
+        $messageResource->expects($this->never())->method('deleteBySession');
+        $binding = $this->binding();
+        $binding->state->serviceId = '';
+
+        iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
+
+        $replayed = $client->calls[0]['request']->getMessages()[3];
+        $this->assertSame(MessageRole::Assistant, $replayed->getRole());
+        $this->assertCount(1, $replayed->getReasoning());
+        $this->assertSame(ScriptedAiClient::SERVICE, $binding->state->serviceId);
+    }
+
+    private function rowsWithThinking(): array
+    {
+        return [
+            ['role' => 'user', 'content' => json_encode([['type' => 'text', 'text' => 'Earlier']])],
+            ['role' => 'assistant', 'content' => json_encode([
+                ['type' => 'thinking', 'thinking' => 'x', 'signature' => 'sig_from_another_service'],
+                ['type' => 'text', 'text' => 'Earlier answer'],
+            ])],
+        ];
     }
 
     private function findToolResultMessage(array $messages): ?array
