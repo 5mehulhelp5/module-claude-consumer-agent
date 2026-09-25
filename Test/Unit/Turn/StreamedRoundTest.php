@@ -343,6 +343,7 @@ final class StreamedRoundTest extends TestCase
             'content filter' => [FinishReason::ContentFilter, false, 'refusal'],
             'none reported with tools' => [null, true, 'tool_use'],
             'none reported without tools' => [null, false, 'end_turn'],
+            'other without tools' => [FinishReason::Other, false, 'end_turn'],
         ];
     }
 
@@ -366,6 +367,31 @@ final class StreamedRoundTest extends TestCase
             $round->assistantMessage()
         );
         $this->assertNull($round->stopReason());
+    }
+
+    public function testTheResponseUsageWinsOverAUsageChunk(): void
+    {
+        $round = new StreamedRound();
+        iterator_to_array($round->consume($this->stream([
+            new StreamChunk(StreamChunkType::Usage, '', null, new TokenUsage(
+                promptTokens: 400,
+                completionTokens: 10,
+                cacheReadTokens: 100,
+                cacheWriteTokens: 50
+            )),
+        ], new ChatResponse(
+            '',
+            [],
+            new TokenUsage(promptTokens: 1000, completionTokens: 50, cacheReadTokens: 700, cacheWriteTokens: 200)
+        ))), false);
+
+        $this->assertSame([
+            'input_tokens' => 100,
+            'output_tokens' => 50,
+            'cache_read_input_tokens' => 700,
+            'cache_creation_input_tokens' => 200,
+        ], $round->usage());
+        $this->assertSame(1000, $round->promptTokens());
     }
 
     public function testAFailedStreamKeepsTheUsageItReportedBeforeFailing(): void
