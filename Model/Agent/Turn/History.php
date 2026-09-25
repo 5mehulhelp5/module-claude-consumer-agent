@@ -132,6 +132,26 @@ final class History
         return $cleared;
     }
 
+    public function dropReasoning(): int
+    {
+        $dropped = 0;
+        foreach ($this->messages as $index => $message) {
+            if (($message['role'] ?? null) !== 'assistant' || !is_array($message['content'] ?? null)) {
+                continue;
+            }
+            $kept = [];
+            foreach ($message['content'] as $block) {
+                if (is_array($block) && ($block['type'] ?? null) === 'thinking') {
+                    $dropped++;
+                    continue;
+                }
+                $kept[] = $block;
+            }
+            $this->messages[$index]['content'] = $kept;
+        }
+        return $dropped;
+    }
+
     public function roundClosesTurn(array $toolUses, array $settled, Executor $executor): bool
     {
         if ($toolUses === []) {

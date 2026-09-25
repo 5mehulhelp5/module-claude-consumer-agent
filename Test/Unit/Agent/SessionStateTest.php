@@ -73,7 +73,7 @@ final class SessionStateTest extends TestCase
         );
         $decoded = json_decode($state->toJson(), true);
         $this->assertSame(
-            ['seen_products', 'turn_counter', 'last_page', 'surface_view', 'recent_customer_text'],
+            ['seen_products', 'turn_counter', 'last_page', 'surface_view', 'recent_customer_text', 'service_id'],
             array_keys($decoded)
         );
         $this->assertSame(['A-1' => ['product_id' => 'A-1']], $decoded['seen_products']);
@@ -134,5 +134,14 @@ final class SessionStateTest extends TestCase
         $this->assertCount(8, $state->recentCustomerText);
         $this->assertSame('Message 2', $state->recentCustomerText[0]);
         $this->assertSame('Message 9', $state->recentCustomerText[7]);
+    }
+
+    public function testTheServiceIdSurvivesTheJsonRoundTrip(): void
+    {
+        $state = new SessionState();
+        $state->serviceId = '_row_1';
+
+        $this->assertSame('_row_1', SessionState::fromJson($state->toJson())->serviceId);
+        $this->assertSame('', SessionState::fromJson('{}')->serviceId);
     }
 }

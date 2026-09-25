@@ -197,6 +197,23 @@ final class HistoryTest extends TestCase
         $this->assertSame('is this one better?', $last['content'][1]['text']);
     }
 
+    public function testDropReasoningRemovesEveryThinkingBlockAndCountsThem(): void
+    {
+        $history = new History([
+            ['role' => 'user', 'content' => [['type' => 'text', 'text' => 'Hi']]],
+            ['role' => 'assistant', 'content' => [
+                ['type' => 'thinking', 'thinking' => 'a', 'signature' => 's1'],
+                ['type' => 'text', 'text' => 'Hello'],
+            ]],
+            ['role' => 'assistant', 'content' => [['type' => 'thinking', 'thinking' => 'b', 'signature' => 's2']]],
+        ], 3);
+
+        $this->assertSame(2, $history->dropReasoning());
+        $this->assertSame([['type' => 'text', 'text' => 'Hello']], $history->all()[1]['content']);
+        $this->assertSame([], $history->all()[2]['content']);
+        $this->assertSame(0, $history->dropReasoning());
+    }
+
     public function testRoundClosesTurnFalseWhenNoToolUses(): void
     {
         $history = new History([], 0);
