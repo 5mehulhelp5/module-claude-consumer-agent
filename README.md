@@ -4,7 +4,8 @@ A shopping assistant for Hyvä and Luma storefronts on Magento 2 and Mage-OS.
 It ports Anthropic's open-source shopping agent to a Magento module. The
 assistant searches the catalog, explains products, adds them to the cart,
 checks orders and answers policy questions from the store's own data. Replies
-stream from the Claude Messages API into a side panel on every page.
+stream from any AI service configured in Mage-OS AI Base into a side panel on
+every page.
 
 The module names no store. Every backend call goes through
 `Api\StorefrontBackendInterface`, so a store layer can replace or extend any
@@ -44,23 +45,28 @@ part without a change to the base module.
 
 ## Requirements
 
-- PHP 8.1 to 8.5
-- Magento 2.4 or Mage-OS 3.x with a Hyvä theme on Tailwind 4 (Hyvä default
-  theme 1.5 or later) or a theme based on Magento/blank or Magento/luma. Luma
-  based themes need no Hyvä package.
-- An Anthropic API key with access to the configured model
+- PHP 8.2 to 8.5
+- Magento 2.4.7+ or Mage-OS, because Mage-OS AI Base needs it
+- A Hyvä theme on Tailwind 4 (Hyvä default theme 1.5 or later) or a theme
+  based on Magento/blank or Magento/luma. Luma based themes need no Hyvä
+  package.
+- A service configured in Mage-OS AI Base (Stores > Configuration > Mage-OS >
+  AI Configuration). Tested with Anthropic Claude Sonnet 5.
 
 ## Installation
 
 ```bash
 cd <magento root>
+composer require mage-os/module-ai-base:dev-main
 composer require mage-os/module-ai-shopping-assistant
-bin/magento module:enable MageOS_AiShoppingAssistant
+bin/magento module:enable MageOS_AiBase MageOS_AiShoppingAssistant
 bin/magento setup:upgrade
 ```
 
+The AI Base constraint moves from `dev-main` to a tagged release before 2.0.0.
+
 For development, clone the repository into
-`app/code/MageOS/AiShoppingAssistant` instead of the `composer require`.
+`app/code/MageOS/AiShoppingAssistant` instead of the module's `composer require`.
 
 `setup:upgrade` creates the tables `aiagent_session`, `aiagent_message` and
 `aiagent_turn`.
@@ -69,13 +75,15 @@ For development, clone the repository into
 
 The module was renamed from `MageOS_ClaudeConsumerAgent` to
 `MageOS_AiShoppingAssistant`. Tables, configuration paths, the frontend route
-and stored sessions keep their names, so data and settings carry over.
+and stored sessions keep their names, so data and settings carry over, apart
+from the model settings below.
 
 ```bash
 composer remove mage-os/module-claude-consumer-agent
+composer require mage-os/module-ai-base:dev-main
 composer require mage-os/module-ai-shopping-assistant
 rm -rf generated/code/* generated/metadata/*
-bin/magento module:enable MageOS_AiShoppingAssistant
+bin/magento module:enable MageOS_AiBase MageOS_AiShoppingAssistant
 bin/magento setup:upgrade
 ```
 
@@ -84,6 +92,13 @@ old namespace stops `bin/magento` from starting. `setup:upgrade` drops the old
 module from `app/etc/config.php`. On Hyvä, run `bin/magento hyva:config:generate`
 again so the theme build finds the new module path. In production mode, finish
 with `setup:di:compile` and `setup:static-content:deploy` as usual.
+
+The module now calls its model through Mage-OS AI Base. The API key, Request
+Timeout and Connect Timeout settings are gone. Add the key as a service in AI
+Base (Stores > Configuration > Mage-OS > AI Configuration), then pick that
+service in AI Service. A saved Model value now overrides the model of the
+service, so clear it to use the service's model. Reasoning Effort maps to AI
+Base's `reasoning_effort`.
 
 ### Hyvä
 
@@ -145,8 +160,31 @@ field has default, website and store view scope. Config paths start with
 
 ![Model group](docs/images/admin-model.png)
 
-API key (stored encrypted, never sent to the browser), model id, max tokens,
-thinking effort, request timeout and connect timeout.
+- AI Service: the Mage-OS AI Base service that answers. Services live under
+  Stores > Configuration > Mage-OS > AI Configuration, with their key and
+  model. Automatic uses the first usable one.
+- Model Override: empty uses the model of the service. A name here must be
+  valid for that provider.
+- Max Tokens: bounds thinking and reply together.
+- Reasoning Effort: Off, Low, Medium or High, passed to AI Base as
+  `reasoning_effort`. AI Base translates it per provider. Off turns reasoning
+  off where the provider allows it.
+
+#### Known limits
+
+- Anthropic receives the results of parallel tool calls as separate messages,
+  a behaviour of the Symfony AI bridge under AI Base.
+- Ollama and HuggingFace report only generic errors, and Azure, OpenRouter and
+  LM Studio report no wait time on rate limits.
+- Gemini reports no token counts while streaming, so the turn log shows 0 for
+  those calls.
+- AI Base ships no default class for its `ReasoningInterface`, so the module
+  rebuilds stored reasoning with its own `Model\Agent\Turn\StoredReasoning`.
+- Network failures get no retry until AI Base reports them as transient
+  errors (mage-os-lab/module-ai-base#55).
+- The module rebuilds assistant turns on the request itself, not through the
+  AI Base message builder, because the builder drops reasoning
+  (mage-os-lab/module-ai-base#54).
 
 ### Voice
 
@@ -217,7 +255,7 @@ with `bin/magento config:set`.
 | Path | Default | Meaning |
 |---|---|---|
 | `ai_integration/aiagent/runtime/first_byte_threshold` | 4 | Seconds the browser waits for the first streamed byte before it switches the session to JSON replies |
-| `ai_integration/aiagent/runtime/heartbeat_seconds` | 10 | Interval of `: ping` comments while a model call runs |
+| `ai_integration/aiagent/runtime/heartbeat_seconds` | 10 | Minimum seconds between `: ping` comments, written between stream chunks while a model call runs |
 | `ai_integration/aiagent/lexicon/policy_intent_terms` | word list | Words that force the policy tool |
 | `ai_integration/aiagent/lexicon/order_intent_terms` | word list | Words that force the order lookup |
 
@@ -230,8 +268,10 @@ with `bin/magento config:set`.
    an existing SKU forces a product read. A first message on a product page
    reads that product.
 3. The orchestrator calls the model with the static system prompt (voice,
-   catalog map, store facts, tool list) and the session context (cart,
-   customer, page). Tool calls run against the store through
+   catalog map, store facts) and the tool list. The session context (cart,
+   customer, page, local hour) travels with the customer message, and only
+   when it changed, so the system prompt and tools stay cached across
+   sessions. Tool calls run against the store through
    `Api\StorefrontBackendInterface`:
    - catalog: `search_products`, `search_categories`, `get_product_details`
    - cart: `get_cart`, `add_to_cart`, `update_cart_item`, `remove_from_cart`
@@ -292,6 +332,11 @@ comment first, one frame per event (`event: <type>\ndata: <json>\n\n`),
 `: ping` heartbeats, then `event: turn_complete`. A client can send
 `{"stream": 0}` and receive the same events as one JSON body after the turn.
 
+The `: ping` heartbeat is written between stream chunks. AI Base reports
+thinking and tool-call starts, so the pause before the first word is covered
+on Anthropic, OpenAI and Ollama. During a silent stretch inside a block no
+ping is sent.
+
 A buffering proxy defeats SSE. Checks and fixes:
 
 - nginx: `proxy_buffering off;` and `gzip off;` on the `aiagent` location
@@ -317,14 +362,17 @@ proxy.
 
 ## Commands
 
-- `aiagent:spike:stream [--store=<code>] [--message="..."] [--product=<id>]
-  [--record=<name>] [--raw]`: runs one turn on a throwaway session and prints
-  text, tool calls, cards, usage and elapsed time. `--raw` streams the
-  Messages client directly. `--record` writes the SSE frames as fixtures.
+- `aiagent:spike:stream [--store=<code>] [--message="..."] [--service=<row id>]`:
+  streams one request with the store's prompt and tools through the
+  configured AI service, or the AI Base service row given by `--service`. It
+  prints the service and model, each chunk with its time, then the finish
+  reason, the longest gap between chunks and the token counts, cache reads
+  and writes included.
 - `aiagent:eval:run [--cases=<dir>] [--filter=<glob>] [--live]
-  [--store=<code>] [--json]`: replays the scripted conversations under
-  `Test/Eval/cases` and grades tool calls, cards and cart state. Without
-  `--live` an in-memory backend serves every tool call. Exits 1 when a
+  [--store=<code>] [--json] [--service=<row id>]`: replays the scripted
+  conversations under `Test/Eval/cases` and grades tool calls, cards and cart
+  state. Without `--live` an in-memory backend serves every tool call.
+  `--service` picks the AI Base service row for `--live`. Exits 1 when a
   critical or high priority case fails.
 - `aiagent:usage:report [--days=<n>] [--store=<id>]`: token usage per day
   from `aiagent_turn`.
