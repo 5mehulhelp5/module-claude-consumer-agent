@@ -71,6 +71,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Turn\RequestMapper;
 use MageOS\AiShoppingAssistant\Model\Agent\Turn\StreamedRoundFactory;
 use MageOS\AiShoppingAssistant\Model\Client\Sleeper;
 use MageOS\AiShoppingAssistant\Model\Config\StoreConfig;
+use MageOS\AiShoppingAssistant\Model\Data\Cart;
 use MageOS\AiShoppingAssistant\Model\Data\PageContext;
 use MageOS\AiShoppingAssistant\Model\Eval\FixedClientResolver;
 use MageOS\AiShoppingAssistant\Model\Eval\ScriptedAiClient;
@@ -104,7 +105,7 @@ final class OrchestratorTest extends TestCase
 
         $messages = $client->calls[0]['request']->getMessages();
         $this->assertSame(MessageRole::System, $messages[0]->getRole());
-        $this->assertSame(MessageRole::System, $messages[1]->getRole());
+        $this->assertSame(MessageRole::User, $messages[1]->getRole());
         $options = $client->calls[0]['options'];
         $this->assertSame(2048, $options['max_tokens']);
         $this->assertSame('low', $options['reasoning_effort']);
@@ -151,9 +152,10 @@ final class OrchestratorTest extends TestCase
 
         $firstUserMessage = $captured[0];
         $this->assertSame('user', $firstUserMessage['role']);
-        $this->assertCount(2, $firstUserMessage['content']);
-        $this->assertStringStartsWith(PageNote::PREFIX, $firstUserMessage['content'][0]['text']);
-        $this->assertSame('is this one better?', $firstUserMessage['content'][1]['text']);
+        $this->assertCount(3, $firstUserMessage['content']);
+        $this->assertStringStartsWith(DynamicContext::PREFIX, $firstUserMessage['content'][0]['text']);
+        $this->assertStringStartsWith(PageNote::PREFIX, $firstUserMessage['content'][1]['text']);
+        $this->assertSame('is this one better?', $firstUserMessage['content'][2]['text']);
     }
 
     public function testNoNoteIsAppendedWhenThePageHasNotChanged(): void
@@ -176,8 +178,55 @@ final class OrchestratorTest extends TestCase
         iterator_to_array($orchestrator->streamTurn($binding, 'tell me more', $binding->context), false);
 
         $firstUserMessage = $captured[0];
-        $this->assertCount(1, $firstUserMessage['content']);
-        $this->assertSame('tell me more', $firstUserMessage['content'][0]['text']);
+        $this->assertCount(2, $firstUserMessage['content']);
+        $this->assertStringStartsWith(DynamicContext::PREFIX, $firstUserMessage['content'][0]['text']);
+        $this->assertSame('tell me more', $firstUserMessage['content'][1]['text']);
+    }
+
+    public function testTheSessionContextLeadsTheCustomerMessageOnlyWhenItChanged(): void
+    {
+        $client = $this->scriptedClient()->addTextRound('One.')->addTextRound('Two.')->addTextRound('Three.');
+        $stored = [];
+        $rows = static function () use (&$stored): array {
+            return array_map(
+                static fn (array $message): array => [
+                    'role' => $message['role'],
+                    'content' => json_encode($message['content']),
+                ],
+                $stored
+            );
+        };
+        [$orchestrator, $resource, , , , , $backend] = $this->buildOrchestrator($client, [], [], true, $rows);
+        $resource->method('insertMany')->willReturnCallback(
+            static function (string $sessionId, array $messages) use (&$stored): void {
+                $stored = array_merge($stored, $messages);
+            }
+        );
+        $backend->method('getCart')->willReturnOnConsecutiveCalls(
+            new Cart(),
+            new Cart(),
+            Cart::fromArray([
+                'items' => [['product_id' => 'p-100', 'title' => 'Tent', 'price' => 149.0, 'quantity' => 1]],
+                'currency' => 'USD',
+            ])
+        );
+        $binding = $this->binding();
+
+        iterator_to_array($orchestrator->streamTurn($binding, 'First', $binding->context), false);
+        iterator_to_array($orchestrator->streamTurn($binding, 'Second', $binding->context), false);
+        iterator_to_array($orchestrator->streamTurn($binding, 'Third', $binding->context), false);
+
+        $first = $client->calls[0]['request']->getMessages();
+        $second = $client->calls[1]['request']->getMessages();
+        $third = $client->calls[2]['request']->getMessages();
+        $this->assertSame(MessageRole::User, $first[1]->getRole());
+        $this->assertStringStartsWith(DynamicContext::PREFIX, $first[1]->getContent());
+        $this->assertCount(4, $second);
+        $this->assertSame($first[1]->getContent(), $second[1]->getContent());
+        $this->assertSame('Second', end($second)->getContent());
+        $this->assertStringStartsWith(DynamicContext::PREFIX, end($third)->getContent());
+        $this->assertStringContainsString('p-100', end($third)->getContent());
+        $this->assertStringEndsWith('Third', end($third)->getContent());
     }
 
     public function testLastPageIsWrittenAfterEveryTurn(): void
@@ -719,7 +768,7 @@ final class OrchestratorTest extends TestCase
 
         iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
 
-        $replayed = $client->calls[0]['request']->getMessages()[3];
+        $replayed = $client->calls[0]['request']->getMessages()[2];
         $this->assertSame(MessageRole::Assistant, $replayed->getRole());
         $this->assertSame([], $replayed->getReasoning());
         $this->assertSame(ScriptedAiClient::SERVICE, $binding->state->serviceId);
@@ -735,7 +784,7 @@ final class OrchestratorTest extends TestCase
 
         iterator_to_array($orchestrator->streamTurn($binding, 'Hi', $binding->context), false);
 
-        $replayed = $client->calls[0]['request']->getMessages()[3];
+        $replayed = $client->calls[0]['request']->getMessages()[2];
         $this->assertSame(MessageRole::Assistant, $replayed->getRole());
         $this->assertCount(1, $replayed->getReasoning());
         $this->assertSame(ScriptedAiClient::SERVICE, $binding->state->serviceId);
@@ -805,7 +854,7 @@ final class OrchestratorTest extends TestCase
         array $definitions,
         array $configOverrides = [],
         bool $saveSucceeds = true,
-        array $loaded = []
+        array|\Closure $loaded = []
     ): array {
         $storeConfig = $this->storeConfig($configOverrides);
         $backend = $this->createMock(StorefrontBackendInterface::class);
@@ -881,7 +930,11 @@ final class OrchestratorTest extends TestCase
         );
 
         $messageResource = $this->createMock(MessageResource::class);
-        $messageResource->method('loadBySession')->willReturn($loaded);
+        if ($loaded instanceof \Closure) {
+            $messageResource->method('loadBySession')->willReturnCallback($loaded);
+        } else {
+            $messageResource->method('loadBySession')->willReturn($loaded);
+        }
         $resourceConnection = $this->createMock(ResourceConnection::class);
         $resourceConnection->method('getConnection')->willReturn($this->createMock(AdapterInterface::class));
         $transcripts = new TranscriptRepository($messageResource, $resourceConnection);
@@ -917,7 +970,7 @@ final class OrchestratorTest extends TestCase
             $sleeper
         );
 
-        return [$orchestrator, $messageResource, $turnLog, $sessions, $logger, $sleeper];
+        return [$orchestrator, $messageResource, $turnLog, $sessions, $logger, $sleeper, $backend];
     }
 
     private function storeConfig(array $valueOverrides = []): StoreConfig

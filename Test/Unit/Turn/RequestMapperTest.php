@@ -13,30 +13,26 @@ class RequestMapperTest extends TestCase
 {
     use AiBaseDoubles;
 
-    public function testTheStaticPromptComesFirstAndTheSessionContextSecond(): void
+    public function testTheStaticPromptIsTheOnlySystemMessage(): void
     {
-        $request = $this->mapper()->build('STATIC', 'DYNAMIC', [], [$this->user('Hi')]);
+        $request = $this->mapper()->build('STATIC', [], [$this->user('Hi')]);
 
         $messages = $request->getMessages();
         $this->assertSame(MessageRole::System, $messages[0]->getRole());
         $this->assertSame('STATIC', $messages[0]->getContent());
-        $this->assertSame(MessageRole::System, $messages[1]->getRole());
-        $this->assertSame('DYNAMIC', $messages[1]->getContent());
-        $this->assertSame(MessageRole::User, $messages[2]->getRole());
-    }
-
-    public function testAnEmptySessionContextAddsNoSecondSystemMessage(): void
-    {
-        $request = $this->mapper()->build('STATIC', '', [], [$this->user('Hi')]);
-
-        $this->assertSame(MessageRole::User, $request->getMessages()[1]->getRole());
+        $this->assertSame(MessageRole::User, $messages[1]->getRole());
+        $systemMessages = array_filter(
+            $messages,
+            static fn ($message): bool => $message->getRole() === MessageRole::System
+        );
+        $this->assertCount(1, $systemMessages);
     }
 
     public function testToolDefinitionsAreOfferedAsTheyAre(): void
     {
         $definition = new Definition('search_products', 'Search', ['type' => 'object'], 'core', null, [], false, false, 10);
 
-        $request = $this->mapper()->build('S', '', [$definition], [$this->user('Hi')]);
+        $request = $this->mapper()->build('S', [$definition], [$this->user('Hi')]);
 
         $this->assertSame([$definition], $request->getTools());
     }
@@ -48,7 +44,7 @@ class RequestMapperTest extends TestCase
             ['type' => 'text', 'text' => 'Does it run small?'],
         ]];
 
-        $request = $this->mapper()->build('S', '', [], [$message]);
+        $request = $this->mapper()->build('S', [], [$message]);
 
         $this->assertSame(
             "[Page: the customer is now on a product page.]\n\nDoes it run small?",
@@ -58,14 +54,14 @@ class RequestMapperTest extends TestCase
 
     public function testStringContentIsReadAsOneTextBlock(): void
     {
-        $request = $this->mapper()->build('S', '', [], [['role' => 'user', 'content' => 'Hello']]);
+        $request = $this->mapper()->build('S', [], [['role' => 'user', 'content' => 'Hello']]);
 
         $this->assertSame('Hello', $request->getMessages()[1]->getContent());
     }
 
     public function testAnAssistantTurnKeepsSignedReasoningTextAndToolCalls(): void
     {
-        $request = $this->mapper()->build('S', '', [], [
+        $request = $this->mapper()->build('S', [], [
             $this->user('Find a jacket'),
             ['role' => 'assistant', 'content' => [
                 ['type' => 'thinking', 'thinking' => 'weighing', 'signature' => 'sig_1'],
@@ -86,7 +82,7 @@ class RequestMapperTest extends TestCase
 
     public function testToolResultsAnswerTheirCallsAndErrorsArePrefixed(): void
     {
-        $request = $this->mapper()->build('S', '', [], [
+        $request = $this->mapper()->build('S', [], [
             $this->user('Two things'),
             ['role' => 'assistant', 'content' => [
                 ['type' => 'tool_use', 'id' => 'tu1', 'name' => 'a', 'input' => []],
@@ -110,7 +106,7 @@ class RequestMapperTest extends TestCase
 
     public function testAnAssistantTurnWithNothingToReplayIsSkipped(): void
     {
-        $request = $this->mapper()->build('S', '', [], [
+        $request = $this->mapper()->build('S', [], [
             $this->user('Hi'),
             ['role' => 'assistant', 'content' => [['type' => 'thinking', 'thinking' => 'x', 'signature' => '']]],
             $this->user('Still there?'),

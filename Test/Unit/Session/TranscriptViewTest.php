@@ -11,6 +11,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\OrderStatus;
 use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\Products;
 use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\Suggestions;
 use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Registry;
+use MageOS\AiShoppingAssistant\Model\Agent\Prompt\DynamicContext;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\PageNote;
 use MageOS\AiShoppingAssistant\Model\Agent\Serializer;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
@@ -63,6 +64,22 @@ final class TranscriptViewTest extends TestCase
         ];
         $messages = (new TranscriptView())->render($rows, new SessionState(), $this->registry());
         $this->assertSame([['role' => 'user', 'text' => 'Is this one better for a gift?']], $messages);
+    }
+
+    public function testTheSessionContextBlockIsHiddenFromTheRestoredCustomerMessage(): void
+    {
+        $rows = [
+            [
+                'role' => 'user',
+                'content' => [
+                    ['type' => 'text', 'text' => DynamicContext::PREFIX . "\n\n<storefront_data>{}</storefront_data>"],
+                    ['type' => 'text', 'text' => PageNote::PREFIX . 'the customer is now on the cart page.]'],
+                    ['type' => 'text', 'text' => 'Show me some backpacks'],
+                ],
+            ],
+        ];
+        $messages = (new TranscriptView())->render($rows, new SessionState(), $this->registry());
+        $this->assertSame([['role' => 'user', 'text' => 'Show me some backpacks']], $messages);
     }
 
     public function testUserMessageThatIsOnlyAPageNoteIsNotEmittedAtAll(): void

@@ -9,6 +9,8 @@ use MageOS\AiShoppingAssistant\Api\Data\UserPreferencesInterface;
 
 final class DynamicContext
 {
+    public const PREFIX = '# Session context';
+
     private const MAX_CHARS = 6000;
 
     public function __construct(
@@ -42,7 +44,7 @@ final class DynamicContext
         $payload['current_page'] = $page->toArray();
         $payload['local_time'] = $hourIso;
 
-        return "# Session context\n\n" . $this->fence->fencePayload($payload, self::MAX_CHARS);
+        return self::PREFIX . "\n\n" . $this->fence->fencePayload($payload, self::MAX_CHARS);
     }
 
     private function cartItems(CartInterface $cart): array

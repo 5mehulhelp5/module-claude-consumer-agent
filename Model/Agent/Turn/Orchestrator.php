@@ -70,15 +70,6 @@ class Orchestrator
         $state = $binding->state;
         $state->rememberCustomerText($message);
 
-        $loaded = $this->transcripts->load($binding->sessionId);
-        $history = new History($loaded, count($loaded));
-        $pageNote = $this->pageNote->text($context->page, $state->lastPage);
-        $userContent = $pageNote !== null
-            ? [['type' => 'text', 'text' => $pageNote], ['type' => 'text', 'text' => $message]]
-            : [['type' => 'text', 'text' => $message]];
-        $history->append(['role' => 'user', 'content' => $userContent]);
-        $state->lastPage = $context->page->toArray();
-
         $turnStart = microtime(true);
         $usage = [
             'input_tokens' => 0,
@@ -111,6 +102,23 @@ class Orchestrator
         }
 
         $dynamic = $this->dynamicContext->build($prefs, $cart, $context->page, $context->clockHour());
+
+        $loaded = $this->transcripts->load($binding->sessionId);
+        $history = new History($loaded, count($loaded));
+        $pageNote = $this->pageNote->text($context->page, $state->lastPage);
+        $userContent = [];
+        $contextHash = sha1($dynamic);
+        if ($contextHash !== $state->contextHash) {
+            $userContent[] = ['type' => 'text', 'text' => $dynamic];
+            $state->contextHash = $contextHash;
+        }
+        if ($pageNote !== null) {
+            $userContent[] = ['type' => 'text', 'text' => $pageNote];
+        }
+        $userContent[] = ['type' => 'text', 'text' => $message];
+        $history->append(['role' => 'user', 'content' => $userContent]);
+        $state->lastPage = $context->page->toArray();
+
         $static = $this->staticSystem->text($context->storeId);
         $definitions = $this->toolRegistry->definitions($context->storeId);
         $executor = $this->executorFactory->create(['context' => $context, 'state' => $state, 'config' => $config]);
@@ -161,7 +169,7 @@ class Orchestrator
                 } else {
                     $toolChoice = 'auto';
                 }
-                $request = $this->requestMapper->build($static, $dynamic, $definitions, $history->all());
+                $request = $this->requestMapper->build($static, $definitions, $history->all());
                 $options = $this->roundOptions($config, $toolChoice);
 
                 $callStart = microtime(true);

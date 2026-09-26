@@ -69,9 +69,19 @@ class SpikeStream extends Command
         $config = $this->storeConfig->agent($storeId);
         $request = $this->requestMapper->build(
             $this->staticSystem->text($storeId),
-            $this->dynamicContext->build(null, null, new PageContext(), (new \DateTimeImmutable())->format(DATE_ATOM)),
             $this->toolRegistry->definitions($storeId),
-            [['role' => 'user', 'content' => [['type' => 'text', 'text' => (string)$input->getOption(self::OPTION_MESSAGE)]]]]
+            [['role' => 'user', 'content' => [
+                [
+                    'type' => 'text',
+                    'text' => $this->dynamicContext->build(
+                        null,
+                        null,
+                        new PageContext(),
+                        (new \DateTimeImmutable())->format(DATE_ATOM)
+                    ),
+                ],
+                ['type' => 'text', 'text' => (string)$input->getOption(self::OPTION_MESSAGE)],
+            ]]]
         );
         $options = [
             'max_tokens' => $config->maxTokens,

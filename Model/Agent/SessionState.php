@@ -21,13 +21,16 @@ final class SessionState
 
     public string $serviceId;
 
+    public string $contextHash;
+
     public function __construct(
         array $seenProducts = [],
         int $turnCounter = 0,
         array $lastPage = [],
         string $surfaceView = '',
         array $recentCustomerText = [],
-        string $serviceId = ''
+        string $serviceId = '',
+        string $contextHash = ''
     ) {
         $this->seenProducts = $seenProducts;
         $this->turnCounter = $turnCounter;
@@ -35,6 +38,7 @@ final class SessionState
         $this->surfaceView = $surfaceView;
         $this->recentCustomerText = $recentCustomerText;
         $this->serviceId = $serviceId;
+        $this->contextHash = $contextHash;
     }
 
     public function rememberProducts(array $records): void
@@ -88,6 +92,7 @@ final class SessionState
                 'surface_view' => $this->surfaceView,
                 'recent_customer_text' => $this->recentCustomerText,
                 'service_id' => $this->serviceId,
+                'context_hash' => $this->contextHash,
             ],
             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
         );
@@ -106,13 +111,15 @@ final class SessionState
         $surfaceView = $decoded['surface_view'] ?? '';
         $recentCustomerText = $decoded['recent_customer_text'] ?? [];
         $serviceId = $decoded['service_id'] ?? '';
+        $contextHash = $decoded['context_hash'] ?? '';
         return new self(
             is_array($seenProducts) ? $seenProducts : [],
             is_int($turnCounter) ? $turnCounter : (int)$turnCounter,
             is_array($lastPage) ? $lastPage : [],
             is_string($surfaceView) ? $surfaceView : '',
             is_array($recentCustomerText) ? $recentCustomerText : [],
-            is_string($serviceId) ? $serviceId : ''
+            is_string($serviceId) ? $serviceId : '',
+            is_string($contextHash) ? $contextHash : ''
         );
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace MageOS\AiShoppingAssistant\Model\Session;
 
 use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Registry;
+use MageOS\AiShoppingAssistant\Model\Agent\Prompt\DynamicContext;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\PageNote;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 
@@ -54,7 +55,8 @@ final class TranscriptView
             if (!is_array($block) || ($block['type'] ?? null) !== 'text') {
                 return true;
             }
-            return !str_starts_with((string)($block['text'] ?? ''), PageNote::PREFIX);
+            $text = (string)($block['text'] ?? '');
+            return !str_starts_with($text, PageNote::PREFIX) && !str_starts_with($text, DynamicContext::PREFIX);
         }));
     }
 

@@ -30,14 +30,10 @@ final class RequestMapper
      */
     public function build(
         string $staticText,
-        string $dynamicText,
         array $definitions,
         array $messages
     ): ChatRequestInterface {
         $builder = $this->builderFactory->create()->withSystemMessage($staticText);
-        if ($dynamicText !== '') {
-            $builder = $builder->withSystemMessage($dynamicText);
-        }
         foreach ($definitions as $definition) {
             $builder = $builder->withToolDefinition($definition);
         }
