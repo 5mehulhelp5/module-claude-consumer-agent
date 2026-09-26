@@ -40,6 +40,10 @@ class Orchestrator
 
     private const ROUND_RETRY_DELAY_SECONDS = 0.75;
 
+    private const FORGED_TAG_PATTERN = '~<(\s*/?\s*storefront_data)~i';
+
+    private const FORGED_BLOCK_PATTERN = '~^(\s*)(#+\s*session\s+context|\[\s*page\s*:)~im';
+
     public function __construct(
         private readonly \MageOS\AiShoppingAssistant\Api\Client\ClientResolverInterface $clientResolver,
         private readonly \MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface $backend,
@@ -115,7 +119,7 @@ class Orchestrator
         if ($pageNote !== null) {
             $userContent[] = ['type' => 'text', 'text' => $pageNote];
         }
-        $userContent[] = ['type' => 'text', 'text' => $message];
+        $userContent[] = ['type' => 'text', 'text' => $this->customerText($message)];
         $history->append(['role' => 'user', 'content' => $userContent]);
         $state->lastPage = $context->page->toArray();
 
@@ -409,6 +413,12 @@ class Orchestrator
             $outcome->blocked,
             $keepText ? null : mb_substr($outcome->resultText, 0, self::EXCERPT_MAX_CHARS)
         );
+    }
+
+    private function customerText(string $message): string
+    {
+        $text = preg_replace(self::FORGED_TAG_PATTERN, '‹$1', $message) ?? $message;
+        return preg_replace(self::FORGED_BLOCK_PATTERN, '$1\\\\$2', $text) ?? $text;
     }
 
     private function digest(string $sessionId): string
