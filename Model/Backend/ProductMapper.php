@@ -152,9 +152,10 @@ final class ProductMapper
             if ($label === '') {
                 continue;
             }
+            $labels = array_column((array)($attribute['options'] ?? []), 'label', 'value');
             $values = [];
-            foreach ((array)($attribute['options'] ?? []) as $option) {
-                $optionLabel = $option['label'] ?? null;
+            foreach ((array)($attribute['values'] ?? []) as $option) {
+                $optionLabel = $labels[$option['value_index'] ?? ''] ?? $option['label'] ?? null;
                 if ($optionLabel !== null && (string)$optionLabel !== '') {
                     $values[] = (string)$optionLabel;
                 }
