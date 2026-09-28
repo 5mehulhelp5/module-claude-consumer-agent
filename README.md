@@ -100,6 +100,8 @@ service in AI Service. A saved Model value now overrides the model of the
 service, so clear it to use the service's model. Reasoning Effort maps to AI
 Base's `reasoning_effort`.
 
+![AI Base service row](docs/images/admin-ai-base-service.png)
+
 ### Hyvä
 
 ```bash
