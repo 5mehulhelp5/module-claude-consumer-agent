@@ -57,3 +57,22 @@ test('the cart view summary shows the latest assistant message that has text', (
 
     assert.equal(drawer.lastLine(), 'Here are some bags.');
 });
+
+test('the Hyvä transcript turns a markdown link to the store into an anchor and drops other links', () => {
+    const {fakeDocument} = require('./support.cjs');
+    const doc = fakeDocument();
+    const render = new Function(
+        'window',
+        'document',
+        'Alpine',
+        'hyva',
+        fs.readFileSync(SCRIPT, 'utf8') + '\nreturn renderAiAgentMarkdown;'
+    )({addEventListener: () => undefined, location: {origin: 'https://shop.test'}}, doc, {store: () => ({})}, {});
+    const container = doc.createElement('div');
+    render(container, 'See [us](/contact/) or [them](https://evil.test/)');
+
+    const paragraph = container.childNodes[0];
+    assert.equal(paragraph.childNodes[1].tagName, 'A');
+    assert.equal(paragraph.childNodes[1].href, 'https://shop.test/contact/');
+    assert.equal(paragraph.childNodes[3].nodeValue, 'them');
+});

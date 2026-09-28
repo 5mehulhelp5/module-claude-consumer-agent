@@ -2,7 +2,50 @@ define([], function () {
     'use strict';
 
     var BULLET = /^[-*]\s+/,
-        ORDERED = /^\d+\.\s+/;
+        ORDERED = /^\d+\.\s+/,
+        LINK = /\[([^\]\n]+)\]\(([^)\s]+)\)/g;
+
+    function storeHref(doc, raw) {
+        var origin = doc.location ? doc.location.origin : '',
+            url;
+
+        if (!origin) {
+            return null;
+        }
+        try {
+            url = new URL(raw, origin);
+        } catch (e) {
+            return null;
+        }
+        return (url.protocol === 'https:' || url.protocol === 'http:') && url.origin === origin ? url.href : null;
+    }
+
+    function appendLinked(doc, parent, text) {
+        var last = 0,
+            match,
+            href,
+            link;
+
+        LINK.lastIndex = 0;
+        while ((match = LINK.exec(text)) !== null) {
+            if (match.index > last) {
+                parent.appendChild(doc.createTextNode(text.slice(last, match.index)));
+            }
+            href = storeHref(doc, match[2]);
+            if (href === null) {
+                parent.appendChild(doc.createTextNode(match[1]));
+            } else {
+                link = doc.createElement('a');
+                link.href = href;
+                link.appendChild(doc.createTextNode(match[1]));
+                parent.appendChild(link);
+            }
+            last = LINK.lastIndex;
+        }
+        if (last < text.length) {
+            parent.appendChild(doc.createTextNode(text.slice(last)));
+        }
+    }
 
     function appendInline(doc, parent, text) {
         String(text).split('**').forEach(function (part, index) {
@@ -13,11 +56,11 @@ define([], function () {
             }
             if (index % 2 === 1) {
                 strong = doc.createElement('strong');
-                strong.appendChild(doc.createTextNode(part));
+                appendLinked(doc, strong, part);
                 parent.appendChild(strong);
                 return;
             }
-            parent.appendChild(doc.createTextNode(part));
+            appendLinked(doc, parent, part);
         });
     }
 

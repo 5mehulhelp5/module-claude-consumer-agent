@@ -8,11 +8,13 @@ function serialize(node) {
     if (Object.prototype.hasOwnProperty.call(node, 'nodeValue')) {
         return JSON.stringify(node.nodeValue);
     }
-    return node.tagName + '(' + node.childNodes.map(serialize).join(' ') + ')';
+    return node.tagName + (node.href ? '[' + node.href + ']' : '') + '(' + node.childNodes.map(serialize).join(' ') + ')';
 }
 
 function render(text) {
-    const container = fakeDocument().createElement('div');
+    const doc = fakeDocument();
+    doc.location = {origin: 'https://shop.test'};
+    const container = doc.createElement('div');
     load('MageOS_ClaudeConsumerAgent/js/luma/model/markdown').render(container, text);
     return container.childNodes.map(serialize).join(' ');
 }
@@ -39,4 +41,19 @@ test('rendering again replaces the previous content', () => {
     markdown.render(container, 'First');
     markdown.render(container, 'Second');
     assert.equal(container.childNodes.map(serialize).join(' '), 'P("Second")');
+});
+
+test('a markdown link to the store becomes an anchor with an absolute href', () => {
+    assert.equal(
+        render('Ask [our consultants](/contact/) today'),
+        'P("Ask " A[https://shop.test/contact/]("our consultants") " today")'
+    );
+});
+
+test('a link to another site or a script url keeps only its label', () => {
+    assert.equal(render('[shop](https://evil.test/x) and [run](javascript:void0)'), 'P("shop" " and " "run")');
+});
+
+test('a link inside bold text stays a link', () => {
+    assert.equal(render('**[Contact](/contact/)**'), 'P(STRONG(A[https://shop.test/contact/]("Contact")))');
 });
