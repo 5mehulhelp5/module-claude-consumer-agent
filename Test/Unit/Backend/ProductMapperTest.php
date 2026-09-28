@@ -182,6 +182,11 @@ final class ProductMapperTest extends TestCase
                 'options' => [
                     ['value' => '10', 'label' => 'Red'],
                     ['value' => '11', 'label' => 'Blue'],
+                    ['value' => '12', 'label' => 'Green'],
+                ],
+                'values' => [
+                    ['value_index' => '10', 'label' => 'Red', 'store_label' => 'Red'],
+                    ['value_index' => '11', 'label' => 'Blue', 'store_label' => 'Blue'],
                 ],
             ],
         ]);
