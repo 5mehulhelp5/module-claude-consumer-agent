@@ -355,6 +355,45 @@ function initAiAgentStart() {
     };
 }
 
+function aiAgentStoreHref(raw) {
+    const origin = window.location ? window.location.origin : '';
+    if (!origin) {
+        return null;
+    }
+    let url;
+    try {
+        url = new URL(raw, origin);
+    } catch (e) {
+        return null;
+    }
+    return (url.protocol === 'https:' || url.protocol === 'http:') && url.origin === origin ? url.href : null;
+}
+
+function appendAiAgentLinkedText(parent, text) {
+    const pattern = /\[([^\]\n]+)\]\(([^)\s]+)\)/g;
+    let last = 0;
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+        if (match.index > last) {
+            parent.appendChild(document.createTextNode(text.slice(last, match.index)));
+        }
+        const href = aiAgentStoreHref(match[2]);
+        if (href === null) {
+            parent.appendChild(document.createTextNode(match[1]));
+        } else {
+            const link = document.createElement('a');
+            link.href = href;
+            link.className = 'underline';
+            link.appendChild(document.createTextNode(match[1]));
+            parent.appendChild(link);
+        }
+        last = pattern.lastIndex;
+    }
+    if (last < text.length) {
+        parent.appendChild(document.createTextNode(text.slice(last)));
+    }
+}
+
 function appendAiAgentInlineText(parent, text) {
     const parts = String(text).split('**');
     parts.forEach((part, index) => {
@@ -363,10 +402,10 @@ function appendAiAgentInlineText(parent, text) {
         }
         if (index % 2 === 1) {
             const strong = document.createElement('strong');
-            strong.appendChild(document.createTextNode(part));
+            appendAiAgentLinkedText(strong, part);
             parent.appendChild(strong);
         } else {
-            parent.appendChild(document.createTextNode(part));
+            appendAiAgentLinkedText(parent, part);
         }
     });
 }

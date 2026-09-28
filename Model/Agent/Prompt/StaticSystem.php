@@ -88,7 +88,7 @@ final class StaticSystem
             : '';
 
         $contactPointer = $config->contactUrl !== ''
-            ? "{$config->contactLabel} ({$config->contactUrl})"
+            ? "[{$config->contactLabel}]({$config->contactUrl}), written as that Markdown link,"
             : $config->contactLabel;
 
         $termsSourceNames = [];
