@@ -16,7 +16,7 @@ use MageOS\AiShoppingAssistant\Model\Data\Product;
 use MageOS\AiShoppingAssistant\Model\Data\ProductDetails;
 use PHPUnit\Framework\TestCase;
 
-final class SerializerTest extends TestCase
+class SerializerTest extends TestCase
 {
     private Serializer $serializer;
 

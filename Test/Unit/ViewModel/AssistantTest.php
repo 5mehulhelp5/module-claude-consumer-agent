@@ -16,7 +16,7 @@ use MageOS\AiShoppingAssistant\Model\Surface\Resolver;
 use MageOS\AiShoppingAssistant\ViewModel\Assistant;
 use PHPUnit\Framework\TestCase;
 
-final class AssistantTest extends TestCase
+class AssistantTest extends TestCase
 {
     private function buildAssistant(string $fullActionName = 'cms_index_index', array $configValues = []): Assistant
     {

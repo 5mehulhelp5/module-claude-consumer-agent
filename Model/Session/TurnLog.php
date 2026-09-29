@@ -9,7 +9,7 @@ use MageOS\AiShoppingAssistant\Api\Turn\TurnLogInterface;
  * A turn log failure must never break the turn it is recording, so record() swallows
  * every insert exception and only warns.
  */
-final class TurnLog implements TurnLogInterface
+class TurnLog implements TurnLogInterface
 {
     public function __construct(
         private readonly \MageOS\AiShoppingAssistant\Model\Session\ResourceModel\Turn $resource,

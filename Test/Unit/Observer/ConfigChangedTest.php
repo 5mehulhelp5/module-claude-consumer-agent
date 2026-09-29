@@ -8,7 +8,7 @@ use Magento\Framework\Event\Observer;
 use MageOS\AiShoppingAssistant\Observer\ConfigChanged;
 use PHPUnit\Framework\TestCase;
 
-final class ConfigChangedTest extends TestCase
+class ConfigChangedTest extends TestCase
 {
     public function testExecuteCleansTheAiagentCacheTag(): void
     {

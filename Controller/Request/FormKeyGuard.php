@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\AiShoppingAssistant\Controller\Request;
 
-final class FormKeyGuard
+class FormKeyGuard
 {
     private const HEADER = 'X-Form-Key';
 

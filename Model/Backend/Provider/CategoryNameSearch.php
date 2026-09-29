@@ -9,7 +9,7 @@ use MageOS\AiShoppingAssistant\Api\Data\CategoryMatchInterface;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
 use MageOS\AiShoppingAssistant\Model\Data\CategoryMatch;
 
-final class CategoryNameSearch implements CategorySearchProviderInterface
+class CategoryNameSearch implements CategorySearchProviderInterface
 {
     private const MIN_WORD_LENGTH = 3;
     private const CANDIDATE_CAP = 200;

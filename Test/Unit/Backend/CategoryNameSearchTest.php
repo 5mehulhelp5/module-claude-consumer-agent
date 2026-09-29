@@ -18,7 +18,7 @@ use MageOS\AiShoppingAssistant\Model\Data\PageContext;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-final class CategoryNameSearchTest extends TestCase
+class CategoryNameSearchTest extends TestCase
 {
     private function context(int $storeId = 1): SessionContext
     {

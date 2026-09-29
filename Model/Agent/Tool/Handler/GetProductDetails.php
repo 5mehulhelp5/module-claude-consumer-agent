@@ -10,7 +10,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 use MageOS\AiShoppingAssistant\Model\Agent\ToolOutcome;
 use MageOS\AiShoppingAssistant\Model\Data\Product;
 
-final class GetProductDetails implements HandlerInterface
+class GetProductDetails implements HandlerInterface
 {
     public function __construct(
         private readonly \MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface $backend,

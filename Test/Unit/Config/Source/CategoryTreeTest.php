@@ -9,7 +9,7 @@ use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory;
 use MageOS\AiShoppingAssistant\Model\Config\Source\CategoryTree;
 use PHPUnit\Framework\TestCase;
 
-final class CategoryTreeTest extends TestCase
+class CategoryTreeTest extends TestCase
 {
     private function category(int $id, string $name, string $path): Category&\PHPUnit\Framework\MockObject\MockObject
     {

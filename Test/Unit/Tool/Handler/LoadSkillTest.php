@@ -15,7 +15,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\LoadSkill;
 use PHPUnit\Framework\TestCase;
 
-final class LoadSkillTest extends TestCase
+class LoadSkillTest extends TestCase
 {
     private string $modulePath;
 

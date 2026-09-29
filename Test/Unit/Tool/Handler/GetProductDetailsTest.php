@@ -13,7 +13,7 @@ use MageOS\AiShoppingAssistant\Model\Data\Product;
 use MageOS\AiShoppingAssistant\Model\Data\ProductDetails;
 use PHPUnit\Framework\TestCase;
 
-final class GetProductDetailsTest extends TestCase
+class GetProductDetailsTest extends TestCase
 {
     private const SERIALIZER_CLASS = \MageOS\AiShoppingAssistant\Model\Agent\Serializer::class;
     private const FENCE_CLASS = \MageOS\AiShoppingAssistant\Model\Agent\Fencing\Fence::class;

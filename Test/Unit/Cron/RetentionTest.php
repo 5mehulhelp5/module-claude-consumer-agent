@@ -12,7 +12,7 @@ use MageOS\AiShoppingAssistant\Model\Session\ResourceModel\Session;
 use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 
-final class RetentionTest extends TestCase
+class RetentionTest extends TestCase
 {
     private function buildStoreConfig(callable $retentionDaysByStoreId): StoreConfig
     {

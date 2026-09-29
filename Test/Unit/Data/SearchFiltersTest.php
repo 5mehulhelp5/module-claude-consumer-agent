@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Test\Unit\Data;
 use MageOS\AiShoppingAssistant\Model\Data\SearchFilters;
 use PHPUnit\Framework\TestCase;
 
-final class SearchFiltersTest extends TestCase
+class SearchFiltersTest extends TestCase
 {
     public function testFromArrayReadsCategoryId(): void
     {

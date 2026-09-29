@@ -21,7 +21,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 
-final class CartWriteTest extends TestCase
+class CartWriteTest extends TestCase
 {
     private function buildGate(
         StorefrontBackendInterface&MockObject $backend,

@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Test\Unit\Prompt;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\CatalogMap;
 use PHPUnit\Framework\TestCase;
 
-final class CatalogMapTest extends TestCase
+class CatalogMapTest extends TestCase
 {
     public function testEmptyNodesProduceEmptyText(): void
     {

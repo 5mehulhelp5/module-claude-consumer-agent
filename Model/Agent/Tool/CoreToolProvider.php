@@ -11,7 +11,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
  * deployment carries, in a fixed order. Descriptions are copied word for word from the
  * reference registry because they sit in the cached prefix.
  */
-final class CoreToolProvider implements ToolProviderInterface
+class CoreToolProvider implements ToolProviderInterface
 {
     public function __construct(
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\LoadSkill $loadSkill,

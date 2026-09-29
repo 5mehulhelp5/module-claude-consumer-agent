@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\AiShoppingAssistant\Model\Limits\Exception;
 
-final class LimitExceeded extends \RuntimeException
+class LimitExceeded extends \RuntimeException
 {
     public function __construct(
         string $message,

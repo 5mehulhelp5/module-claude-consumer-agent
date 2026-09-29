@@ -10,7 +10,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
  * the order it hands them back in. Every other provider is an extension: its tools are
  * pooled and sorted by (sortOrder, name) behind the core tools.
  */
-final class Registry
+class Registry
 {
     private array $definitionsByStore = [];
 

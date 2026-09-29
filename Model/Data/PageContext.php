@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Data;
 
 use MageOS\AiShoppingAssistant\Api\Data\PageContextInterface;
 
-final class PageContext implements PageContextInterface
+class PageContext implements PageContextInterface
 {
     private const QUERY_MAX_LENGTH = 200;
 

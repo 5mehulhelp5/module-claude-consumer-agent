@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
-final class HyvaIndependenceTest extends TestCase
+class HyvaIndependenceTest extends TestCase
 {
     private const SCANNED_DIRECTORIES = ['Api', 'Block', 'Console', 'Controller', 'Cron', 'Model', 'Observer', 'ViewModel'];
 

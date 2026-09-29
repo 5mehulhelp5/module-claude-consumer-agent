@@ -8,7 +8,7 @@ namespace MageOS\AiShoppingAssistant\Model\Agent\Prompt;
  * di.xml. Keys carry the desired output order, the same convention Backend\Provider\
  * FulfillmentAggregator uses for its own provider pool.
  */
-final class CoreFacts
+class CoreFacts
 {
     public function __construct(
         private readonly array $providers

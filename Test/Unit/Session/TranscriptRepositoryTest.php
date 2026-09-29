@@ -9,7 +9,7 @@ use MageOS\AiShoppingAssistant\Model\Session\ResourceModel\Message;
 use MageOS\AiShoppingAssistant\Model\Session\TranscriptRepository;
 use PHPUnit\Framework\TestCase;
 
-final class TranscriptRepositoryTest extends TestCase
+class TranscriptRepositoryTest extends TestCase
 {
     public function testAppendInsertsInOrderInsideTransaction(): void
     {

@@ -16,7 +16,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
  * Reads Magento\Framework\ObjectManagerInterface directly to resolve the two optional
  * MSI (Multi Source Inventory) interfaces without hard-coupling the module to them.
  */
-final class Salability
+class Salability
 {
     public function __construct(
         private readonly \Magento\Framework\ObjectManagerInterface $objectManager,

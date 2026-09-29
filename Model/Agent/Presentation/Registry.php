@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Agent\Presentation;
 
 use MageOS\AiShoppingAssistant\Api\Presentation\PresentationExtensionInterface;
 
-final class Registry
+class Registry
 {
     private const TEMPLATE_PREFIX = 'MageOS_AiShoppingAssistant::cards/';
 

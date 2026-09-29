@@ -9,7 +9,7 @@ use MageOS\AiShoppingAssistant\Api\Data\FulfillmentOptionInterface;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
 use MageOS\AiShoppingAssistant\Model\Data\FulfillmentOption;
 
-final class AddressEstimate implements FulfillmentProviderInterface
+class AddressEstimate implements FulfillmentProviderInterface
 {
     private const MAX_OPTIONS = 5;
 

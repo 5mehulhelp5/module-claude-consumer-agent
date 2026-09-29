@@ -10,7 +10,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
 /**
  * The AI service itself is configured in Mage-OS AI Base; this class stores which row the assistant uses.
  */
-final class StoreConfig
+class StoreConfig
 {
     private const PATH_GENERAL_ENABLED = 'ai_integration/aiagent/general/enabled';
     private const PATH_GENERAL_SURFACE_MODE = 'ai_integration/aiagent/general/surface_mode';

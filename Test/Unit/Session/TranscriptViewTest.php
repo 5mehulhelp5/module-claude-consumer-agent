@@ -19,7 +19,7 @@ use MageOS\AiShoppingAssistant\Model\Session\TranscriptView;
 use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 
-final class TranscriptViewTest extends TestCase
+class TranscriptViewTest extends TestCase
 {
     private function registry(): Registry
     {

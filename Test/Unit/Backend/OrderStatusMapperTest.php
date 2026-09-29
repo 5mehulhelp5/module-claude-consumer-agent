@@ -8,7 +8,7 @@ use MageOS\AiShoppingAssistant\Api\Data\OrderInterface;
 use MageOS\AiShoppingAssistant\Model\Backend\Provider\OrderStatusMapper;
 use PHPUnit\Framework\TestCase;
 
-final class OrderStatusMapperTest extends TestCase
+class OrderStatusMapperTest extends TestCase
 {
     private function mapper(): OrderStatusMapper
     {

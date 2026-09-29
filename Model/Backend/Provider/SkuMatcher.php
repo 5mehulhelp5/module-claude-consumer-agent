@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Backend\Provider;
 
 use MageOS\AiShoppingAssistant\Api\Backend\SkuMatcherInterface;
 
-final class SkuMatcher implements SkuMatcherInterface
+class SkuMatcher implements SkuMatcherInterface
 {
     private const TABLE_PRODUCT = 'catalog_product_entity';
 

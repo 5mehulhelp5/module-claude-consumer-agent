@@ -42,7 +42,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\UpdateCartItem;
 use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 
-final class CoreToolProviderTest extends TestCase
+class CoreToolProviderTest extends TestCase
 {
     private function realSkillRegistry(): SkillRegistry
     {

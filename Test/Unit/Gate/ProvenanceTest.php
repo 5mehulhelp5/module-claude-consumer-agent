@@ -7,7 +7,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Gate\Provenance;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 use PHPUnit\Framework\TestCase;
 
-final class ProvenanceTest extends TestCase
+class ProvenanceTest extends TestCase
 {
     public function testUnseenProductIsHeld(): void
     {

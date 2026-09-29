@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\AiShoppingAssistant\Model\Agent\Skill;
 
-final class Registry
+class Registry
 {
     private ?array $cachedSkills = null;
 

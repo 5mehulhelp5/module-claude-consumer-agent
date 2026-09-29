@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\AiShoppingAssistant\Model\Agent\Schema;
 
-final class Validator
+class Validator
 {
     public function validate(array $schema, array &$data, bool $dropUnknownKeys = false): array
     {

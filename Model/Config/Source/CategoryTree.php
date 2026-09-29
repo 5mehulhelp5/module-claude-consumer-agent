@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Model\Config\Source;
 use Magento\Catalog\Model\Category;
 use Magento\Framework\Data\OptionSourceInterface;
 
-final class CategoryTree implements OptionSourceInterface
+class CategoryTree implements OptionSourceInterface
 {
     private const MIN_LEVEL = 2;
     private const MAX_LEVEL = 4;

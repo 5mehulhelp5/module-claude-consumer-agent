@@ -7,7 +7,7 @@ use Magento\Catalog\Model\Product as MagentoProduct;
 use MageOS\AiShoppingAssistant\Model\Backend\BuyRequestBuilder;
 use PHPUnit\Framework\TestCase;
 
-final class BuyRequestBuilderTest extends TestCase
+class BuyRequestBuilderTest extends TestCase
 {
     private function product(int $id): MagentoProduct
     {

@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Agent\Event;
 
 use MageOS\AiShoppingAssistant\Model\Agent\Event;
 
-final class SseFrame
+class SseFrame
 {
     public static function encode(Event $event): string
     {

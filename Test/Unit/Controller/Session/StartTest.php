@@ -29,7 +29,7 @@ use MageOS\AiShoppingAssistant\Model\Surface\Resolver;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-final class StartTest extends TestCase
+class StartTest extends TestCase
 {
     private function requestWithBody(array $body): HttpRequest
     {

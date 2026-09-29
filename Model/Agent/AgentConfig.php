@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\AiShoppingAssistant\Model\Agent;
 
-final class AgentConfig
+class AgentConfig
 {
     public readonly bool $enablePolicies;
 

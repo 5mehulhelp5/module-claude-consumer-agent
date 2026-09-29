@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich;
 use MageOS\AiShoppingAssistant\Model\Agent\Exception\PresentationRefused;
 use MageOS\AiShoppingAssistant\Model\Agent\Presentation\EnrichmentContext;
 
-final class Checkout
+class Checkout
 {
     public function __construct(
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Serializer $serializer,

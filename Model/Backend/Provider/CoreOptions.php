@@ -8,7 +8,7 @@ use Magento\Catalog\Api\Data\ProductCustomOptionValuesInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
 use MageOS\AiShoppingAssistant\Api\Backend\ProductOptionsProviderInterface;
 
-final class CoreOptions implements ProductOptionsProviderInterface
+class CoreOptions implements ProductOptionsProviderInterface
 {
     public function summarize(ProductInterface $product): array
     {

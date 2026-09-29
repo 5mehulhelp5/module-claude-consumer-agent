@@ -15,7 +15,7 @@ use MageOS\AiShoppingAssistant\Model\Surface\PageDetector;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-final class PageDetectorTest extends TestCase
+class PageDetectorTest extends TestCase
 {
     private function request(string $fullActionName, array $params = []): Http&MockObject
     {

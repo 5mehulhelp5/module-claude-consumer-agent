@@ -7,7 +7,7 @@ use MageOS\AiShoppingAssistant\Api\Data\PageContextInterface;
 use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 
-final class Rules
+class Rules
 {
     public function __construct(
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Lexicon $lexicon,

@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Config\Source;
 
 use Magento\Framework\Data\OptionSourceInterface;
 
-final class HeaderIconView implements OptionSourceInterface
+class HeaderIconView implements OptionSourceInterface
 {
     public const CART = 'cart';
     public const CHAT = 'chat';

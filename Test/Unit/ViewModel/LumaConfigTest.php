@@ -19,7 +19,7 @@ use MageOS\AiShoppingAssistant\ViewModel\CartSection;
 use MageOS\AiShoppingAssistant\ViewModel\LumaConfig;
 use PHPUnit\Framework\TestCase;
 
-final class LumaConfigTest extends TestCase
+class LumaConfigTest extends TestCase
 {
     private const GREETING_PATH = 'ai_integration/aiagent/voice/greeting';
     private const STARTERS_PATH = 'ai_integration/aiagent/voice/starters';

@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Model\Agent\Prompt;
 use MageOS\AiShoppingAssistant\Api\Data\PageContextInterface;
 use MageOS\AiShoppingAssistant\Model\Data\PageContext;
 
-final class PageNote
+class PageNote
 {
     public const PREFIX = '[Page: ';
 

@@ -19,7 +19,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Tool\PresentationToolProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-final class PresentationToolProviderTest extends TestCase
+class PresentationToolProviderTest extends TestCase
 {
     private function presentationRegistry(array $extensions = []): PresentationRegistry
     {

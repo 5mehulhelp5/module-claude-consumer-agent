@@ -9,7 +9,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Exception\SignInRequired;
 use MageOS\AiShoppingAssistant\Model\Agent\Exception\Unavailable;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Definition;
 
-final class Executor
+class Executor
 {
     private const DISPLAYED_TEXT = 'Displayed to the customer.';
 

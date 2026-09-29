@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Limits;
 
 use MageOS\AiShoppingAssistant\Model\Agent\Event;
 
-final class BusyEvent
+class BusyEvent
 {
     public function event(int $retryAfter): Event
     {

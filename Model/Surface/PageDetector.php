@@ -7,7 +7,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use MageOS\AiShoppingAssistant\Api\Data\PageContextInterface;
 use MageOS\AiShoppingAssistant\Model\Data\PageContext;
 
-final class PageDetector
+class PageDetector
 {
     private const QUERY_MAX_LENGTH = 200;
 

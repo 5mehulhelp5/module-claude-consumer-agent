@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Model\Agent\Turn;
 use MageOS\AiShoppingAssistant\Model\Agent\Executor;
 use MageOS\AiShoppingAssistant\Model\Agent\ToolOutcome;
 
-final class History
+class History
 {
     private const INTERRUPTED_TEXT = 'Interrupted before this tool finished.';
 

@@ -11,7 +11,7 @@ use MageOS\AiShoppingAssistant\Api\Data\OrderItemInterface;
 use MageOS\AiShoppingAssistant\Api\Data\PolicyInterface;
 use MageOS\AiShoppingAssistant\Api\Data\ProductDetailsInterface;
 
-final class Serializer
+class Serializer
 {
     private const SEARCH_EMPTY_HEADER = 'Search returned 0 results: nothing in the catalog matched this query. '
         . 'Run the broader retry before telling the customer it is not carried, and do not present a '

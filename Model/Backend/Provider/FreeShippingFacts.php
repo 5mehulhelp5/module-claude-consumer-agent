@@ -9,7 +9,7 @@ use MageOS\AiShoppingAssistant\Api\Data\FulfillmentOptionInterface;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
 use MageOS\AiShoppingAssistant\Model\Data\FulfillmentOption;
 
-final class FreeShippingFacts implements FulfillmentProviderInterface
+class FreeShippingFacts implements FulfillmentProviderInterface
 {
     private const PATH_ACTIVE = 'carriers/freeshipping/active';
     private const PATH_SUBTOTAL = 'carriers/freeshipping/free_shipping_subtotal';

@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Model\Agent\Gate;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 use MageOS\AiShoppingAssistant\Model\Agent\ToolOutcome;
 
-final class Options
+class Options
 {
     public const NAME = 'options';
 

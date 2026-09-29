@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Test\Unit\Skill;
 use MageOS\AiShoppingAssistant\Model\Agent\Skill\FrontMatter;
 use PHPUnit\Framework\TestCase;
 
-final class FrontMatterTest extends TestCase
+class FrontMatterTest extends TestCase
 {
     private function skillsDir(): string
     {

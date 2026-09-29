@@ -13,7 +13,7 @@ use MageOS\AiShoppingAssistant\Model\Client\ConfiguredClientResolver;
 use MageOS\AiShoppingAssistant\Model\Config\StoreConfig;
 use PHPUnit\Framework\TestCase;
 
-final class ConfiguredClientResolverTest extends TestCase
+class ConfiguredClientResolverTest extends TestCase
 {
     public function testNoSelectedServiceAsksAiBaseForTheFirstUsableOne(): void
     {

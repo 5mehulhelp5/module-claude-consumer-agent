@@ -10,7 +10,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Skill\Loader;
 use MageOS\AiShoppingAssistant\Model\Agent\Skill\Registry;
 use PHPUnit\Framework\TestCase;
 
-final class RegistryTest extends TestCase
+class RegistryTest extends TestCase
 {
     private function realRegistry(): Registry
     {

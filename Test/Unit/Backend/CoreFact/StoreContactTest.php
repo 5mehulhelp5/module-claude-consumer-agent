@@ -7,7 +7,7 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use MageOS\AiShoppingAssistant\Model\Backend\Provider\CoreFact\StoreContact;
 use PHPUnit\Framework\TestCase;
 
-final class StoreContactTest extends TestCase
+class StoreContactTest extends TestCase
 {
     public function testJoinsPhoneAndEmailWhenBothPresent(): void
     {

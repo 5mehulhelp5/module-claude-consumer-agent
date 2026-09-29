@@ -12,7 +12,7 @@ use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
 use MageOS\AiShoppingAssistant\Model\Data\Product;
 
-final class ProductMapper
+class ProductMapper
 {
     public function __construct(
         private readonly \Magento\Store\Model\StoreManagerInterface $storeManager,

@@ -12,7 +12,7 @@ use MageOS\AiBase\Api\Data\TokenUsageInterface;
 use MageOS\AiShoppingAssistant\Model\Agent\Turn\Item\TextDelta;
 use MageOS\AiShoppingAssistant\Model\Agent\Turn\Item\ToolUseClosed;
 
-final class StreamedRound
+class StreamedRound
 {
     private string $text = '';
 

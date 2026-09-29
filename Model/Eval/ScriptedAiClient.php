@@ -14,7 +14,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Turn\StoredReasoning;
 /**
  * Plays scripted model rounds through the AI Base client contract, for the eval harness and unit tests.
  */
-final class ScriptedAiClient implements AiClientInterface
+class ScriptedAiClient implements AiClientInterface
 {
     public const SERVICE = 'scripted';
 

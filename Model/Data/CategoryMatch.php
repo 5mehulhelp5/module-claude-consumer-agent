@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Data;
 
 use MageOS\AiShoppingAssistant\Api\Data\CategoryMatchInterface;
 
-final class CategoryMatch implements CategoryMatchInterface
+class CategoryMatch implements CategoryMatchInterface
 {
     public function __construct(
         private readonly int $categoryId,

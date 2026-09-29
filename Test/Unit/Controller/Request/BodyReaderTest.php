@@ -8,7 +8,7 @@ use MageOS\AiShoppingAssistant\Controller\Request\BodyReader;
 use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
 use PHPUnit\Framework\TestCase;
 
-final class BodyReaderTest extends TestCase
+class BodyReaderTest extends TestCase
 {
     private function request(string $content): Http
     {

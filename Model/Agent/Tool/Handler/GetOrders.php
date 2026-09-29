@@ -11,7 +11,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 use MageOS\AiShoppingAssistant\Model\Agent\ToolOutcome;
 
-final class GetOrders implements HandlerInterface
+class GetOrders implements HandlerInterface
 {
     private const DEFAULT_LIMIT = 5;
     private const MAX_LIMIT = 20;

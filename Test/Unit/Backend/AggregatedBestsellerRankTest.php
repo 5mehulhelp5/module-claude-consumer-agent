@@ -9,7 +9,7 @@ use Magento\Framework\DB\Select;
 use MageOS\AiShoppingAssistant\Model\Backend\Provider\AggregatedBestsellerRank;
 use PHPUnit\Framework\TestCase;
 
-final class AggregatedBestsellerRankTest extends TestCase
+class AggregatedBestsellerRankTest extends TestCase
 {
     private function buildRank(array $superLinkRows, array $yearlyPairs): AggregatedBestsellerRank
     {

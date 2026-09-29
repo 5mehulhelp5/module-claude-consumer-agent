@@ -7,7 +7,7 @@ use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Framework\DataObject;
 use MageOS\AiShoppingAssistant\Api\Cart\BuyRequestBuilderInterface;
 
-final class BuyRequestBuilder implements BuyRequestBuilderInterface
+class BuyRequestBuilder implements BuyRequestBuilderInterface
 {
     public function build(ProductInterface $product, int $qty, array $selections): DataObject
     {

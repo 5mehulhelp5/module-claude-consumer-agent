@@ -9,7 +9,7 @@ use Magento\Shipping\Model\Config;
 use MageOS\AiShoppingAssistant\Model\Backend\Provider\CoreFact\ShippingCarriers;
 use PHPUnit\Framework\TestCase;
 
-final class ShippingCarriersTest extends TestCase
+class ShippingCarriersTest extends TestCase
 {
     public function testJoinsActiveCarrierTitles(): void
     {

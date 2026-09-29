@@ -20,7 +20,7 @@ use MageOS\AiShoppingAssistant\Model\Data\PageContext;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-final class SalabilityTest extends TestCase
+class SalabilityTest extends TestCase
 {
     private function context(): SessionContext
     {

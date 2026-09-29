@@ -9,7 +9,7 @@ use Magento\Framework\Data\Form\FormKey\Validator;
 use MageOS\AiShoppingAssistant\Controller\Request\FormKeyGuard;
 use PHPUnit\Framework\TestCase;
 
-final class FormKeyGuardTest extends TestCase
+class FormKeyGuardTest extends TestCase
 {
     public function testValidWhenFormKeyValidatorAcceptsTheParam(): void
     {

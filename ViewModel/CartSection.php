@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\ViewModel;
 
 use Magento\Framework\View\Element\Block\ArgumentInterface;
 
-final class CartSection implements ArgumentInterface
+class CartSection implements ArgumentInterface
 {
     public function __construct(
         private readonly \Magento\Framework\UrlInterface $url

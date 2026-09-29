@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich;
 use MageOS\AiShoppingAssistant\Model\Agent\Exception\PresentationRefused;
 use MageOS\AiShoppingAssistant\Model\Agent\Presentation\EnrichmentContext;
 
-final class Products
+class Products
 {
     private const MAX_ITEMS = 12;
 

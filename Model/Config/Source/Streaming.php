@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Config\Source;
 
 use Magento\Framework\Data\OptionSourceInterface;
 
-final class Streaming implements OptionSourceInterface
+class Streaming implements OptionSourceInterface
 {
     public const AUTO = 'auto';
     public const OFF = 'off';

@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Model\Client;
 use MageOS\AiBase\Api\AiClientInterface;
 use MageOS\AiShoppingAssistant\Api\Client\ClientResolverInterface;
 
-final class ConfiguredClientResolver implements ClientResolverInterface
+class ConfiguredClientResolver implements ClientResolverInterface
 {
     public const CONSUMER = 'MageOS_AiShoppingAssistant';
 

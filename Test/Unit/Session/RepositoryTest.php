@@ -13,7 +13,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 
-final class RepositoryTest extends TestCase
+class RepositoryTest extends TestCase
 {
     private function buildContext(?int $customerId, int $quoteId, int $storeId): SessionContext
     {

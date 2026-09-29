@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Data;
 
 use MageOS\AiShoppingAssistant\Api\Data\OrderItemInterface;
 
-final class OrderItem implements OrderItemInterface
+class OrderItem implements OrderItemInterface
 {
     public function __construct(
         private readonly string $productId,

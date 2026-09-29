@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Test\Unit\Grounding;
 use MageOS\AiShoppingAssistant\Model\Agent\Grounding\SkuCandidates;
 use PHPUnit\Framework\TestCase;
 
-final class SkuCandidatesTest extends TestCase
+class SkuCandidatesTest extends TestCase
 {
     private SkuCandidates $candidates;
 

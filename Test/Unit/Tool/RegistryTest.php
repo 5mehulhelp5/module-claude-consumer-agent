@@ -13,7 +13,7 @@ use MageOS\AiShoppingAssistant\Model\Config\StoreConfig;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use PHPUnit\Framework\TestCase;
 
-final class RegistryTest extends TestCase
+class RegistryTest extends TestCase
 {
     private function definition(string $name, bool $takesStatus, int $sortOrder = 0): Definition
     {

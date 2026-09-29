@@ -9,7 +9,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 use MageOS\AiShoppingAssistant\Model\Agent\ToolOutcome;
 
-final class MemoryOff implements HandlerInterface
+class MemoryOff implements HandlerInterface
 {
     public function handle(array $input, SessionContext $context, SessionState $state, AgentConfig $config): ToolOutcome
     {

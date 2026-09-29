@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Agent\Tool;
 
 use MageOS\AiShoppingAssistant\Api\Tool\HandlerInterface;
 
-final class Definition implements \MageOS\AiBase\Api\Data\ToolDefinitionInterface
+class Definition implements \MageOS\AiBase\Api\Data\ToolDefinitionInterface
 {
     public const STATUS_MAX_LENGTH = 60;
     public const STATUS_DESCRIPTION = 'A few plain words the customer sees while this runs';

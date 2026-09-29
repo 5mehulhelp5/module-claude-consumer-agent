@@ -7,7 +7,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Event;
 use MageOS\AiShoppingAssistant\Model\Agent\ToolOutcome;
 use PHPUnit\Framework\TestCase;
 
-final class ToolOutcomeTest extends TestCase
+class ToolOutcomeTest extends TestCase
 {
     public function testOkDefaults(): void
     {

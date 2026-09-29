@@ -25,7 +25,7 @@ use MageOS\AiShoppingAssistant\Model\Data\ProductDetails;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-final class RunnerTest extends TestCase
+class RunnerTest extends TestCase
 {
     private const SERIALIZER_CLASS = \MageOS\AiShoppingAssistant\Model\Agent\Serializer::class;
     private const FENCE_CLASS = \MageOS\AiShoppingAssistant\Model\Agent\Fencing\Fence::class;

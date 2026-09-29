@@ -10,7 +10,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 
-final class SessionPurgeTest extends TestCase
+class SessionPurgeTest extends TestCase
 {
     private Session|MockObject $sessionResource;
 

@@ -16,7 +16,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
 use MageOS\AiShoppingAssistant\Model\Data\PageContext;
 use PHPUnit\Framework\TestCase;
 
-final class MagentoStorefrontTest extends TestCase
+class MagentoStorefrontTest extends TestCase
 {
     private function backend(): StorefrontBackendInterface
     {

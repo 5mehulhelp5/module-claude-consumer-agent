@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Model\Data;
 use MageOS\AiShoppingAssistant\Api\Data\ProductDetailsInterface;
 use MageOS\AiShoppingAssistant\Api\Data\ProductInterface;
 
-final class ProductDetails implements ProductDetailsInterface
+class ProductDetails implements ProductDetailsInterface
 {
     public function __construct(
         private readonly string $productId,

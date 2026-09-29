@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Backend\Provider\CoreFact;
 
 use MageOS\AiShoppingAssistant\Api\Prompt\CoreFactProviderInterface;
 
-final class PaymentMethods implements CoreFactProviderInterface
+class PaymentMethods implements CoreFactProviderInterface
 {
     public function __construct(
         private readonly \Magento\Payment\Api\PaymentMethodListInterface $paymentMethodList,

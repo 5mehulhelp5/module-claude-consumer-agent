@@ -8,7 +8,7 @@ use DateTimeInterface;
 use MageOS\AiShoppingAssistant\Api\Data\OrderInterface;
 use MageOS\AiShoppingAssistant\Api\Data\OrderItemInterface;
 
-final class Order implements OrderInterface
+class Order implements OrderInterface
 {
     public function __construct(
         private readonly string $orderId,

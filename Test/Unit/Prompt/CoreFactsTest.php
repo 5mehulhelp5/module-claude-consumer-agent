@@ -7,7 +7,7 @@ use MageOS\AiShoppingAssistant\Api\Prompt\CoreFactProviderInterface;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\CoreFacts;
 use PHPUnit\Framework\TestCase;
 
-final class CoreFactsTest extends TestCase
+class CoreFactsTest extends TestCase
 {
     private function provider(?string $line): CoreFactProviderInterface
     {

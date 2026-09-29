@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Data;
 
 use MageOS\AiShoppingAssistant\Api\Data\CheckoutHandoffInterface;
 
-final class CheckoutHandoff implements CheckoutHandoffInterface
+class CheckoutHandoff implements CheckoutHandoffInterface
 {
     public function __construct(
         private readonly string $url,

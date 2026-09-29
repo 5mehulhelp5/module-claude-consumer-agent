@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Agent\Skill;
 
 use Magento\Framework\Component\ComponentRegistrar;
 
-final class Loader
+class Loader
 {
     public function __construct(
         private readonly array $directories,

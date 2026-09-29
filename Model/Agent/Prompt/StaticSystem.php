@@ -11,7 +11,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
  * memory-personalization backend ships yet), and only the five presentation components
  * shipped in v1 (products, comparison, order_status, checkout, suggestions) are named.
  */
-final class StaticSystem
+class StaticSystem
 {
     private const CACHE_TAG = 'AIAGENT';
     private const CACHE_LIFETIME = 86400;

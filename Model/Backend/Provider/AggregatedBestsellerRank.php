@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Backend\Provider;
 
 use MageOS\AiShoppingAssistant\Api\Backend\BestsellerRankInterface;
 
-final class AggregatedBestsellerRank implements BestsellerRankInterface
+class AggregatedBestsellerRank implements BestsellerRankInterface
 {
     private const TABLE_YEARLY = 'sales_bestsellers_aggregated_yearly';
     private const TABLE_SUPER_LINK = 'catalog_product_super_link';

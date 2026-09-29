@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Test\Unit\Agent;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 use PHPUnit\Framework\TestCase;
 
-final class SessionStateTest extends TestCase
+class SessionStateTest extends TestCase
 {
     public function testRememberProductsStoresRecords(): void
     {

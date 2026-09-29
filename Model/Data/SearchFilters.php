@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Data;
 
 use MageOS\AiShoppingAssistant\Api\Data\SearchFiltersInterface;
 
-final class SearchFilters implements SearchFiltersInterface
+class SearchFilters implements SearchFiltersInterface
 {
     public function __construct(
         private readonly ?string $category = null,

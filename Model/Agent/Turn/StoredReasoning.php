@@ -8,7 +8,7 @@ use MageOS\AiBase\Api\Data\ReasoningInterface;
 /**
  * AI Base declares no preference for ReasoningInterface, so stored reasoning is rebuilt here.
  */
-final class StoredReasoning implements ReasoningInterface
+class StoredReasoning implements ReasoningInterface
 {
     public function __construct(
         private readonly string $text,

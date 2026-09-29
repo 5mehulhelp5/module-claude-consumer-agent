@@ -10,7 +10,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\MemoryOff;
 use PHPUnit\Framework\TestCase;
 
-final class MemoryOffTest extends TestCase
+class MemoryOffTest extends TestCase
 {
     public function testAlwaysReturnsTheNoMemoryLine(): void
     {

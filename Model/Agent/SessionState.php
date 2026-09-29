@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\AiShoppingAssistant\Model\Agent;
 
-final class SessionState
+class SessionState
 {
     public const SEEN_PRODUCTS_CAP = 200;
 

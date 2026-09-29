@@ -33,7 +33,7 @@ use MageOS\AiShoppingAssistant\Model\Data\SearchFilters;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-final class FulltextSearchTest extends TestCase
+class FulltextSearchTest extends TestCase
 {
     private array $filterCalls = [];
     private array $sortOrderCalls = [];

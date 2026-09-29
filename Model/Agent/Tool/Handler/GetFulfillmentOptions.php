@@ -9,7 +9,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 use MageOS\AiShoppingAssistant\Model\Agent\ToolOutcome;
 
-final class GetFulfillmentOptions implements HandlerInterface
+class GetFulfillmentOptions implements HandlerInterface
 {
     private const MAX_PRODUCT_IDS = 20;
 

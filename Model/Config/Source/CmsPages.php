@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Model\Config\Source;
 use Magento\Cms\Api\Data\PageInterface;
 use Magento\Framework\Data\OptionSourceInterface;
 
-final class CmsPages implements OptionSourceInterface
+class CmsPages implements OptionSourceInterface
 {
     public function __construct(
         private readonly \Magento\Cms\Api\PageRepositoryInterface $pageRepository,

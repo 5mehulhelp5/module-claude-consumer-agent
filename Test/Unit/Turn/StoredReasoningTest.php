@@ -7,7 +7,7 @@ use MageOS\AiBase\Api\Data\ReasoningInterface;
 use MageOS\AiShoppingAssistant\Model\Agent\Turn\StoredReasoning;
 use PHPUnit\Framework\TestCase;
 
-final class StoredReasoningTest extends TestCase
+class StoredReasoningTest extends TestCase
 {
     public function testItCarriesTextAndSignatureUnchanged(): void
     {

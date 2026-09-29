@@ -11,7 +11,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
  * definition. The five built-in components are excluded here: CoreToolProvider already
  * emits them from the same registry, so including them again would register duplicates.
  */
-final class PresentationToolProvider implements ToolProviderInterface
+class PresentationToolProvider implements ToolProviderInterface
 {
     private const BUILT_IN_NAMES = [
         'present_products',

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\AiShoppingAssistant\Model\Agent;
 
-final class Lexicon
+class Lexicon
 {
     private const POLICY_CUES = [
         '?',

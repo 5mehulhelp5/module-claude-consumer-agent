@@ -16,7 +16,7 @@ use MageOS\AiShoppingAssistant\Model\Config\StoreConfig;
 use MageOS\AiShoppingAssistant\Model\Data\PageContext;
 use PHPUnit\Framework\TestCase;
 
-final class RulesTest extends TestCase
+class RulesTest extends TestCase
 {
     private StoreConfig $storeConfig;
     private array $receivedCandidates = [];

@@ -8,7 +8,7 @@ use Magento\Catalog\Model\Product as MagentoProduct;
 use MageOS\AiShoppingAssistant\Model\Backend\Provider\HelperImageUrl;
 use PHPUnit\Framework\TestCase;
 
-final class HelperImageUrlTest extends TestCase
+class HelperImageUrlTest extends TestCase
 {
     public function testDelegatesToTheImageHelperInitAndGetUrl(): void
     {

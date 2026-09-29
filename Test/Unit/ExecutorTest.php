@@ -36,7 +36,7 @@ use MageOS\AiShoppingAssistant\Model\Data\PageContext;
 use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 
-final class ExecutorTestFakeHandler implements HandlerInterface
+class ExecutorTestFakeHandler implements HandlerInterface
 {
     public function __construct(
         private $callback
@@ -49,7 +49,7 @@ final class ExecutorTestFakeHandler implements HandlerInterface
     }
 }
 
-final class ExecutorTestFakeToolProvider implements ToolProviderInterface
+class ExecutorTestFakeToolProvider implements ToolProviderInterface
 {
     public function __construct(
         private readonly array $definitions
@@ -62,7 +62,7 @@ final class ExecutorTestFakeToolProvider implements ToolProviderInterface
     }
 }
 
-final class ExecutorTest extends TestCase
+class ExecutorTest extends TestCase
 {
     private function context(): SessionContext
     {

@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Test\Unit\Agent;
 use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
 use PHPUnit\Framework\TestCase;
 
-final class AgentConfigTest extends TestCase
+class AgentConfigTest extends TestCase
 {
     public function testDefaultsMatchConfigXmlDefaults(): void
     {

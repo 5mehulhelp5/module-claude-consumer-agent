@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\AiShoppingAssistant\Model\Limits;
 
-final class SlotHandle
+class SlotHandle
 {
     private bool $released = false;
 

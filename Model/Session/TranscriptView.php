@@ -8,7 +8,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Prompt\DynamicContext;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\PageNote;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 
-final class TranscriptView
+class TranscriptView
 {
     public function render(array $rows, SessionState $state, Registry $registry): array
     {

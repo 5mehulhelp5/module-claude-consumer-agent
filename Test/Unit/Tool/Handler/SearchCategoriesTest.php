@@ -15,7 +15,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\SearchCategories;
 use MageOS\AiShoppingAssistant\Model\Data\CategoryMatch;
 use PHPUnit\Framework\TestCase;
 
-final class SearchCategoriesTest extends TestCase
+class SearchCategoriesTest extends TestCase
 {
     private function serializer(): Serializer
     {

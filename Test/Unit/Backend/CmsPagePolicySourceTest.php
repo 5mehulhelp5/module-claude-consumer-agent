@@ -22,7 +22,7 @@ use MageOS\AiShoppingAssistant\Model\Config\StoreConfig;
 use MageOS\AiShoppingAssistant\Model\Data\PageContext;
 use PHPUnit\Framework\TestCase;
 
-final class CmsPagePolicySourceTest extends TestCase
+class CmsPagePolicySourceTest extends TestCase
 {
     private function context(): SessionContext
     {

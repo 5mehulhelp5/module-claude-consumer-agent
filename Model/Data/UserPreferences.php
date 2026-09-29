@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Data;
 
 use MageOS\AiShoppingAssistant\Api\Data\UserPreferencesInterface;
 
-final class UserPreferences implements UserPreferencesInterface
+class UserPreferences implements UserPreferencesInterface
 {
     public function __construct(
         private readonly string $userId,

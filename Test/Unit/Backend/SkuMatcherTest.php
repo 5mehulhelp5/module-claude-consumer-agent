@@ -9,7 +9,7 @@ use Magento\Framework\DB\Select;
 use MageOS\AiShoppingAssistant\Model\Backend\Provider\SkuMatcher;
 use PHPUnit\Framework\TestCase;
 
-final class SkuMatcherTest extends TestCase
+class SkuMatcherTest extends TestCase
 {
     public function testAnEmptyCandidateListReturnsNullWithoutAQuery(): void
     {

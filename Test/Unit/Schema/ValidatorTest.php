@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Test\Unit\Schema;
 use MageOS\AiShoppingAssistant\Model\Agent\Schema\Validator;
 use PHPUnit\Framework\TestCase;
 
-final class ValidatorTest extends TestCase
+class ValidatorTest extends TestCase
 {
     private Validator $validator;
 

@@ -10,7 +10,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Skill\FrontMatter;
 use MageOS\AiShoppingAssistant\Model\Agent\Skill\Loader;
 use PHPUnit\Framework\TestCase;
 
-final class LoaderTest extends TestCase
+class LoaderTest extends TestCase
 {
     private string $base;
     private string $override;

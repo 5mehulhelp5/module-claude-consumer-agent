@@ -16,15 +16,12 @@ use MageOS\AiShoppingAssistant\Model\Session\Binding;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-final class JsonTurnTest extends TestCase
+class JsonTurnTest extends TestCase
 {
     protected function setUp(): void
     {
         if (!class_exists(Orchestrator::class)) {
             $this->markTestSkipped('Turn\\Orchestrator is not present on disk yet (task T9 has not landed).');
-        }
-        if ((new \ReflectionClass(Orchestrator::class))->isFinal()) {
-            $this->markTestSkipped('Turn\\Orchestrator is declared final and cannot be mocked by PHPUnit 9.6.');
         }
     }
 

@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Config\Source;
 
 use Magento\Framework\Data\OptionSourceInterface;
 
-final class CatalogMapDepth implements OptionSourceInterface
+class CatalogMapDepth implements OptionSourceInterface
 {
     public const OFF = 0;
     public const ONE = 1;

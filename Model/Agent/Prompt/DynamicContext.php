@@ -7,7 +7,7 @@ use MageOS\AiShoppingAssistant\Api\Data\CartInterface;
 use MageOS\AiShoppingAssistant\Api\Data\PageContextInterface;
 use MageOS\AiShoppingAssistant\Api\Data\UserPreferencesInterface;
 
-final class DynamicContext
+class DynamicContext
 {
     public const PREFIX = '# Session context';
 

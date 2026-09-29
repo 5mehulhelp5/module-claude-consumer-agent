@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Model\Backend\Provider\CoreFact;
 use Magento\Store\Model\ScopeInterface;
 use MageOS\AiShoppingAssistant\Api\Prompt\CoreFactProviderInterface;
 
-final class GuestCheckout implements CoreFactProviderInterface
+class GuestCheckout implements CoreFactProviderInterface
 {
     private const PATH_GUEST_CHECKOUT = 'checkout/options/guest_checkout';
 

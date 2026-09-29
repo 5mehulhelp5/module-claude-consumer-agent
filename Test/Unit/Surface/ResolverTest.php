@@ -12,7 +12,7 @@ use MageOS\AiShoppingAssistant\Model\Config\StoreConfig;
 use MageOS\AiShoppingAssistant\Model\Surface\Resolver;
 use PHPUnit\Framework\TestCase;
 
-final class ResolverTest extends TestCase
+class ResolverTest extends TestCase
 {
     private function buildResolver(string $surfaceMode, bool $sidebarEnabled): Resolver
     {

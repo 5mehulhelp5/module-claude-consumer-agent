@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich;
 use MageOS\AiShoppingAssistant\Model\Agent\Exception\PresentationRefused;
 use MageOS\AiShoppingAssistant\Model\Agent\Presentation\EnrichmentContext;
 
-final class Comparison
+class Comparison
 {
     public function __invoke(array $input, EnrichmentContext $ctx): array
     {

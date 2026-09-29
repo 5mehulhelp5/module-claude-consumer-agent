@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Test\Unit\Agent;
 use MageOS\AiShoppingAssistant\Model\Agent\Event;
 use PHPUnit\Framework\TestCase;
 
-final class EventTest extends TestCase
+class EventTest extends TestCase
 {
     public function testTextDelta(): void
     {

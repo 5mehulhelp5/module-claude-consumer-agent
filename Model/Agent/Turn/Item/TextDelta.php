@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\AiShoppingAssistant\Model\Agent\Turn\Item;
 
-final class TextDelta
+class TextDelta
 {
     public function __construct(
         public readonly string $text

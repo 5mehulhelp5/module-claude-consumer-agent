@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Model\Backend\Provider;
 use MageOS\AiShoppingAssistant\Api\Backend\FulfillmentProviderInterface;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
 
-final class FulfillmentAggregator implements FulfillmentProviderInterface
+class FulfillmentAggregator implements FulfillmentProviderInterface
 {
     public function __construct(
         private readonly array $providers

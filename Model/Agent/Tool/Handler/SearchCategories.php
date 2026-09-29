@@ -10,7 +10,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 use MageOS\AiShoppingAssistant\Model\Agent\ToolOutcome;
 
-final class SearchCategories implements HandlerInterface
+class SearchCategories implements HandlerInterface
 {
     private const DEFAULT_LIMIT = 8;
     private const MAX_LIMIT = 20;

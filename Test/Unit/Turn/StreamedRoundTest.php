@@ -17,7 +17,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Turn\StreamedRound;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-final class StreamedRoundTest extends TestCase
+class StreamedRoundTest extends TestCase
 {
     public function testTextAndToolCallChunksBecomeItems(): void
     {

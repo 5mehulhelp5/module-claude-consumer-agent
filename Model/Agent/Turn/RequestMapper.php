@@ -13,7 +13,7 @@ use MageOS\AiBase\Api\Data\ToolCallInterface;
  * The builder carries the system prompt and the tools; the conversation continues on the request
  * itself, because only ChatRequestInterface::withAssistantTurn() carries reasoning back.
  */
-final class RequestMapper
+class RequestMapper
 {
     private const ERROR_PREFIX = 'Error: ';
 

@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Controller\Request;
 
 use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
 
-final class BodyReader
+class BodyReader
 {
     private const SESSION_ID_PATTERN = '/^[0-9a-f]{64}$/';
 

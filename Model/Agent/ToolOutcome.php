@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\AiShoppingAssistant\Model\Agent;
 
-final class ToolOutcome
+class ToolOutcome
 {
     public function __construct(
         public readonly string $resultText,

@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Agent;
 
 use DateTimeImmutable;
 
-final class SessionContext
+class SessionContext
 {
     public function __construct(
         public readonly string $sessionId,

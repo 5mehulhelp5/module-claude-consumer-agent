@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Model\Backend\Provider;
 use Magento\Catalog\Model\Category;
 use MageOS\AiShoppingAssistant\Api\Backend\CatalogMapProviderInterface;
 
-final class CategoryTree implements CatalogMapProviderInterface
+class CategoryTree implements CatalogMapProviderInterface
 {
     public function __construct(
         private readonly \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $collectionFactory,

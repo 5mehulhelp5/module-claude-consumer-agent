@@ -85,7 +85,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 
-final class OrchestratorTest extends TestCase
+class OrchestratorTest extends TestCase
 {
     use AiBaseDoubles;
 

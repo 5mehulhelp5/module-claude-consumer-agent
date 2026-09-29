@@ -11,7 +11,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 use MageOS\AiShoppingAssistant\Model\Agent\ToolOutcome;
 use MageOS\AiShoppingAssistant\Model\Data\SearchFilters;
 
-final class SearchProducts implements HandlerInterface
+class SearchProducts implements HandlerInterface
 {
     public function __construct(
         private readonly \MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface $backend,

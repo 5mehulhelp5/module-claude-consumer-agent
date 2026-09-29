@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Model\Backend\Provider\CoreFact;
 use Magento\Store\Model\ScopeInterface;
 use MageOS\AiShoppingAssistant\Api\Prompt\CoreFactProviderInterface;
 
-final class ShippingCarriers implements CoreFactProviderInterface
+class ShippingCarriers implements CoreFactProviderInterface
 {
     public function __construct(
         private readonly \Magento\Shipping\Model\Config $shippingConfig,

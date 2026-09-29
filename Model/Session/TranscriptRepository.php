@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\AiShoppingAssistant\Model\Session;
 
-final class TranscriptRepository
+class TranscriptRepository
 {
     public function __construct(
         private readonly \MageOS\AiShoppingAssistant\Model\Session\ResourceModel\Message $resource,

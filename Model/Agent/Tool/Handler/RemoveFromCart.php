@@ -9,7 +9,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 use MageOS\AiShoppingAssistant\Model\Agent\ToolOutcome;
 
-final class RemoveFromCart implements HandlerInterface
+class RemoveFromCart implements HandlerInterface
 {
     public function __construct(
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Gate\CartWrite $cartWrite

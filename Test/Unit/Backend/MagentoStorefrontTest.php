@@ -77,7 +77,7 @@ use MageOS\AiShoppingAssistant\Model\Data\PageContext;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-final class MagentoStorefrontTest extends TestCase
+class MagentoStorefrontTest extends TestCase
 {
     private function context(?int $customerId = null): SessionContext
     {

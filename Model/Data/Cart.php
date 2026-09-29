@@ -6,7 +6,7 @@ namespace MageOS\AiShoppingAssistant\Model\Data;
 use MageOS\AiShoppingAssistant\Api\Data\CartInterface;
 use MageOS\AiShoppingAssistant\Api\Data\CartItemInterface;
 
-final class Cart implements CartInterface
+class Cart implements CartInterface
 {
     public function __construct(
         private readonly array $items = [],

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\AiShoppingAssistant\Model\Session;
 
-final class Binding
+class Binding
 {
     public function __construct(
         public readonly string $sessionId,

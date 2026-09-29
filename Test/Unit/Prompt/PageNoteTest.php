@@ -8,7 +8,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Prompt\PageNote;
 use MageOS\AiShoppingAssistant\Model\Data\PageContext;
 use PHPUnit\Framework\TestCase;
 
-final class PageNoteTest extends TestCase
+class PageNoteTest extends TestCase
 {
     public function testReturnsNullWhenCurrentPageIsHome(): void
     {

@@ -9,7 +9,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 use MageOS\AiShoppingAssistant\Model\Agent\ToolOutcome;
 
-final class SearchPolicies implements HandlerInterface
+class SearchPolicies implements HandlerInterface
 {
     public function __construct(
         private readonly \MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface $backend,

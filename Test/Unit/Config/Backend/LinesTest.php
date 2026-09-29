@@ -11,7 +11,7 @@ use Magento\Framework\Registry;
 use MageOS\AiShoppingAssistant\Model\Config\Backend\Lines;
 use PHPUnit\Framework\TestCase;
 
-final class LinesTest extends TestCase
+class LinesTest extends TestCase
 {
     private function buildLines(): Lines
     {

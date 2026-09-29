@@ -5,7 +5,7 @@ namespace MageOS\AiShoppingAssistant\Cron;
 
 use DateTimeImmutable;
 
-final class Retention
+class Retention
 {
     public function __construct(
         private readonly \MageOS\AiShoppingAssistant\Model\Config\StoreConfig $storeConfig,

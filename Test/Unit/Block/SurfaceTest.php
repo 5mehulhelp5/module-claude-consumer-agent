@@ -20,7 +20,7 @@ use MageOS\AiShoppingAssistant\ViewModel\Assistant;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
-final class SurfaceTest extends TestCase
+class SurfaceTest extends TestCase
 {
     private function buildBlock(bool $enabled, string $surfaceMode, string $surfaceArgument): Surface
     {

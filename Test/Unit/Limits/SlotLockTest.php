@@ -13,7 +13,7 @@ use MageOS\AiShoppingAssistant\Model\Limits\SlotLock;
 use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 
-final class SlotLockTest extends TestCase
+class SlotLockTest extends TestCase
 {
     private function buildStoreConfig(int $concurrentTurns): StoreConfig
     {
