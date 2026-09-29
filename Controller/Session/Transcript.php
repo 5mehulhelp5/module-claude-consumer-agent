@@ -8,6 +8,7 @@ use Magento\Framework\App\CsrfAwareActionInterface;
 use Magento\Framework\App\Request\InvalidRequestException;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\ResultInterface;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\EnrichmentContext;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
 use MageOS\AiShoppingAssistant\Model\Data\PageContext;
 
@@ -24,6 +25,7 @@ class Transcript implements HttpPostActionInterface, CsrfAwareActionInterface
         private readonly \MageOS\AiShoppingAssistant\Model\Session\TranscriptView $transcriptView,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Presentation\Registry $presentationRegistry,
         private readonly \MageOS\AiShoppingAssistant\Model\Config\StoreConfig $storeConfig,
+        private readonly \MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface $backend,
         private readonly \Magento\Framework\Session\SessionManagerInterface $sessionManager,
         private readonly \Magento\Framework\App\RequestInterface $request,
         private readonly \Magento\Framework\App\Response\Http $response,
@@ -56,7 +58,9 @@ class Transcript implements HttpPostActionInterface, CsrfAwareActionInterface
             $result->setData(['session' => null, 'messages' => []]);
         } else {
             $rows = $this->transcriptRepository->load($binding->sessionId);
-            $messages = $this->transcriptView->render($rows, $binding->state, $this->presentationRegistry);
+            $config = $this->storeConfig->agent($storeId);
+            $ctx = new EnrichmentContext($this->backend, $config, $binding->context, $binding->state);
+            $messages = $this->transcriptView->render($rows, $this->presentationRegistry, $ctx);
             $result->setData(['session' => $binding->sessionId, 'messages' => $messages]);
         }
         $this->response->setNoCacheHeaders();

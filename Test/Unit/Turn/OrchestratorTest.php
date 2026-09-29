@@ -48,6 +48,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\Comparison;
 use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\OrderStatus;
 use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\Products;
 use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\Suggestions;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\EnrichmentContext;
 use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Registry as PresentationRegistry;
 use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Runner;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\CatalogMap;
@@ -257,7 +258,11 @@ class OrchestratorTest extends TestCase
         $messages = $client->calls[0]['request']->getMessages();
         $sent = end($messages)->getContent();
         $this->assertSame(1, substr_count($sent, '<storefront_data>'));
-        $restored = (new TranscriptView())->render($captured, new SessionState(), $this->presentationRegistry());
+        $restored = (new TranscriptView())->render(
+            $captured,
+            $this->presentationRegistry(),
+            new EnrichmentContext($this->createMock(StorefrontBackendInterface::class), new AgentConfig(), $binding->context, new SessionState())
+        );
         $this->assertSame('user', $restored[0]['role']);
         $this->assertStringContainsString('free shipping', $restored[0]['text']);
     }
