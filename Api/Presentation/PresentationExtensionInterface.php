@@ -15,6 +15,9 @@ interface PresentationExtensionInterface
 
     public function getInputSchema(): array;
 
+    /**
+     * Runs on the live turn and again when the conversation is restored, so it must only read data.
+     */
     public function enrich(array $payload, EnrichmentContext $ctx): array;
 
     public function getTemplate(): string;

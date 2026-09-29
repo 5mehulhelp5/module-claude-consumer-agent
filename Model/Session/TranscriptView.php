@@ -3,13 +3,20 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Model\Session;
 
+use MageOS\ClaudeConsumerAgent\Model\Agent\Exception\PresentationRefused;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Component;
+use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\EnrichmentContext;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Registry;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\PageNote;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 
+/**
+ * Rebuilds the cards of a restored conversation: products and comparisons from the products the session
+ * has seen, every other card through its own enricher, the same way the live turn built it.
+ */
 class TranscriptView
 {
-    public function render(array $rows, SessionState $state, Registry $registry): array
+    public function render(array $rows, Registry $registry, EnrichmentContext $ctx): array
     {
         $messages = [];
         $count = count($rows);
@@ -29,7 +36,7 @@ class TranscriptView
             $nextContent = $index + 1 < $count && (string)($rows[$index + 1]['role'] ?? '') === 'user'
                 ? (is_array($rows[$index + 1]['content'] ?? null) ? $rows[$index + 1]['content'] : [])
                 : [];
-            $entry = $this->assistantEntry($content, $nextContent, $state, $registry);
+            $entry = $this->assistantEntry($content, $nextContent, $registry, $ctx);
             if ($entry !== null) {
                 $messages[] = $entry;
             }
@@ -58,10 +65,10 @@ class TranscriptView
         }));
     }
 
-    private function assistantEntry(array $content, array $nextContent, SessionState $state, Registry $registry): ?array
+    private function assistantEntry(array $content, array $nextContent, Registry $registry, EnrichmentContext $ctx): ?array
     {
         $text = $this->textOf($content);
-        $cards = $this->cards($content, $nextContent, $state, $registry);
+        $cards = $this->cards($content, $nextContent, $registry, $ctx);
         if ($text === '' && $cards === []) {
             return null;
         }
@@ -79,7 +86,7 @@ class TranscriptView
         return $text;
     }
 
-    private function cards(array $content, array $nextContent, SessionState $state, Registry $registry): array
+    private function cards(array $content, array $nextContent, Registry $registry, EnrichmentContext $ctx): array
     {
         $results = $this->toolResultsById($nextContent);
         $components = $registry->components();
@@ -98,7 +105,7 @@ class TranscriptView
                 continue;
             }
             $input = is_array($block['input'] ?? null) ? $block['input'] : [];
-            $payload = $this->payload($name, $input, $state);
+            $payload = $this->payload($components[$name], $input, $ctx);
             if ($payload === null) {
                 continue;
             }
@@ -123,15 +130,19 @@ class TranscriptView
         return $results;
     }
 
-    private function payload(string $name, array $input, SessionState $state): ?array
+    private function payload(Component $component, array $input, EnrichmentContext $ctx): ?array
     {
-        if ($name === 'present_products') {
-            return $this->productsPayload($input, $state);
+        if ($component->name === 'present_products') {
+            return $this->productsPayload($input, $ctx->state);
         }
-        if ($name === 'present_comparison') {
-            return $this->comparisonPayload($input, $state);
+        if ($component->name === 'present_comparison') {
+            return $this->comparisonPayload($input, $ctx->state);
         }
-        return $input;
+        try {
+            return ($component->enricher)($input, $ctx);
+        } catch (PresentationRefused) {
+            return null;
+        }
     }
 
     private function productsPayload(array $input, SessionState $state): ?array

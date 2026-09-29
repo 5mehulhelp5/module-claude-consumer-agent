@@ -373,7 +373,8 @@ preference on a base concrete class.
    `Model\Agent\Presentation\Registry` under `<argument name="extensions">`.
    The extension registers its own Alpine component the same way `aiagent.js`
    registers the built-in ones. Custom card components render on Hyvä only.
-   Luma skips unknown components.
+   Luma skips unknown components. `enrich()` runs again when a conversation
+   is restored after a page load, so it must only read data.
 
 4. Core facts. `Api\Prompt\CoreFactProviderInterface` items pool on
    `Model\Agent\Prompt\CoreFacts` under `<argument name="providers">`.
