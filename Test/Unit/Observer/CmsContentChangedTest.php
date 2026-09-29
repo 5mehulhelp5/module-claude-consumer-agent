@@ -8,7 +8,7 @@ use Magento\Framework\Event\Observer;
 use MageOS\ClaudeConsumerAgent\Observer\CmsContentChanged;
 use PHPUnit\Framework\TestCase;
 
-final class CmsContentChangedTest extends TestCase
+class CmsContentChangedTest extends TestCase
 {
     public function testExecuteCleansTheAiagentCacheTag(): void
     {

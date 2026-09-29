@@ -38,7 +38,7 @@ use MageOS\ClaudeConsumerAgent\Model\Session\ResourceModel\Session as SessionRes
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-final class IndexTest extends TestCase
+class IndexTest extends TestCase
 {
     private function requestWithBody(array $body): HttpRequest
     {

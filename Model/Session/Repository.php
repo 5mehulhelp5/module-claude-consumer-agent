@@ -10,7 +10,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 /**
  * A signed-in customer may claim a guest row of the same quote, so a guest who signs in keeps the session.
  */
-final class Repository implements SessionRepositoryInterface
+class Repository implements SessionRepositoryInterface
 {
     public function __construct(
         private readonly \MageOS\ClaudeConsumerAgent\Model\Session\ResourceModel\Session $resource,

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Model\Backend\Provider;
 
-final class AllowedCategories
+class AllowedCategories
 {
     public function __construct(
         private readonly \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $collectionFactory,

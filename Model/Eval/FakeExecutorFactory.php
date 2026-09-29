@@ -14,7 +14,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\ExecutorFactory;
  * two calls Orchestrator makes directly, wired to whichever backend the eval runner
  * built this factory with.
  */
-final class FakeExecutorFactory extends ExecutorFactory
+class FakeExecutorFactory extends ExecutorFactory
 {
     public function __construct(
         private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Registry $registry,

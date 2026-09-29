@@ -7,7 +7,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use MageOS\ClaudeConsumerAgent\Api\Data\PageContextInterface;
 use MageOS\ClaudeConsumerAgent\Model\Data\PageContext;
 
-final class PageDetector
+class PageDetector
 {
     private const QUERY_MAX_LENGTH = 200;
 

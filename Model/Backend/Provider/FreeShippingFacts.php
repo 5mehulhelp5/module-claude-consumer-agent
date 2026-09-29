@@ -9,7 +9,7 @@ use MageOS\ClaudeConsumerAgent\Api\Data\FulfillmentOptionInterface;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Data\FulfillmentOption;
 
-final class FreeShippingFacts implements FulfillmentProviderInterface
+class FreeShippingFacts implements FulfillmentProviderInterface
 {
     private const PATH_ACTIVE = 'carriers/freeshipping/active';
     private const PATH_SUBTOTAL = 'carriers/freeshipping/free_shipping_subtotal';

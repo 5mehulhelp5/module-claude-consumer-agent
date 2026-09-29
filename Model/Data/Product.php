@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Data;
 
 use MageOS\ClaudeConsumerAgent\Api\Data\ProductInterface;
 
-final class Product implements ProductInterface
+class Product implements ProductInterface
 {
     public function __construct(
         private readonly string $productId,

@@ -9,7 +9,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Exception\SignInRequired;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Exception\Unavailable;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Definition;
 
-final class Executor
+class Executor
 {
     private const DISPLAYED_TEXT = 'Displayed to the customer.';
 

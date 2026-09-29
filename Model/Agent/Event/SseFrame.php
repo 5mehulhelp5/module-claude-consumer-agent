@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Agent\Event;
 
 use MageOS\ClaudeConsumerAgent\Model\Agent\Event;
 
-final class SseFrame
+class SseFrame
 {
     public static function encode(Event $event): string
     {

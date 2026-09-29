@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Model\Agent;
 
-final class Event
+class Event
 {
     public const TYPE_TEXT_DELTA = 'text_delta';
     public const TYPE_TOOL_CALL = 'tool_call';

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Model\Agent\Turn\Item;
 
-final class UnreadableToolInput
+class UnreadableToolInput
 {
     public function __construct(
         public readonly string $id,

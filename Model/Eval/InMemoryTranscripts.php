@@ -9,7 +9,7 @@ use MageOS\ClaudeConsumerAgent\Model\Session\ResourceModel\Message;
  * A drop-in replacement for the message resource model, keyed by session id, so a
  * TranscriptRepository built with it never touches the aiagent_message table.
  */
-final class InMemoryTranscripts extends Message
+class InMemoryTranscripts extends Message
 {
     private array $rows = [];
 

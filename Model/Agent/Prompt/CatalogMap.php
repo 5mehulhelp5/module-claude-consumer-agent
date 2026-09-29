@@ -9,7 +9,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Agent\Prompt;
  * configured depth, so this class infers depth from shape rather than taking it as an
  * argument.
  */
-final class CatalogMap
+class CatalogMap
 {
     private const TRUNCATION_LINE = '- ... (map truncated; use search_categories for the rest)';
 

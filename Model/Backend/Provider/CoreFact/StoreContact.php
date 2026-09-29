@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Backend\Provider\CoreFact;
 use Magento\Store\Model\ScopeInterface;
 use MageOS\ClaudeConsumerAgent\Api\Prompt\CoreFactProviderInterface;
 
-final class StoreContact implements CoreFactProviderInterface
+class StoreContact implements CoreFactProviderInterface
 {
     private const PATH_PHONE = 'general/store_information/phone';
     private const PATH_EMAIL = 'trans_email/ident_general/email';

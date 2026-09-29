@@ -7,7 +7,7 @@ use MageOS\ClaudeConsumerAgent\Api\Data\CartInterface;
 use MageOS\ClaudeConsumerAgent\Api\Data\PageContextInterface;
 use MageOS\ClaudeConsumerAgent\Api\Data\UserPreferencesInterface;
 
-final class DynamicContext
+class DynamicContext
 {
     private const MAX_CHARS = 6000;
 

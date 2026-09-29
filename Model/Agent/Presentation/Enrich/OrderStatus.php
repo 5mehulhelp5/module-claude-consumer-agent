@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Exception\PresentationRefused;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\EnrichmentContext;
 
-final class OrderStatus
+class OrderStatus
 {
     public function __construct(
         private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Serializer $serializer

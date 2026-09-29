@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Test\Unit\Prompt;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\StoreFactsBlock;
 use PHPUnit\Framework\TestCase;
 
-final class StoreFactsBlockTest extends TestCase
+class StoreFactsBlockTest extends TestCase
 {
     private function block(): StoreFactsBlock
     {

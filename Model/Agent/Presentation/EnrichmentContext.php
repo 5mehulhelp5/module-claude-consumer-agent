@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Model\Agent\Presentation;
 
-final class EnrichmentContext
+class EnrichmentContext
 {
     public function __construct(
         public readonly \MageOS\ClaudeConsumerAgent\Api\StorefrontBackendInterface $backend,

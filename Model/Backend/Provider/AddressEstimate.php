@@ -9,7 +9,7 @@ use MageOS\ClaudeConsumerAgent\Api\Data\FulfillmentOptionInterface;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Data\FulfillmentOption;
 
-final class AddressEstimate implements FulfillmentProviderInterface
+class AddressEstimate implements FulfillmentProviderInterface
 {
     private const MAX_OPTIONS = 5;
 

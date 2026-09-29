@@ -9,7 +9,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 use MageOS\ClaudeConsumerAgent\Model\Agent\ToolOutcome;
 
-final class GetPreferences implements HandlerInterface
+class GetPreferences implements HandlerInterface
 {
     public function __construct(
         private readonly \MageOS\ClaudeConsumerAgent\Api\StorefrontBackendInterface $backend,

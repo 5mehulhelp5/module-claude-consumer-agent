@@ -10,7 +10,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 use MageOS\ClaudeConsumerAgent\Model\Agent\ToolOutcome;
 use MageOS\ClaudeConsumerAgent\Model\Data\Product;
 
-final class GetProductDetails implements HandlerInterface
+class GetProductDetails implements HandlerInterface
 {
     public function __construct(
         private readonly \MageOS\ClaudeConsumerAgent\Api\StorefrontBackendInterface $backend,

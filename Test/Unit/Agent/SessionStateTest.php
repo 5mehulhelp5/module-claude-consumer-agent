@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Test\Unit\Agent;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 use PHPUnit\Framework\TestCase;
 
-final class SessionStateTest extends TestCase
+class SessionStateTest extends TestCase
 {
     public function testRememberProductsStoresRecords(): void
     {

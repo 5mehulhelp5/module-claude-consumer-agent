@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Data;
 
 use MageOS\ClaudeConsumerAgent\Api\Data\UserPreferencesInterface;
 
-final class UserPreferences implements UserPreferencesInterface
+class UserPreferences implements UserPreferencesInterface
 {
     public function __construct(
         private readonly string $userId,

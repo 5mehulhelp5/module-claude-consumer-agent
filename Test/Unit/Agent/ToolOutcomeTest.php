@@ -7,7 +7,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Event;
 use MageOS\ClaudeConsumerAgent\Model\Agent\ToolOutcome;
 use PHPUnit\Framework\TestCase;
 
-final class ToolOutcomeTest extends TestCase
+class ToolOutcomeTest extends TestCase
 {
     public function testOkDefaults(): void
     {

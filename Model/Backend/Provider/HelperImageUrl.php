@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Backend\Provider;
 use Magento\Catalog\Api\Data\ProductInterface;
 use MageOS\ClaudeConsumerAgent\Api\Backend\ProductImageUrlInterface;
 
-final class HelperImageUrl implements ProductImageUrlInterface
+class HelperImageUrl implements ProductImageUrlInterface
 {
     public function __construct(
         private readonly \Magento\Catalog\Helper\Image $imageHelper

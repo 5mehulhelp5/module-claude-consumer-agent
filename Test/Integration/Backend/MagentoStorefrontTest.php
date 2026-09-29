@@ -16,7 +16,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Data\PageContext;
 use PHPUnit\Framework\TestCase;
 
-final class MagentoStorefrontTest extends TestCase
+class MagentoStorefrontTest extends TestCase
 {
     private function backend(): StorefrontBackendInterface
     {

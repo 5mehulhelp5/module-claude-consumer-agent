@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Data;
 
 use MageOS\ClaudeConsumerAgent\Api\Data\CartItemInterface;
 
-final class CartItem implements CartItemInterface
+class CartItem implements CartItemInterface
 {
     public function __construct(
         private readonly string $productId,

@@ -7,7 +7,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Gate\Provenance;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 use PHPUnit\Framework\TestCase;
 
-final class ProvenanceTest extends TestCase
+class ProvenanceTest extends TestCase
 {
     public function testUnseenProductIsHeld(): void
     {

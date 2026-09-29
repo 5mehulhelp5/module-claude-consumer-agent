@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Controller\Request;
 
 use MageOS\ClaudeConsumerAgent\Model\Agent\AgentConfig;
 
-final class BodyReader
+class BodyReader
 {
     private const SESSION_ID_PATTERN = '/^[0-9a-f]{64}$/';
 

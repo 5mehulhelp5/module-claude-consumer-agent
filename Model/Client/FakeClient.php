@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Client;
 
 use MageOS\ClaudeConsumerAgent\Api\Client\MessagesClientInterface;
 
-final class FakeClient implements MessagesClientInterface
+class FakeClient implements MessagesClientInterface
 {
     public array $calls = [];
 

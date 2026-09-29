@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Test\Unit\Schema;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Schema\Validator;
 use PHPUnit\Framework\TestCase;
 
-final class ValidatorTest extends TestCase
+class ValidatorTest extends TestCase
 {
     private Validator $validator;
 

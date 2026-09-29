@@ -33,7 +33,7 @@ use MageOS\ClaudeConsumerAgent\Model\Data\PageContext;
 use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 
-final class HistoryTest extends TestCase
+class HistoryTest extends TestCase
 {
     public function testIsFirstTurnTrueWhenNoMessageExistedBeforeThisTurn(): void
     {

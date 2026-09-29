@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Model\Agent\Exception;
 
-final class PresentationRefused extends \RuntimeException
+class PresentationRefused extends \RuntimeException
 {
     private readonly ?string $gate;
 

@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\ViewModel;
 
 use Magento\Framework\View\Element\Block\ArgumentInterface;
 
-final class Assistant implements ArgumentInterface
+class Assistant implements ArgumentInterface
 {
     public function __construct(
         private readonly \MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig $storeConfig,

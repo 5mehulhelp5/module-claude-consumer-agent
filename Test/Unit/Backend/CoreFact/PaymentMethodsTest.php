@@ -8,7 +8,7 @@ use Magento\Payment\Api\PaymentMethodListInterface;
 use MageOS\ClaudeConsumerAgent\Model\Backend\Provider\CoreFact\PaymentMethods;
 use PHPUnit\Framework\TestCase;
 
-final class PaymentMethodsTest extends TestCase
+class PaymentMethodsTest extends TestCase
 {
     private function method(string $title, string $code = ''): PaymentMethodInterface
     {

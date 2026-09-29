@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Exception\PresentationRefused;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\EnrichmentContext;
 
-final class Comparison
+class Comparison
 {
     public function __invoke(array $input, EnrichmentContext $ctx): array
     {

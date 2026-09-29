@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Model\Agent\Fencing;
 
-final class Sanitizer
+class Sanitizer
 {
     private const INVISIBLE_PATTERN = '/[\x{00AD}\x{200B}-\x{200F}\x{2028}-\x{2029}\x{202A}-\x{202E}'
         . '\x{2060}-\x{2064}\x{2066}-\x{2069}\x{061C}\x{180E}\x{206A}-\x{206F}\x{FE00}-\x{FE0F}'

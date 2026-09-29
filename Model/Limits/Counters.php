@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Limits;
 use MageOS\ClaudeConsumerAgent\Model\Agent\AgentConfig;
 use MageOS\ClaudeConsumerAgent\Model\Limits\Exception\LimitExceeded;
 
-final class Counters
+class Counters
 {
     private const CACHE_TAG = 'AIAGENT_LIMITS';
     private const SESSION_TTL = 600;

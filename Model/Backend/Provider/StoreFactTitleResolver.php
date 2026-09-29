@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Backend\Provider;
 
 use MageOS\ClaudeConsumerAgent\Api\Backend\StoreFactTitleResolverInterface;
 
-final class StoreFactTitleResolver implements StoreFactTitleResolverInterface
+class StoreFactTitleResolver implements StoreFactTitleResolverInterface
 {
     public function __construct(
         private readonly \Magento\Cms\Api\PageRepositoryInterface $pageRepository,

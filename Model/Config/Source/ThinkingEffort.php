@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Config\Source;
 
 use Magento\Framework\Data\OptionSourceInterface;
 
-final class ThinkingEffort implements OptionSourceInterface
+class ThinkingEffort implements OptionSourceInterface
 {
     public const OFF = 'off';
     public const LOW = 'low';

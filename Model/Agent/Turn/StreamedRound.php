@@ -9,7 +9,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Turn\Item\ToolUseClosed;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Turn\Item\UnreadableToolInput;
 use MageOS\ClaudeConsumerAgent\Model\Client\RawEvent;
 
-final class StreamedRound
+class StreamedRound
 {
     private array $blocks = [];
 

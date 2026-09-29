@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Model\Agent\Presentation;
 
-final class Component
+class Component
 {
     public function __construct(
         public readonly string $name,

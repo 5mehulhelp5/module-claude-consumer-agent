@@ -13,7 +13,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\ToolOutcome;
  * run() takes a fourth optional $streamId, falling back to the component name when null,
  * so the caller can pass the originating tool_use id through to the ui event.
  */
-final class Runner
+class Runner
 {
     public function __construct(
         private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Registry $registry,

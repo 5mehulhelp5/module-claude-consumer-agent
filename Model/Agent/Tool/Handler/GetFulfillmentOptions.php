@@ -9,7 +9,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 use MageOS\ClaudeConsumerAgent\Model\Agent\ToolOutcome;
 
-final class GetFulfillmentOptions implements HandlerInterface
+class GetFulfillmentOptions implements HandlerInterface
 {
     private const MAX_PRODUCT_IDS = 20;
 

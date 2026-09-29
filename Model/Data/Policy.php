@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Data;
 
 use MageOS\ClaudeConsumerAgent\Api\Data\PolicyInterface;
 
-final class Policy implements PolicyInterface
+class Policy implements PolicyInterface
 {
     public function __construct(
         private readonly string $policyId,

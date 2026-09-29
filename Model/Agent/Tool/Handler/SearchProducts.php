@@ -11,7 +11,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 use MageOS\ClaudeConsumerAgent\Model\Agent\ToolOutcome;
 use MageOS\ClaudeConsumerAgent\Model\Data\SearchFilters;
 
-final class SearchProducts implements HandlerInterface
+class SearchProducts implements HandlerInterface
 {
     public function __construct(
         private readonly \MageOS\ClaudeConsumerAgent\Api\StorefrontBackendInterface $backend,

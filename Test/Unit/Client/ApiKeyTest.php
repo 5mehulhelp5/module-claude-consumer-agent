@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Test\Unit\Client;
 use MageOS\ClaudeConsumerAgent\Model\Client\ApiKey;
 use PHPUnit\Framework\TestCase;
 
-final class ApiKeyTest extends TestCase
+class ApiKeyTest extends TestCase
 {
     public function testToStringReturnsTheWrappedValue(): void
     {

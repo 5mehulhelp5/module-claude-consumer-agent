@@ -8,7 +8,7 @@ use MageOS\ClaudeConsumerAgent\Api\Backend\SearchProviderInterface;
 use MageOS\ClaudeConsumerAgent\Api\Data\SearchFiltersInterface;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 
-final class BrandCapSearchDecorator implements SearchProviderInterface
+class BrandCapSearchDecorator implements SearchProviderInterface
 {
     private const SORT_BEST_SELLERS = 'best_sellers';
     private const BRAND_CAP_PAGE_SIZE_MULTIPLIER = 3;

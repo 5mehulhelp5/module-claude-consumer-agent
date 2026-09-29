@@ -9,7 +9,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 use MageOS\ClaudeConsumerAgent\Model\Agent\ToolOutcome;
 
-final class AddToCart implements HandlerInterface
+class AddToCart implements HandlerInterface
 {
     public function __construct(
         private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Gate\CartWrite $cartWrite

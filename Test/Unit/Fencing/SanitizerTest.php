@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Test\Unit\Fencing;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Sanitizer;
 use PHPUnit\Framework\TestCase;
 
-final class SanitizerTest extends TestCase
+class SanitizerTest extends TestCase
 {
     private Sanitizer $sanitizer;
 

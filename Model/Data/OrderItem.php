@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Data;
 
 use MageOS\ClaudeConsumerAgent\Api\Data\OrderItemInterface;
 
-final class OrderItem implements OrderItemInterface
+class OrderItem implements OrderItemInterface
 {
     public function __construct(
         private readonly string $productId,

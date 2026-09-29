@@ -8,7 +8,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Agent\Grounding;
  * punctuation stripped, at least one digit, three to sixty-four characters. The catalog
  * decides which of them exist, this class only keeps the list short and free of plain words.
  */
-final class SkuCandidates
+class SkuCandidates
 {
     private const MIN_LENGTH = 3;
     private const MAX_LENGTH = 64;

@@ -9,7 +9,7 @@ use MageOS\ClaudeConsumerAgent\Model\Session\ResourceModel\Message;
 use MageOS\ClaudeConsumerAgent\Model\Session\TranscriptRepository;
 use PHPUnit\Framework\TestCase;
 
-final class TranscriptRepositoryTest extends TestCase
+class TranscriptRepositoryTest extends TestCase
 {
     public function testAppendInsertsInOrderInsideTransaction(): void
     {

@@ -12,7 +12,7 @@ use MageOS\ClaudeConsumerAgent\Model\Session\Binding;
  * Session persistence for the eval runner: every save lands in an in-memory map instead
  * of the aiagent_session table, so a case never writes to the database.
  */
-final class InMemorySessions implements SessionRepositoryInterface
+class InMemorySessions implements SessionRepositoryInterface
 {
     private array $states = [];
 

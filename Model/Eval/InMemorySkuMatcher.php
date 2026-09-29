@@ -9,7 +9,7 @@ use MageOS\ClaudeConsumerAgent\Api\Backend\SkuMatcherInterface;
  * SKU lookup for the eval runner: the case's catalog ids stand in for the product table,
  * so a fixture run never queries the database to decide whether a token is a product.
  */
-final class InMemorySkuMatcher implements SkuMatcherInterface
+class InMemorySkuMatcher implements SkuMatcherInterface
 {
     public function __construct(
         private readonly array $skus = []

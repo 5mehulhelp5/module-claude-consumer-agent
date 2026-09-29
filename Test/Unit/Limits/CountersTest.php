@@ -12,7 +12,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 
-final class CountersTest extends TestCase
+class CountersTest extends TestCase
 {
     private function lockManager(): LockManagerInterface&MockObject
     {

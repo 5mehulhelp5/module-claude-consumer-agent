@@ -9,7 +9,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 use MageOS\ClaudeConsumerAgent\Model\Agent\ToolOutcome;
 
-final class SearchPolicies implements HandlerInterface
+class SearchPolicies implements HandlerInterface
 {
     public function __construct(
         private readonly \MageOS\ClaudeConsumerAgent\Api\StorefrontBackendInterface $backend,

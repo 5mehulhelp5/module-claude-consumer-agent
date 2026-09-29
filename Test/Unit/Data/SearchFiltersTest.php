@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Test\Unit\Data;
 use MageOS\ClaudeConsumerAgent\Model\Data\SearchFilters;
 use PHPUnit\Framework\TestCase;
 
-final class SearchFiltersTest extends TestCase
+class SearchFiltersTest extends TestCase
 {
     public function testFromArrayReadsCategoryId(): void
     {

@@ -7,7 +7,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Registry;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\PageNote;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 
-final class TranscriptView
+class TranscriptView
 {
     public function render(array $rows, SessionState $state, Registry $registry): array
     {

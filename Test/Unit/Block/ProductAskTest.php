@@ -14,7 +14,7 @@ use MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
-final class ProductAskTest extends TestCase
+class ProductAskTest extends TestCase
 {
     private function buildBlock(bool $enabled, ?Product $product): ProductAsk
     {

@@ -8,7 +8,7 @@ use Magento\Framework\Event\Observer;
 use MageOS\ClaudeConsumerAgent\Observer\CategoryChanged;
 use PHPUnit\Framework\TestCase;
 
-final class CategoryChangedTest extends TestCase
+class CategoryChangedTest extends TestCase
 {
     public function testExecuteCleansTheAiagentCacheTag(): void
     {

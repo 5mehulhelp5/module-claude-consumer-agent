@@ -8,7 +8,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Agent\Prompt;
  * and a rolling marker on the newest persisted message block for an auto round with
  * two or more outgoing messages. Never mutates the caller's message history.
  */
-final class Assembly
+class Assembly
 {
     private const CACHE_CONTROL = ['type' => 'ephemeral'];
 

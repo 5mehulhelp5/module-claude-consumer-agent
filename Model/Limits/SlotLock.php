@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Model\Limits;
 
-final class SlotLock
+class SlotLock
 {
     private const PREFIX = 'aiagent:turn:';
 

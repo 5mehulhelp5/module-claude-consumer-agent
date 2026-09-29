@@ -10,7 +10,7 @@ use Magento\Store\Model\StoreManagerInterface;
 use MageOS\ClaudeConsumerAgent\Model\Backend\Provider\CoreFact\MinimumOrder;
 use PHPUnit\Framework\TestCase;
 
-final class MinimumOrderTest extends TestCase
+class MinimumOrderTest extends TestCase
 {
     public function testReturnsTheLineWithTheStoreCurrencyWhenActive(): void
     {

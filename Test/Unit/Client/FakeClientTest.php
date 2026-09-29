@@ -7,7 +7,7 @@ use MageOS\ClaudeConsumerAgent\Model\Client\FakeClient;
 use MageOS\ClaudeConsumerAgent\Model\Client\RawEvent;
 use PHPUnit\Framework\TestCase;
 
-final class FakeClientTest extends TestCase
+class FakeClientTest extends TestCase
 {
     public function testStreamRecordsRequestAndReplaysRound(): void
     {

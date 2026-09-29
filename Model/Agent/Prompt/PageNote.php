@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Agent\Prompt;
 use MageOS\ClaudeConsumerAgent\Api\Data\PageContextInterface;
 use MageOS\ClaudeConsumerAgent\Model\Data\PageContext;
 
-final class PageNote
+class PageNote
 {
     public const PREFIX = '[Page: ';
 

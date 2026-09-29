@@ -12,7 +12,7 @@ use MageOS\ClaudeConsumerAgent\Model\Data\PageContext;
 use MageOS\ClaudeConsumerAgent\Model\Data\UserPreferences;
 use PHPUnit\Framework\TestCase;
 
-final class DynamicContextTest extends TestCase
+class DynamicContextTest extends TestCase
 {
     private function buildContext(): DynamicContext
     {

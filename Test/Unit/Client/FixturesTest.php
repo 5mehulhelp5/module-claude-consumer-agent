@@ -7,7 +7,7 @@ use MageOS\ClaudeConsumerAgent\Model\Client\Fixtures;
 use MageOS\ClaudeConsumerAgent\Model\Client\RawEvent;
 use PHPUnit\Framework\TestCase;
 
-final class FixturesTest extends TestCase
+class FixturesTest extends TestCase
 {
     private const NAMES = ['text-only', 'tool-use', 'presentation', 'refusal', 'max-tokens'];
 

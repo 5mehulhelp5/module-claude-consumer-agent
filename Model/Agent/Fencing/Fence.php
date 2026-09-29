@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Model\Agent\Fencing;
 
-final class Fence
+class Fence
 {
     public const LABEL = 'storefront_data';
 

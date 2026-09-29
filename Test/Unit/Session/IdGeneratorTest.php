@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Test\Unit\Session;
 use MageOS\ClaudeConsumerAgent\Model\Session\IdGenerator;
 use PHPUnit\Framework\TestCase;
 
-final class IdGeneratorTest extends TestCase
+class IdGeneratorTest extends TestCase
 {
     public function testGenerateReturnsSixtyFourHexCharacters(): void
     {

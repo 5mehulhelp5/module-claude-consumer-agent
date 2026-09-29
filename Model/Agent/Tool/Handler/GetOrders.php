@@ -11,7 +11,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 use MageOS\ClaudeConsumerAgent\Model\Agent\ToolOutcome;
 
-final class GetOrders implements HandlerInterface
+class GetOrders implements HandlerInterface
 {
     private const DEFAULT_LIMIT = 5;
     private const MAX_LIMIT = 20;

@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Agent\Tool;
 
 use MageOS\ClaudeConsumerAgent\Api\Tool\HandlerInterface;
 
-final class Definition
+class Definition
 {
     public const STATUS_MAX_LENGTH = 60;
     public const STATUS_DESCRIPTION = 'A few plain words the customer sees while this runs';

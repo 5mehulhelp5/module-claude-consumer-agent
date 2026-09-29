@@ -37,7 +37,7 @@ use MageOS\ClaudeConsumerAgent\Model\Data\Product;
 use MageOS\ClaudeConsumerAgent\Model\Data\ProductDetails;
 use MageOS\ClaudeConsumerAgent\Model\Data\UserPreferences;
 
-final class MagentoStorefront implements StorefrontBackendInterface
+class MagentoStorefront implements StorefrontBackendInterface
 {
     private const MAX_VARIANTS = 60;
     private const VARIANT_CAP_NOTE = 'More variants exist; ask about a size or colour to narrow the list.';

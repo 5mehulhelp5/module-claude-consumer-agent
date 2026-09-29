@@ -12,7 +12,7 @@ use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Data\Product;
 
-final class ProductMapper
+class ProductMapper
 {
     public function __construct(
         private readonly \Magento\Store\Model\StoreManagerInterface $storeManager,

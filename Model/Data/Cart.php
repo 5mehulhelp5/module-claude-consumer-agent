@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Data;
 use MageOS\ClaudeConsumerAgent\Api\Data\CartInterface;
 use MageOS\ClaudeConsumerAgent\Api\Data\CartItemInterface;
 
-final class Cart implements CartInterface
+class Cart implements CartInterface
 {
     public function __construct(
         private readonly array $items = [],

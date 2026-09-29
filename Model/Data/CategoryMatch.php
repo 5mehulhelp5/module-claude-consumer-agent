@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Data;
 
 use MageOS\ClaudeConsumerAgent\Api\Data\CategoryMatchInterface;
 
-final class CategoryMatch implements CategoryMatchInterface
+class CategoryMatch implements CategoryMatchInterface
 {
     public function __construct(
         private readonly int $categoryId,

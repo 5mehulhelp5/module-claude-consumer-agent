@@ -8,7 +8,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Gate\Options;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 use PHPUnit\Framework\TestCase;
 
-final class OptionsTest extends TestCase
+class OptionsTest extends TestCase
 {
     private Options $gate;
 

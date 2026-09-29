@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Model\Session;
 
-final class IdGenerator
+class IdGenerator
 {
     public function generate(): string
     {

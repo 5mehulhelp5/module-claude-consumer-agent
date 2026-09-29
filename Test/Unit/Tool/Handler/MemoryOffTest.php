@@ -10,7 +10,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\MemoryOff;
 use PHPUnit\Framework\TestCase;
 
-final class MemoryOffTest extends TestCase
+class MemoryOffTest extends TestCase
 {
     public function testAlwaysReturnsTheNoMemoryLine(): void
     {

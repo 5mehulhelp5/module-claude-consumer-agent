@@ -15,7 +15,7 @@ use MageOS\ClaudeConsumerAgent\Model\Data\SearchFilters;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-final class BrandCapSearchDecoratorTest extends TestCase
+class BrandCapSearchDecoratorTest extends TestCase
 {
     private function context(int $storeId = 2): SessionContext
     {

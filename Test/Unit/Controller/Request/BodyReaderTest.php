@@ -8,7 +8,7 @@ use MageOS\ClaudeConsumerAgent\Controller\Request\BodyReader;
 use MageOS\ClaudeConsumerAgent\Model\Agent\AgentConfig;
 use PHPUnit\Framework\TestCase;
 
-final class BodyReaderTest extends TestCase
+class BodyReaderTest extends TestCase
 {
     private function request(string $content): Http
     {

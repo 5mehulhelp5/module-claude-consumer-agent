@@ -7,7 +7,7 @@ use Magento\Sales\Model\Order;
 use MageOS\ClaudeConsumerAgent\Api\Backend\OrderStatusMapperInterface;
 use MageOS\ClaudeConsumerAgent\Api\Data\OrderInterface;
 
-final class OrderStatusMapper implements OrderStatusMapperInterface
+class OrderStatusMapper implements OrderStatusMapperInterface
 {
     public function map(Order $order, bool $hasTracking): string
     {

@@ -9,7 +9,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Agent\Prompt;
  * rows happens before this class is called; a fact missing a resolved title falls back to
  * its own identifier.
  */
-final class StoreFactsBlock
+class StoreFactsBlock
 {
     private const HEADER = "# Store facts\n\nServices and terms this store offers, with the words "
         . "customers use for them. Answer a service question from this list or from a "

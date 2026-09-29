@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Model\Client\Exception;
 
-final class RateLimited extends ApiException
+class RateLimited extends ApiException
 {
     public function __construct(
         string $message,

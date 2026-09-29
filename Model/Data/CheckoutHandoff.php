@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Data;
 
 use MageOS\ClaudeConsumerAgent\Api\Data\CheckoutHandoffInterface;
 
-final class CheckoutHandoff implements CheckoutHandoffInterface
+class CheckoutHandoff implements CheckoutHandoffInterface
 {
     public function __construct(
         private readonly string $url,

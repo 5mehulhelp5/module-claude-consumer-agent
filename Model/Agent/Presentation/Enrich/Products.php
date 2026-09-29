@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Exception\PresentationRefused;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\EnrichmentContext;
 
-final class Products
+class Products
 {
     private const MAX_ITEMS = 12;
 

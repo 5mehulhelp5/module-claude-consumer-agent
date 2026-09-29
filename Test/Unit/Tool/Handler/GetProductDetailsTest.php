@@ -13,7 +13,7 @@ use MageOS\ClaudeConsumerAgent\Model\Data\Product;
 use MageOS\ClaudeConsumerAgent\Model\Data\ProductDetails;
 use PHPUnit\Framework\TestCase;
 
-final class GetProductDetailsTest extends TestCase
+class GetProductDetailsTest extends TestCase
 {
     private const SERIALIZER_CLASS = \MageOS\ClaudeConsumerAgent\Model\Agent\Serializer::class;
     private const FENCE_CLASS = \MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Fence::class;

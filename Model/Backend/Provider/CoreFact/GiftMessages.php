@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Backend\Provider\CoreFact;
 use Magento\Store\Model\ScopeInterface;
 use MageOS\ClaudeConsumerAgent\Api\Prompt\CoreFactProviderInterface;
 
-final class GiftMessages implements CoreFactProviderInterface
+class GiftMessages implements CoreFactProviderInterface
 {
     private const PATH_ALLOW_ORDER = 'sales/gift_options/allow_order';
     private const PATH_ALLOW_ITEMS = 'sales/gift_options/allow_items';

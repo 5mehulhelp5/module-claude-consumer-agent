@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Agent\Presentation;
 
 use MageOS\ClaudeConsumerAgent\Api\Presentation\PresentationExtensionInterface;
 
-final class Registry
+class Registry
 {
     private const TEMPLATE_PREFIX = 'MageOS_ClaudeConsumerAgent::cards/';
 

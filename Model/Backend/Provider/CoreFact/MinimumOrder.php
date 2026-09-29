@@ -7,7 +7,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Store\Model\ScopeInterface;
 use MageOS\ClaudeConsumerAgent\Api\Prompt\CoreFactProviderInterface;
 
-final class MinimumOrder implements CoreFactProviderInterface
+class MinimumOrder implements CoreFactProviderInterface
 {
     private const PATH_ACTIVE = 'sales/minimum_order/active';
     private const PATH_AMOUNT = 'sales/minimum_order/amount';

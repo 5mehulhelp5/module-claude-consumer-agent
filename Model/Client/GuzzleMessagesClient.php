@@ -13,7 +13,7 @@ use Psr\Http\Message\StreamInterface;
  * stream a read timeout surfaces as fread() returning false rather than an empty string, which
  * is why the reader below separates a timed-out read from a genuine read failure.
  */
-final class GuzzleMessagesClient implements MessagesClientInterface
+class GuzzleMessagesClient implements MessagesClientInterface
 {
     public const ENDPOINT = 'https://api.anthropic.com/v1/messages';
     public const API_VERSION = '2023-06-01';

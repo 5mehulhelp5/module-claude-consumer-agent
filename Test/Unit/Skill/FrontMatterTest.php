@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Test\Unit\Skill;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Skill\FrontMatter;
 use PHPUnit\Framework\TestCase;
 
-final class FrontMatterTest extends TestCase
+class FrontMatterTest extends TestCase
 {
     private function skillsDir(): string
     {

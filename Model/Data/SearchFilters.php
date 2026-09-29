@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Data;
 
 use MageOS\ClaudeConsumerAgent\Api\Data\SearchFiltersInterface;
 
-final class SearchFilters implements SearchFiltersInterface
+class SearchFilters implements SearchFiltersInterface
 {
     public function __construct(
         private readonly ?string $category = null,

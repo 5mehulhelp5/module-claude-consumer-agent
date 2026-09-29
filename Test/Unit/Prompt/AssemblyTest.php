@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Test\Unit\Prompt;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\Assembly;
 use PHPUnit\Framework\TestCase;
 
-final class AssemblyTest extends TestCase
+class AssemblyTest extends TestCase
 {
     private function tools(): array
     {

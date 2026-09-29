@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Test\Unit\Agent;
 use MageOS\ClaudeConsumerAgent\Model\Agent\AgentConfig;
 use PHPUnit\Framework\TestCase;
 
-final class AgentConfigTest extends TestCase
+class AgentConfigTest extends TestCase
 {
     public function testDefaultsMatchConfigXmlDefaults(): void
     {

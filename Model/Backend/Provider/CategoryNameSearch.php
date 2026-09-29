@@ -9,7 +9,7 @@ use MageOS\ClaudeConsumerAgent\Api\Data\CategoryMatchInterface;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Data\CategoryMatch;
 
-final class CategoryNameSearch implements CategorySearchProviderInterface
+class CategoryNameSearch implements CategorySearchProviderInterface
 {
     private const MIN_WORD_LENGTH = 3;
     private const CANDIDATE_CAP = 200;

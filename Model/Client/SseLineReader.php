@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Model\Client;
 
-final class SseLineReader
+class SseLineReader
 {
     private const MAX_FRAME_BYTES = 1_048_576;
 

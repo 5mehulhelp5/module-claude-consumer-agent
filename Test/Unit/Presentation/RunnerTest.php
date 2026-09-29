@@ -25,7 +25,7 @@ use MageOS\ClaudeConsumerAgent\Model\Data\ProductDetails;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-final class RunnerTest extends TestCase
+class RunnerTest extends TestCase
 {
     private const SERIALIZER_CLASS = \MageOS\ClaudeConsumerAgent\Model\Agent\Serializer::class;
     private const FENCE_CLASS = \MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Fence::class;

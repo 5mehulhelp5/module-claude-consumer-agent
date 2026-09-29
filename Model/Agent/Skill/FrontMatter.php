@@ -7,7 +7,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Agent\Skill;
  * Reads the SKILL.md frontmatter dialect: a "---" fenced block of "key: value" lines,
  * a value may continue on indented lines, before the trimmed body.
  */
-final class FrontMatter
+class FrontMatter
 {
     public function parse(string $text, string $path): Skill
     {

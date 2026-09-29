@@ -8,7 +8,7 @@ use MageOS\ClaudeConsumerAgent\Model\Session\TurnLog;
 use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 
-final class TurnLogTest extends TestCase
+class TurnLogTest extends TestCase
 {
     public function testRecordInsertsTheGivenRowUnchanged(): void
     {

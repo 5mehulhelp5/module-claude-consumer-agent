@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Limits;
 
 use MageOS\ClaudeConsumerAgent\Model\Agent\Event;
 
-final class BusyEvent
+class BusyEvent
 {
     public function event(int $retryAfter): Event
     {

@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Config\Source;
 
 use Magento\Framework\Data\OptionSourceInterface;
 
-final class SurfaceMode implements OptionSourceInterface
+class SurfaceMode implements OptionSourceInterface
 {
     public const AUTO = 'auto';
     public const SIDE_CART = 'side_cart';

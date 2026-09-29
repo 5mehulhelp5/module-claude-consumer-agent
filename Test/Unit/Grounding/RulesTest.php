@@ -16,7 +16,7 @@ use MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig;
 use MageOS\ClaudeConsumerAgent\Model\Data\PageContext;
 use PHPUnit\Framework\TestCase;
 
-final class RulesTest extends TestCase
+class RulesTest extends TestCase
 {
     private StoreConfig $storeConfig;
     private array $receivedCandidates = [];

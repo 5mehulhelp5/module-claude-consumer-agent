@@ -12,7 +12,7 @@ use MageOS\ClaudeConsumerAgent\Model\Client\Fixtures;
 use MageOS\ClaudeConsumerAgent\Model\Client\RawEvent;
 use PHPUnit\Framework\TestCase;
 
-final class StreamedRoundTest extends TestCase
+class StreamedRoundTest extends TestCase
 {
     private const FIXTURES = ['text-only', 'tool-use', 'presentation', 'refusal', 'max-tokens'];
 

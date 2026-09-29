@@ -12,7 +12,7 @@ use MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-final class StoreConfigTest extends TestCase
+class StoreConfigTest extends TestCase
 {
     private function buildStoreConfig(
         ScopeConfigInterface&MockObject $scopeConfig,

@@ -7,7 +7,7 @@ use Magento\Framework\View\LayoutInterface;
 use Magento\Store\Model\ScopeInterface;
 use MageOS\ClaudeConsumerAgent\Model\Config\Source\SurfaceMode;
 
-final class Resolver
+class Resolver
 {
     private const PATH_CHECKOUT_SIDEBAR_DISPLAY = 'checkout/sidebar/display';
     private const CART_DRAWER_BLOCK = 'cart-drawer';

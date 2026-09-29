@@ -26,7 +26,7 @@ use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 
-final class GuzzleMessagesClientTest extends TestCase
+class GuzzleMessagesClientTest extends TestCase
 {
     private const SSE_TEXT = "event: message_start\n"
         . "data: {\"type\":\"message_start\",\"message\":{\"usage\":{\"input_tokens\":10,\"output_tokens\":1,"

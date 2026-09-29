@@ -10,7 +10,7 @@ use MageOS\ClaudeConsumerAgent\Model\Backend\Provider\FreeShippingFacts;
 use MageOS\ClaudeConsumerAgent\Model\Data\PageContext;
 use PHPUnit\Framework\TestCase;
 
-final class FreeShippingFactsTest extends TestCase
+class FreeShippingFactsTest extends TestCase
 {
     private function context(): SessionContext
     {

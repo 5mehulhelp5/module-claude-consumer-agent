@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Agent\Turn;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Executor;
 use MageOS\ClaudeConsumerAgent\Model\Agent\ToolOutcome;
 
-final class History
+class History
 {
     private const INTERRUPTED_TEXT = 'Interrupted before this tool finished.';
 

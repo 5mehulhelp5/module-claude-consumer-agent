@@ -15,7 +15,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\LoadSkill;
 use PHPUnit\Framework\TestCase;
 
-final class LoadSkillTest extends TestCase
+class LoadSkillTest extends TestCase
 {
     private string $modulePath;
 

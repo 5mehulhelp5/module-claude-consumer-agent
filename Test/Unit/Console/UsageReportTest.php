@@ -10,7 +10,7 @@ use MageOS\ClaudeConsumerAgent\Console\Command\UsageReport;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 
-final class UsageReportTest extends TestCase
+class UsageReportTest extends TestCase
 {
     public function testDailyAndTotalsTablesArePrintedWithComputedAverages(): void
     {

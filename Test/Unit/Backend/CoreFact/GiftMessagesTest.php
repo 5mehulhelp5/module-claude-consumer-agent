@@ -7,7 +7,7 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use MageOS\ClaudeConsumerAgent\Model\Backend\Provider\CoreFact\GiftMessages;
 use PHPUnit\Framework\TestCase;
 
-final class GiftMessagesTest extends TestCase
+class GiftMessagesTest extends TestCase
 {
     public function testAvailableWhenAllowOrderIsOn(): void
     {

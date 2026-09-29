@@ -15,7 +15,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\SearchCategories;
 use MageOS\ClaudeConsumerAgent\Model\Data\CategoryMatch;
 use PHPUnit\Framework\TestCase;
 
-final class SearchCategoriesTest extends TestCase
+class SearchCategoriesTest extends TestCase
 {
     private function serializer(): Serializer
     {

@@ -8,7 +8,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Agent\Turn\Exception;
  * Not part of Model\Client\Exception\*: those model a failed HTTP call, this models a
  * stream that started and then reported failure mid-flight.
  */
-final class ApiStreamError extends \RuntimeException
+class ApiStreamError extends \RuntimeException
 {
     public function __construct(
         private readonly string $apiType,

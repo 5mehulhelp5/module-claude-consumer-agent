@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Test\Unit\Grounding;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Grounding\SkuCandidates;
 use PHPUnit\Framework\TestCase;
 
-final class SkuCandidatesTest extends TestCase
+class SkuCandidatesTest extends TestCase
 {
     private SkuCandidates $candidates;
 

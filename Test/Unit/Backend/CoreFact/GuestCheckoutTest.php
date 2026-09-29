@@ -7,7 +7,7 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use MageOS\ClaudeConsumerAgent\Model\Backend\Provider\CoreFact\GuestCheckout;
 use PHPUnit\Framework\TestCase;
 
-final class GuestCheckoutTest extends TestCase
+class GuestCheckoutTest extends TestCase
 {
     public function testAllowedWhenFlagIsOn(): void
     {

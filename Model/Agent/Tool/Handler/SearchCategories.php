@@ -10,7 +10,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 use MageOS\ClaudeConsumerAgent\Model\Agent\ToolOutcome;
 
-final class SearchCategories implements HandlerInterface
+class SearchCategories implements HandlerInterface
 {
     private const DEFAULT_LIMIT = 8;
     private const MAX_LIMIT = 20;

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Model\Client;
 
-final class ApiKey
+class ApiKey
 {
     public function __construct(private readonly string $value)
     {

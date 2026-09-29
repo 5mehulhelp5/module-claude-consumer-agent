@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Data;
 
 use MageOS\ClaudeConsumerAgent\Api\Data\FulfillmentOptionInterface;
 
-final class FulfillmentOption implements FulfillmentOptionInterface
+class FulfillmentOption implements FulfillmentOptionInterface
 {
     public function __construct(
         private readonly string $method,

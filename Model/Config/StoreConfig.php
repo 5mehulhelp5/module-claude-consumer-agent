@@ -10,7 +10,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\AgentConfig;
 /**
  * The API key path carries the Encrypted backend model in config.xml, so scope config already returns it decrypted.
  */
-final class StoreConfig
+class StoreConfig
 {
     private const PATH_GENERAL_ENABLED = 'ai_integration/aiagent/general/enabled';
     private const PATH_GENERAL_SURFACE_MODE = 'ai_integration/aiagent/general/surface_mode';

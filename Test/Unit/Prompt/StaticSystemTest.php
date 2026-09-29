@@ -26,7 +26,7 @@ use MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use PHPUnit\Framework\TestCase;
 
-final class StaticSystemTest extends TestCase
+class StaticSystemTest extends TestCase
 {
     private function passthroughTitleResolver(): StoreFactTitleResolverInterface
     {

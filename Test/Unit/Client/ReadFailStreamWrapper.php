@@ -7,7 +7,7 @@ namespace MageOS\ClaudeConsumerAgent\Test\Unit\Client;
  * A stream whose reads fail without ever setting the timed_out flag, so a test can tell a
  * genuine read failure apart from the timed-out read that a chunked response produces.
  */
-final class ReadFailStreamWrapper
+class ReadFailStreamWrapper
 {
     public $context;
 

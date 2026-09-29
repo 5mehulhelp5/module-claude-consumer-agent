@@ -16,7 +16,7 @@ use MageOS\ClaudeConsumerAgent\Model\Surface\Resolver;
 use MageOS\ClaudeConsumerAgent\ViewModel\Assistant;
 use PHPUnit\Framework\TestCase;
 
-final class AssistantTest extends TestCase
+class AssistantTest extends TestCase
 {
     private function buildAssistant(string $fullActionName = 'cms_index_index', array $configValues = []): Assistant
     {

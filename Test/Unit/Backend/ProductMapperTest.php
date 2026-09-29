@@ -32,7 +32,7 @@ use MageOS\ClaudeConsumerAgent\Model\Data\PageContext;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-final class ProductMapperTest extends TestCase
+class ProductMapperTest extends TestCase
 {
     private function context(): SessionContext
     {

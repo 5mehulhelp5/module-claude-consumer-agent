@@ -29,7 +29,7 @@ use MageOS\ClaudeConsumerAgent\Model\Data\UserPreferences;
  * seeded from a case's state, with cart writes mutating an in-memory line list. No tool
  * call ever leaves this object, so a fixture run never touches the real storefront.
  */
-final class FakeBackend implements StorefrontBackendInterface
+class FakeBackend implements StorefrontBackendInterface
 {
     private array $cart = [];
 

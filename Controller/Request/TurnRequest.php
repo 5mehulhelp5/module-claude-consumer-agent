@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Controller\Request;
 
-final class TurnRequest
+class TurnRequest
 {
     public function __construct(
         public readonly ?string $sessionId,

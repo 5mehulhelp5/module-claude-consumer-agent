@@ -7,7 +7,7 @@ use MageOS\ClaudeConsumerAgent\Model\Client\RawEvent;
 use MageOS\ClaudeConsumerAgent\Model\Client\SseLineReader;
 use PHPUnit\Framework\TestCase;
 
-final class SseLineReaderTest extends TestCase
+class SseLineReaderTest extends TestCase
 {
     private function collect(iterable $chunks): array
     {

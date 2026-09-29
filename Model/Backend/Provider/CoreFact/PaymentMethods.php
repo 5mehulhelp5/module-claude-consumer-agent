@@ -5,7 +5,7 @@ namespace MageOS\ClaudeConsumerAgent\Model\Backend\Provider\CoreFact;
 
 use MageOS\ClaudeConsumerAgent\Api\Prompt\CoreFactProviderInterface;
 
-final class PaymentMethods implements CoreFactProviderInterface
+class PaymentMethods implements CoreFactProviderInterface
 {
     public function __construct(
         private readonly \Magento\Payment\Api\PaymentMethodListInterface $paymentMethodList,

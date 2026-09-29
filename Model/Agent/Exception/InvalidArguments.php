@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Model\Agent\Exception;
 
-final class InvalidArguments extends \RuntimeException
+class InvalidArguments extends \RuntimeException
 {
     private readonly array $errors;
 

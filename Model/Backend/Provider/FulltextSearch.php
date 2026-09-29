@@ -11,7 +11,7 @@ use MageOS\ClaudeConsumerAgent\Api\Backend\SearchProviderInterface;
 use MageOS\ClaudeConsumerAgent\Api\Data\SearchFiltersInterface;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 
-final class FulltextSearch implements SearchProviderInterface
+class FulltextSearch implements SearchProviderInterface
 {
     private const SORT_BEST_SELLERS = 'best_sellers';
     private const BEST_SELLERS_PAGE_SIZE_MULTIPLIER = 5;

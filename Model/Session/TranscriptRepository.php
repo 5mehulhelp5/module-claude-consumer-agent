@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Model\Session;
 
-final class TranscriptRepository
+class TranscriptRepository
 {
     public function __construct(
         private readonly \MageOS\ClaudeConsumerAgent\Model\Session\ResourceModel\Message $resource,

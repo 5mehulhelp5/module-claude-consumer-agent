@@ -25,7 +25,7 @@ use ReflectionNamedType;
 use ReflectionParameter;
 use Throwable;
 
-final class RegistryTest extends TestCase
+class RegistryTest extends TestCase
 {
     private const SERIALIZER_CLASS = \MageOS\ClaudeConsumerAgent\Model\Agent\Serializer::class;
     private const FENCE_CLASS = \MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Fence::class;
@@ -143,8 +143,7 @@ final class RegistryTest extends TestCase
 
     /**
      * A tiny reflection-based container: mocks interface parameters and recursively
-     * builds real instances of concrete (often final) parameters, since PHPUnit cannot
-     * generate a test double for a final class.
+     * builds real instances of concrete parameters.
      */
     private function autowire(string $className): object
     {

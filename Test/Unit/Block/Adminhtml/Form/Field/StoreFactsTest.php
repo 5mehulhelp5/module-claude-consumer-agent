@@ -12,7 +12,7 @@ use MageOS\ClaudeConsumerAgent\Block\Adminhtml\Form\Field\StoreFacts;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
-final class StoreFactsTest extends TestCase
+class StoreFactsTest extends TestCase
 {
     protected function setUp(): void
     {

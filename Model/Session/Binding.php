@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Model\Session;
 
-final class Binding
+class Binding
 {
     public function __construct(
         public readonly string $sessionId,

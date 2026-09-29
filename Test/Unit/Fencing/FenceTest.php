@@ -7,7 +7,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Fence;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Sanitizer;
 use PHPUnit\Framework\TestCase;
 
-final class FenceTest extends TestCase
+class FenceTest extends TestCase
 {
     private Fence $fence;
 

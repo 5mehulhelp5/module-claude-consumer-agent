@@ -8,7 +8,7 @@ use MageOS\ClaudeConsumerAgent\Api\Data\OrderInterface;
 use MageOS\ClaudeConsumerAgent\Model\Backend\Provider\OrderStatusMapper;
 use PHPUnit\Framework\TestCase;
 
-final class OrderStatusMapperTest extends TestCase
+class OrderStatusMapperTest extends TestCase
 {
     private function mapper(): OrderStatusMapper
     {

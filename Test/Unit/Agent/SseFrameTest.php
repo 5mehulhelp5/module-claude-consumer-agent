@@ -7,7 +7,7 @@ use MageOS\ClaudeConsumerAgent\Model\Agent\Event;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Event\SseFrame;
 use PHPUnit\Framework\TestCase;
 
-final class SseFrameTest extends TestCase
+class SseFrameTest extends TestCase
 {
     public function testEncodeShapesFrame(): void
     {

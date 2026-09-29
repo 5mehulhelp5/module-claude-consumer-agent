@@ -6,7 +6,7 @@ namespace MageOS\ClaudeConsumerAgent\Test\Unit\Agent\Tool;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Definition;
 use PHPUnit\Framework\TestCase;
 
-final class DefinitionTest extends TestCase
+class DefinitionTest extends TestCase
 {
     private function buildDefinition(bool $takesStatus, array $inputSchema = []): Definition
     {

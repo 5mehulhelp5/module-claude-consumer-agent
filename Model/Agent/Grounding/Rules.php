@@ -7,7 +7,7 @@ use MageOS\ClaudeConsumerAgent\Api\Data\PageContextInterface;
 use MageOS\ClaudeConsumerAgent\Model\Agent\AgentConfig;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
 
-final class Rules
+class Rules
 {
     public function __construct(
         private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Lexicon $lexicon,

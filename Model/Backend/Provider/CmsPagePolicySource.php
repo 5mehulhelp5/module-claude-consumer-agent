@@ -8,7 +8,7 @@ use MageOS\ClaudeConsumerAgent\Api\Backend\PolicySourceInterface;
 use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
 use MageOS\ClaudeConsumerAgent\Model\Data\Policy;
 
-final class CmsPagePolicySource implements PolicySourceInterface
+class CmsPagePolicySource implements PolicySourceInterface
 {
     private const CACHE_TAG = 'AIAGENT';
     private const CACHE_TAG_POLICIES = 'cms_p';

@@ -13,7 +13,7 @@ use MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
-final class CartAskTest extends TestCase
+class CartAskTest extends TestCase
 {
     private function buildBlock(ScopeConfigInterface $scopeConfig): CartAsk
     {

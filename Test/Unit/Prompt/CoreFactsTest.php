@@ -7,7 +7,7 @@ use MageOS\ClaudeConsumerAgent\Api\Prompt\CoreFactProviderInterface;
 use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\CoreFacts;
 use PHPUnit\Framework\TestCase;
 
-final class CoreFactsTest extends TestCase
+class CoreFactsTest extends TestCase
 {
     private function provider(?string $line): CoreFactProviderInterface
     {

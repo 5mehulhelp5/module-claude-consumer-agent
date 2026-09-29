@@ -11,7 +11,7 @@ use Magento\Framework\Event\Observer;
 use MageOS\ClaudeConsumerAgent\Observer\HyvaConfigGenerateBefore;
 use PHPUnit\Framework\TestCase;
 
-final class HyvaConfigGenerateBeforeTest extends TestCase
+class HyvaConfigGenerateBeforeTest extends TestCase
 {
     private function buildObserver(DataObject $config): Observer
     {

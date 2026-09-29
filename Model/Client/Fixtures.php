@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\ClaudeConsumerAgent\Model\Client;
 
-final class Fixtures
+class Fixtures
 {
     public static function path(string $name): string
     {
