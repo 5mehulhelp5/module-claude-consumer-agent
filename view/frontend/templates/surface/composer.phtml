@@ -33,6 +33,7 @@ $autofocus = (bool)$block->getData('autofocus');
             rows="1"
             <?= $autofocus ? 'autofocus' : '' ?>
             :disabled="disabled"
+            :maxlength="maxLength"
             :placeholder="placeholder"
             aria-label="<?= $escaper->escapeHtmlAttr(__('Message the assistant')) ?>"
             class="form-textarea flex-1 w-full min-h-11 resize-none max-h-32"

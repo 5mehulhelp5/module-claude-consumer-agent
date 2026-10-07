@@ -11,8 +11,6 @@ class Counters
     private const CACHE_TAG = 'AIAGENT_LIMITS';
     private const SESSION_TTL = 600;
     private const IP_TTL = 60;
-    private const SESSION_RETRY_AFTER = 60;
-    private const IP_RETRY_AFTER = 20;
     private const LOCK_PREFIX = 'aiagent:counters:';
     private const LOCK_TIMEOUT = 2;
 
@@ -35,11 +33,11 @@ class Counters
             $ipCount = (int)$this->cache->load($ipKey);
             if ($sessionCount >= $config->turnsPerSessionWindow) {
                 $this->trip($sessionId, 'window');
-                throw new LimitExceeded('session turns per window exceeded', self::SESSION_RETRY_AFTER);
+                throw new LimitExceeded('session turns per window exceeded', $this->secondsLeft(self::SESSION_TTL));
             }
             if ($ipCount >= $config->turnsPerIpMinute) {
                 $this->trip($sessionId, 'ip');
-                throw new LimitExceeded('turns per ip minute exceeded', self::IP_RETRY_AFTER);
+                throw new LimitExceeded('turns per ip minute exceeded', $this->secondsLeft(self::IP_TTL));
             }
             $this->cache->save((string)($sessionCount + 1), $sessionKey, [self::CACHE_TAG], self::SESSION_TTL);
             $this->cache->save((string)($ipCount + 1), $ipKey, [self::CACHE_TAG], self::IP_TTL);
@@ -56,6 +54,11 @@ class Counters
     private function bucketKey(string $prefix, string $subject, int $ttl): string
     {
         return $prefix . substr(sha1($subject), 0, 24) . '_' . intdiv(time(), $ttl);
+    }
+
+    private function secondsLeft(int $ttl): int
+    {
+        return $ttl - time() % $ttl;
     }
 
     private function trip(string $sessionId, string $kind): void

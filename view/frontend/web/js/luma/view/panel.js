@@ -45,10 +45,16 @@ define([
                 return state.suggestions().length > 0;
             });
             this.placeholder = ko.pureComputed(function () {
+                if (state.limited()) {
+                    return self.settings.i18n.limited;
+                }
                 return self.hasTranscript() ? self.settings.i18n.placeholderReply : self.settings.i18n.placeholder;
             });
+            this.inputDisabled = ko.pureComputed(function () {
+                return state.turn.running() || state.limited();
+            });
             this.cannotSend = ko.pureComputed(function () {
-                return state.turn.running() || self.text().trim() === '';
+                return self.inputDisabled() || self.text().trim() === '';
             });
             this.cartLabel = ko.pureComputed(function () {
                 var cart = state.cart() || {},

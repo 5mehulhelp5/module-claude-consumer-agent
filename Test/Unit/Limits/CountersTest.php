@@ -56,7 +56,13 @@ class CountersTest extends TestCase
         $this->fail('No window counter was saved.');
     }
 
-    public function testSessionWindowCapThrowsWithRetryAfterSixty(): void
+    private function assertWaitsForTheBlock(int $block, int $retryAfter): void
+    {
+        $expected = $block - time() % $block;
+        $this->assertContains($retryAfter, [$expected, $expected === $block ? 1 : $expected + 1]);
+    }
+
+    public function testSessionWindowCapWaitsUntilTheTenMinuteBlockEnds(): void
     {
         $cache = $this->createMock(CacheInterface::class);
         $cache->method('load')->willReturnCallback(
@@ -73,11 +79,11 @@ class CountersTest extends TestCase
             $counters->bump('session-1', 'php-1', '10.0.0.1', $config);
             $this->fail('Expected LimitExceeded was not thrown.');
         } catch (LimitExceeded $exception) {
-            $this->assertSame(60, $exception->getRetryAfter());
+            $this->assertWaitsForTheBlock(600, $exception->getRetryAfter());
         }
     }
 
-    public function testIpCapThrowsWithRetryAfterTwenty(): void
+    public function testIpCapWaitsUntilTheMinuteEnds(): void
     {
         $cache = $this->createMock(CacheInterface::class);
         $cache->method('load')->willReturnCallback(
@@ -94,7 +100,7 @@ class CountersTest extends TestCase
             $counters->bump('session-2', 'php-2', '10.0.0.2', $config);
             $this->fail('Expected LimitExceeded was not thrown.');
         } catch (LimitExceeded $exception) {
-            $this->assertSame(20, $exception->getRetryAfter());
+            $this->assertWaitsForTheBlock(60, $exception->getRetryAfter());
         }
     }
 
@@ -154,7 +160,7 @@ class CountersTest extends TestCase
             $counters->bump('session-5', 'php-5', '10.0.0.9', $config);
             $this->fail('Expected LimitExceeded was not thrown.');
         } catch (LimitExceeded $exception) {
-            $this->assertSame(60, $exception->getRetryAfter());
+            $this->assertWaitsForTheBlock(600, $exception->getRetryAfter());
         }
     }
 
@@ -229,7 +235,7 @@ class CountersTest extends TestCase
             $counters->bump('agent-d', 'php-d', '10.0.0.6', $config);
             $this->fail('Expected LimitExceeded was not thrown.');
         } catch (LimitExceeded $exception) {
-            $this->assertSame(60, $exception->getRetryAfter());
+            $this->assertWaitsForTheBlock(600, $exception->getRetryAfter());
         }
 
         $this->assertSame('1', $store[$windowKey]);

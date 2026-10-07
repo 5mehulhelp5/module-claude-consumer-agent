@@ -281,12 +281,16 @@ class IndexTest extends TestCase
         $index->execute();
     }
 
-    public function testBusyResultWhenCountersThrowLimitExceeded(): void
+    public function testARateLimitAnswersWithItsOwnEventAndTheWaitUntilTheBlockEnds(): void
     {
+        $capturedEvent = null;
         $eventStreamResult = $this->eventStreamResult();
         $eventStreamResult->expects($this->once())
             ->method('setBusy')
-            ->with($this->isInstanceOf(Event::class))
+            ->with($this->callback(function (Event $event) use (&$capturedEvent): bool {
+                $capturedEvent = $event;
+                return true;
+            }))
             ->willReturnSelf();
         $eventStreamResult->expects($this->never())->method('setTurn');
 
@@ -297,6 +301,8 @@ class IndexTest extends TestCase
 
         $result = $index->execute();
         $this->assertSame($eventStreamResult, $result);
+        $this->assertSame('rate_limit', $capturedEvent->data['kind'] ?? null);
+        $this->assertArrayHasKey('retry_after', $capturedEvent->data);
     }
 
     public function testBusyResultWhenBindingRowIsAtTheSessionCapEmitsADistinctSessionCapEvent(): void

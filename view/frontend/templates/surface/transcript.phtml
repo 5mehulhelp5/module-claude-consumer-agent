@@ -26,7 +26,8 @@ use Magento\Framework\Escaper;
             <button
                 type="button"
                 x-show="m.retryAfter"
-                class="mt-2 btn btn-secondary btn-size-sm"
+                :disabled="retryDisabled"
+                class="mt-2 btn btn-secondary btn-size-sm disabled:opacity-50"
                 @click="retry"
             >
                 <?= $escaper->escapeHtml(__('Retry')) ?>

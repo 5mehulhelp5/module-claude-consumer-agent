@@ -61,6 +61,7 @@ class Assistant implements ArgumentInterface
                 'cartEmpty' => (string)__('Your cart is empty'),
                 'placeholder' => (string)__('Ask about products, orders or policies'),
                 'placeholderReply' => (string)__('Type a reply'),
+                'limited' => (string)__('Please wait a moment before you send another message.'),
                 'aiAssistant' => (string)__('AI assistant. '),
                 'needPerson' => (string)__('Need a person? '),
                 'productChips' => [

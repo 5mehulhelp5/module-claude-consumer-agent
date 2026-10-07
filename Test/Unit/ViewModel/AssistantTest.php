@@ -155,6 +155,7 @@ class AssistantTest extends TestCase
                 'cartEmpty',
                 'placeholder',
                 'placeholderReply',
+                'limited',
                 'aiAssistant',
                 'needPerson',
                 'productChips',

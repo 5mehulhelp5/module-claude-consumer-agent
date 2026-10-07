@@ -86,8 +86,10 @@ class Index implements HttpPostActionInterface, CsrfAwareActionInterface
             if ($overSessionCap) {
                 return $this->busyResult($body, $this->busyEvent->sessionCap());
             }
-            $busyRetryAfter = $retryAfter ?? self::SLOT_RETRY_AFTER;
-            return $this->busyResult($body, $this->busyEvent->event($busyRetryAfter));
+            if ($retryAfter !== null) {
+                return $this->busyResult($body, $this->busyEvent->limited($retryAfter));
+            }
+            return $this->busyResult($body, $this->busyEvent->event(self::SLOT_RETRY_AFTER));
         }
         if ($body->wantsStream && $agentConfig->streaming !== Streaming::OFF) {
             return $this->eventStreamFactory->create()->setTurn($binding, $body->message, $context, $slot);
