@@ -15,6 +15,16 @@ class BusyEvent
         );
     }
 
+    public function limited(int $retryAfter): Event
+    {
+        $minutes = (int)ceil($retryAfter / 60);
+        $message = $minutes <= 1
+            ? 'You are sending messages quickly. Please wait a minute, then try again.'
+            : sprintf('You are sending messages quickly. Please wait about %d minutes, then try again.', $minutes);
+
+        return Event::error($message, $retryAfter, 'rate_limit');
+    }
+
     public function sessionCap(): Event
     {
         return Event::error(

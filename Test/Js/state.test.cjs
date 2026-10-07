@@ -357,23 +357,25 @@ test('starting over after a session cap ignores a failed reset request', async (
     }
 });
 
-test('retry sends the closest earlier user message again', () => {
+test('retry after the wait sends the closest earlier user message again', async () => {
     const {state, calls} = loadState();
     const assistant = startedTurn(state);
-    state.apply('error', {message: 'Busy', retry_after: 5});
+    state.apply('error', {message: 'Busy', retry_after: 0.02});
+    await new Promise((resolve) => setTimeout(resolve, 40));
     assistant.retry();
     assert.equal(assistant.notice(), '');
     assert.deepEqual(calls.runs, ['hello', 'hello']);
 });
 
-test('retry while a turn is running keeps the notice and sends nothing', () => {
+test('retry while a turn is running keeps the notice and sends nothing', async () => {
     const {state, calls} = loadState();
     const assistant = startedTurn(state);
-    state.apply('error', {message: 'Busy', retry_after: 5});
+    state.apply('error', {message: 'Busy', retry_after: 0.02});
+    await new Promise((resolve) => setTimeout(resolve, 40));
     state.send('something else');
     assistant.retry();
     assert.equal(assistant.notice(), 'Busy');
-    assert.equal(assistant.retryAfter(), 5);
+    assert.equal(assistant.retryAfter(), 0.02);
     assert.equal(state.transcript().length, 4);
     assert.deepEqual(calls.runs, ['hello', 'something else']);
 });
@@ -433,4 +435,29 @@ test('with keep open switched off the open flag is never read or written', () =>
     });
     assert.deepEqual(win.calls, []);
     assert.equal(win.items.get('aiagent_open'), '1');
+});
+
+test('an error with a wait holds every send until the wait ends', async () => {
+    const {state, calls} = loadState();
+    startedTurn(state);
+    state.apply('error', {message: 'You are sending messages quickly.', retry_after: 0.05, kind: 'rate_limit'});
+
+    state.send('my order came broken');
+    assert.equal(state.transcript().length, 2);
+    assert.equal(calls.runs.length, 1);
+    assert.equal(state.transcript()[1].retryDisabled(), true);
+
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    state.send('my order came broken');
+    assert.equal(state.transcript().length, 4);
+    assert.equal(calls.runs.length, 2);
+});
+
+test('retry during the wait keeps the notice and sends nothing', () => {
+    const {state, calls} = loadState();
+    const assistant = startedTurn(state);
+    state.apply('error', {message: 'Busy', retry_after: 0.02});
+    assistant.retry();
+    assert.equal(assistant.notice(), 'Busy');
+    assert.deepEqual(calls.runs, ['hello']);
 });

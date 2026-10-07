@@ -111,6 +111,8 @@ $configJson = json_encode(
             ready: false,
             mounting: null,
             startPromise: null,
+            limitedUntil: 0,
+            limitTimer: null,
             init() {
                 try {
                     const storage = hyva.getBrowserStorage();
@@ -221,7 +223,7 @@ $configJson = json_encode(
                 window.dispatchEvent(new CustomEvent('ai-agent:transcript-restored'));
             },
             send(text) {
-                if (!this.ready) {
+                if (!this.ready || this.isLimited()) {
                     return;
                 }
                 if (this.turn.running || !text) {
@@ -240,6 +242,16 @@ $configJson = json_encode(
                 }
                 this.pushTurn(text);
                 window.aiAgentReader.run(this, text);
+            },
+            isLimited() {
+                return this.limitedUntil > 0;
+            },
+            limit(seconds) {
+                clearTimeout(this.limitTimer);
+                this.limitedUntil = Date.now() + seconds * 1000;
+                this.limitTimer = setTimeout(() => {
+                    this.limitedUntil = 0;
+                }, seconds * 1000);
             },
             pushTurn(text) {
                 this.suggestions = [];
@@ -287,6 +299,9 @@ $configJson = json_encode(
                         last.notice = data.message;
                         last.error = true;
                         last.retryAfter = data.retry_after || null;
+                        if (data.retry_after) {
+                            this.limit(data.retry_after);
+                        }
                         last.sessionCap = data.kind === 'session_cap';
                         last.streaming = false;
                         this.turn.running = false;

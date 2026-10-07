@@ -18,7 +18,8 @@ function loadStore(responses) {
         addEventListener: (name, handler) => {
             handlers[name] = handler;
         },
-        dispatchEvent: () => true
+        dispatchEvent: () => true,
+        aiAgentReader: {runs: [], run: (current, text) => window.aiAgentReader.runs.push(text)}
     };
     const Alpine = {
         store: (name, value) => {
@@ -34,6 +35,7 @@ function loadStore(responses) {
     handlers['alpine:init']();
     store.config = {urls: {transcript: '/aiagent/session/transcript'}};
     store.sessionId = 'a'.repeat(64);
+    store.window = window;
     return store;
 }
 
@@ -69,4 +71,23 @@ test('restore keeps an assistant message whose text shares a row with the sugges
         {role: 'assistant', text: 'Men or women?', cards: []}
     ]);
     assert.deepEqual(store.suggestions, ['Men', 'Women']);
+});
+
+test('an error with a wait holds every send until the wait ends', async () => {
+    const store = loadStore({});
+    store.ready = true;
+    store.started = true;
+    store.send('hello');
+    store.apply('error', {message: 'You are sending messages quickly.', retry_after: 0.05, kind: 'rate_limit'});
+
+    store.send('my order came broken');
+    assert.equal(store.isLimited(), true);
+    assert.equal(store.transcript.length, 2);
+    assert.deepEqual(store.window.aiAgentReader.runs, ['hello']);
+
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    store.send('my order came broken');
+    assert.equal(store.isLimited(), false);
+    assert.equal(store.transcript.length, 4);
+    assert.deepEqual(store.window.aiAgentReader.runs, ['hello', 'my order came broken']);
 });

@@ -77,6 +77,8 @@ define([
         transcript: ko.observableArray([]),
         suggestions: ko.observableArray([]),
         announcement: ko.observable(''),
+        limited: ko.observable(false),
+        limitTimer: null,
         activity: ko.observable(0),
         isOpen: ko.observable(false),
         cart: customerData.get('cart'),
@@ -138,6 +140,9 @@ define([
             message.retry = function () {
                 self.retry(message);
             };
+            message.retryDisabled = ko.pureComputed(function () {
+                return self.limited();
+            });
             message.startNew = function () {
                 self.reset().catch(function () {});
             };
@@ -215,7 +220,7 @@ define([
         send: function (text) {
             var self = this;
 
-            if (this.turn.running() || !text) {
+            if (this.turn.running() || this.limited() || !text) {
                 return;
             }
             if (!this.started) {
@@ -285,6 +290,9 @@ define([
                 case 'error':
                     last.notice(data.message || this.config.i18n.interrupted);
                     last.retryAfter(data.retry_after || null);
+                    if (data.retry_after) {
+                        this.limit(data.retry_after);
+                    }
                     last.sessionCap(data.kind === 'session_cap');
                     last.streaming(false);
                     this.turn.running(false);
@@ -310,11 +318,21 @@ define([
             this.touch();
         },
 
+        limit: function (seconds) {
+            var self = this;
+
+            clearTimeout(this.limitTimer);
+            this.limited(true);
+            this.limitTimer = setTimeout(function () {
+                self.limited(false);
+            }, seconds * 1000);
+        },
+
         retry: function (message) {
             var messages = this.transcript(),
                 index = messages.indexOf(message);
 
-            if (this.turn.running()) {
+            if (this.turn.running() || this.limited()) {
                 return;
             }
             while (index >= 0 && messages[index].role !== 'user') {

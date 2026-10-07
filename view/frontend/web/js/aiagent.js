@@ -551,9 +551,12 @@ function initAiAgentTranscript() {
             }
             return '';
         },
+        retryDisabled() {
+            return Alpine.store('aiAgent').isLimited();
+        },
         retry() {
             const text = this.lastUserText();
-            if (!text) {
+            if (!text || Alpine.store('aiAgent').isLimited()) {
                 return;
             }
             this.m.notice = '';
@@ -680,7 +683,10 @@ function initAiAgentComposer() {
             }
         },
         disabled() {
-            return this.running();
+            return this.running() || Alpine.store('aiAgent').isLimited();
+        },
+        maxLength() {
+            return Alpine.store('aiAgent').config.maxMessageLength;
         },
         running() {
             return Alpine.store('aiAgent').turn.running;
@@ -701,6 +707,9 @@ function initAiAgentComposer() {
         },
         placeholder() {
             const store = Alpine.store('aiAgent');
+            if (store.isLimited()) {
+                return store.config.i18n.limited;
+            }
             return store.transcript.length > 0 ? store.config.i18n.placeholderReply : store.config.i18n.placeholder;
         },
         chips() {
