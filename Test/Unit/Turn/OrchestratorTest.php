@@ -114,6 +114,23 @@ class OrchestratorTest extends TestCase
         $this->assertArrayNotHasKey('model', $options);
     }
 
+    public function testTextAfterAToolCallStartsANewParagraph(): void
+    {
+        $client = $this->scriptedClient()
+            ->addToolRound([['id' => 'tu1', 'name' => 'tool_a', 'input' => []]], 'Here are three picks.')
+            ->addTextRound('- **Decanter**: for hosts.');
+        [$orchestrator] = $this->buildOrchestrator($client, [$this->definitionForHandler('tool_a', ToolOutcome::ok('shown'))]);
+        $binding = $this->binding();
+
+        $events = iterator_to_array($orchestrator->streamTurn($binding, 'gift', $binding->context), false);
+
+        $text = implode('', array_map(
+            static fn ($event): string => (string)$event->data['text'],
+            array_filter($events, static fn ($event): bool => $event->type === 'text_delta')
+        ));
+        $this->assertSame("Here are three picks.\n\n- **Decanter**: for hosts.", $text);
+    }
+
     public function testStreamTurnRemembersTheCustomerMessageBeforeTheRounds(): void
     {
         $client = $this->scriptedClient()->addTextRound('Hello there.');

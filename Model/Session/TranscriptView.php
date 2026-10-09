@@ -79,13 +79,13 @@ class TranscriptView
 
     private function textOf(array $content): string
     {
-        $text = '';
+        $parts = [];
         foreach ($content as $block) {
-            if (is_array($block) && ($block['type'] ?? null) === 'text') {
-                $text .= (string)($block['text'] ?? '');
+            if (is_array($block) && ($block['type'] ?? null) === 'text' && trim((string)($block['text'] ?? '')) !== '') {
+                $parts[] = trim((string)$block['text']);
             }
         }
-        return $text;
+        return implode("\n\n", $parts);
     }
 
     private function cards(array $content, array $nextContent, Registry $registry, EnrichmentContext $ctx): array
