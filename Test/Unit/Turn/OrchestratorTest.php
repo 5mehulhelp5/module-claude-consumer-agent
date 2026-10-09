@@ -421,6 +421,24 @@ class OrchestratorTest extends TestCase
         $this->assertSame('tu1', $uiEvents[0]->data['stream_id']);
     }
 
+    public function testAForcedToolTheModelRejectsIsRetriedWithAuto(): void
+    {
+        $client = $this->scriptedClient()
+            ->addFailure(new AiInvalidRequestException(__('tool_choice: type "tool" and "any" are not supported for this model.')))
+            ->addToolRound([['id' => 'tu1', 'name' => 'get_product_details', 'input' => ['product_id' => 'SKU-1']]])
+            ->addTextRound('Here it is.');
+        $definitions = [$this->definitionForHandler('get_product_details', ToolOutcome::ok('details'))];
+        [$orchestrator] = $this->buildOrchestrator($client, $definitions);
+        $binding = $this->binding(new PageContext(PageContextInterface::PAGE_TYPE_PRODUCT, 'SKU-1', null));
+
+        $events = iterator_to_array($orchestrator->streamTurn($binding, 'tell me about this', $binding->context), false);
+
+        $this->assertSame(['tool' => 'get_product_details'], $client->calls[0]['options']['tool_choice']);
+        $this->assertSame('auto', $client->calls[1]['options']['tool_choice']);
+        $this->assertEmpty(array_filter($events, static fn ($event): bool => $event->type === 'error'));
+        $this->assertSame('turn_complete', $events[count($events) - 1]->type);
+    }
+
     public function testPresentationWithoutTextIsFollowedByATextOnlyRound(): void
     {
         $client = $this->scriptedClient()->addToolRound([
@@ -432,7 +450,9 @@ class OrchestratorTest extends TestCase
         $events = iterator_to_array($orchestrator->streamTurn($binding, 'is that all?', $binding->context), false);
 
         $this->assertCount(2, $client->calls);
-        $this->assertSame('none', $client->calls[1]['options']['tool_choice']);
+        $this->assertSame('auto', $client->calls[1]['options']['tool_choice']);
+        $messages = $client->calls[1]['request']->getMessages();
+        $this->assertStringContainsString('no reply text yet', $messages[count($messages) - 1]->getContent());
         $texts =array_values(array_filter($events, static fn ($event): bool => $event->type === 'text_delta'));
         $this->assertSame('There are 110 of them.', $texts[0]->data['text']);
         $this->assertSame('turn_complete', $events[count($events) - 1]->type);
