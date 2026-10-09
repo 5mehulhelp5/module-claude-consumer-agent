@@ -286,7 +286,7 @@ class OrchestratorTest extends TestCase
         $client = new FakeClient([
             FakeClient::toolRound([
                 ['id' => 'tu1', 'name' => 'present_suggestions', 'input' => ['suggestions' => ['Show more', 'Compare']]],
-            ]),
+            ], 'Two ways to go from here.'),
         ]);
         $definitions = [$this->presentationDefinition('present_suggestions')];
         [$orchestrator] = $this->buildOrchestrator($client, $definitions);
@@ -302,6 +302,29 @@ class OrchestratorTest extends TestCase
         $uiEvents = array_values(array_filter($events, static fn ($event): bool => $event->type === 'ui'));
         $this->assertNotEmpty($uiEvents);
         $this->assertSame('tu1', $uiEvents[0]->data['stream_id']);
+    }
+
+    public function testPresentationWithoutTextIsFollowedByATextOnlyRound(): void
+    {
+        $client = new FakeClient([
+            FakeClient::toolRound([
+                ['id' => 'tu1', 'name' => 'present_suggestions', 'input' => ['suggestions' => ['Show more', 'Compare']]],
+            ]),
+            FakeClient::textRound('There are 110 of them.', 'end_turn'),
+        ]);
+        [$orchestrator] = $this->buildOrchestrator($client, [$this->presentationDefinition('present_suggestions')]);
+        $binding = $this->binding();
+
+        $events = iterator_to_array($orchestrator->streamTurn($binding, 'is that all?', $binding->context), false);
+
+        $this->assertCount(2, $client->calls);
+        $this->assertSame(['type' => 'none'], $client->calls[1]['tool_choice']);
+        $messages = $client->calls[1]['messages'];
+        $lastResult = $messages[count($messages) - 1]['content'][0];
+        $this->assertStringContainsString('no reply text yet', (string)$lastResult['content']);
+        $texts =array_values(array_filter($events, static fn ($event): bool => $event->type === 'text_delta'));
+        $this->assertSame('There are 110 of them.', $texts[0]->data['text']);
+        $this->assertSame('turn_complete', $events[count($events) - 1]->type);
     }
 
     public function testMaxTokensEndsTheTurn(): void
