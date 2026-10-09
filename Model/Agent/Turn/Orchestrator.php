@@ -34,6 +34,9 @@ class Orchestrator
 
     private const BUSY_MESSAGE = 'The assistant is busy. Please try again in a few seconds.';
 
+    private const TEXT_OWED_NOTE = ' The customer sees these components but no reply text yet. Write one or two sentences now that answer their message, '
+        . 'without repeating what the components show.';
+
     private const SUMMARY_MAX_CHARS = 200;
 
     private const EXCERPT_MAX_CHARS = 1200;
@@ -145,6 +148,7 @@ class Orchestrator
         $client = null;
         $textTail = '';
         $textBreak = false;
+        $textOwed = false;
 
         try {
             try {
@@ -167,7 +171,7 @@ class Orchestrator
             }
             for ($round = 0; $client !== null && $round <= $config->maxToolIterations; $round++) {
                 $now = microtime(true);
-                $forceText = $round === $config->maxToolIterations || $now >= $deadline;
+                $forceText = $textOwed || $round === $config->maxToolIterations || $now >= $deadline;
                 if ($forceText) {
                     $toolChoice = 'none';
                 } elseif ($round === 0 && $forced !== null) {
@@ -331,10 +335,14 @@ class Orchestrator
                         'is_error' => $outcome->isError,
                     ];
                 }
-                $roundOutcomes = $settled;
+                $closes = $config->closeOnPresentation && $history->roundClosesTurn($toolUses, $settled, $executor);
+                $textOwed = $closes && $textTail === '' && $blocks !== [];
+                if ($textOwed) {
+                    $blocks[count($blocks) - 1]['content'] .= self::TEXT_OWED_NOTE;
+                }
                 $history->append(['role' => 'user', 'content' => $blocks]);
                 $settled = [];
-                if ($config->closeOnPresentation && $history->roundClosesTurn($toolUses, $roundOutcomes, $executor)) {
+                if ($closes && !$textOwed) {
                     $stopReason = 'end_turn';
                     break;
                 }

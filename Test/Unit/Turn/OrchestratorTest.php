@@ -404,7 +404,7 @@ class OrchestratorTest extends TestCase
     {
         $client = $this->scriptedClient()->addToolRound([
             ['id' => 'tu1', 'name' => 'present_suggestions', 'input' => ['suggestions' => ['Show more', 'Compare']]],
-        ]);
+        ], 'Two ways to go from here.');
         $definitions = [$this->presentationDefinition('present_suggestions')];
         [$orchestrator] = $this->buildOrchestrator($client, $definitions);
         $binding = $this->binding();
@@ -419,6 +419,23 @@ class OrchestratorTest extends TestCase
         $uiEvents = array_values(array_filter($events, static fn ($event): bool => $event->type === 'ui'));
         $this->assertNotEmpty($uiEvents);
         $this->assertSame('tu1', $uiEvents[0]->data['stream_id']);
+    }
+
+    public function testPresentationWithoutTextIsFollowedByATextOnlyRound(): void
+    {
+        $client = $this->scriptedClient()->addToolRound([
+            ['id' => 'tu1', 'name' => 'present_suggestions', 'input' => ['suggestions' => ['Show more', 'Compare']]],
+        ])->addTextRound('There are 110 of them.');
+        [$orchestrator] = $this->buildOrchestrator($client, [$this->presentationDefinition('present_suggestions')]);
+        $binding = $this->binding();
+
+        $events = iterator_to_array($orchestrator->streamTurn($binding, 'is that all?', $binding->context), false);
+
+        $this->assertCount(2, $client->calls);
+        $this->assertSame('none', $client->calls[1]['options']['tool_choice']);
+        $texts =array_values(array_filter($events, static fn ($event): bool => $event->type === 'text_delta'));
+        $this->assertSame('There are 110 of them.', $texts[0]->data['text']);
+        $this->assertSame('turn_complete', $events[count($events) - 1]->type);
     }
 
     public function testMaxTokensEndsTheTurn(): void
