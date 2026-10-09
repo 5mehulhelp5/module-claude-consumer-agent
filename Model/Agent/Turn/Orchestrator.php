@@ -128,6 +128,8 @@ class Orchestrator
         $lastPromptTokens = 0;
         $cleared = 0;
         $rounds = 0;
+        $textTail = '';
+        $textBreak = false;
 
         try {
             for ($round = 0; $round <= $config->maxToolIterations; $round++) {
@@ -166,10 +168,16 @@ class Orchestrator
                             foreach ($streamed->feed($rawEvent) as $item) {
                                 $emitted = true;
                                 if ($item instanceof TextDelta) {
+                                    if ($textBreak && $textTail !== '' && !str_ends_with($textTail, "\n") && !str_starts_with($item->text, "\n")) {
+                                        yield Event::textDelta("\n\n");
+                                    }
+                                    $textBreak = false;
+                                    $textTail = $item->text;
                                     yield Event::textDelta($item->text);
                                     continue;
                                 }
                                 if ($item instanceof ToolUseClosed) {
+                                    $textBreak = true;
                                     $outcome = $executor->dispatch($item->name, $item->input, $item->id);
                                     $settled[$item->id] = $outcome;
                                     yield Event::toolCall(

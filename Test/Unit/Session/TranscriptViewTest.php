@@ -106,6 +106,19 @@ class TranscriptViewTest extends TestCase
         );
     }
 
+    public function testTextBlocksAroundAToolCallAreSeparateParagraphs(): void
+    {
+        $rows = [
+            ['role' => 'assistant', 'content' => [
+                ['type' => 'text', 'text' => 'Here are three picks.'],
+                ['type' => 'tool_use', 'id' => 'tu1', 'name' => 'lookup', 'input' => []],
+                ['type' => 'text', 'text' => '- **Decanter**: for hosts.'],
+            ]],
+        ];
+        $messages = (new TranscriptView())->render($rows, $this->registry(), $this->ctx(new SessionState()));
+        $this->assertSame("Here are three picks.\n\n- **Decanter**: for hosts.", $messages[0]['text']);
+    }
+
     public function testToolResultOnlyUserMessageIsNotEmittedAsAUserEntry(): void
     {
         $rows = [
