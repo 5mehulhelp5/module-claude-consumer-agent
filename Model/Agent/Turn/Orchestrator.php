@@ -134,11 +134,12 @@ class Orchestrator
         $textTail = '';
         $textBreak = false;
         $textOwed = false;
+        $textAsked = false;
 
         try {
             for ($round = 0; $round <= $config->maxToolIterations; $round++) {
                 $now = microtime(true);
-                $forceText = $textOwed || $round === $config->maxToolIterations || $now >= $deadline;
+                $forceText = $round === $config->maxToolIterations || $now >= $deadline;
                 if ($forceText) {
                     $toolChoice = ['type' => 'none'];
                 } elseif ($round === 0 && $forced !== null) {
@@ -147,7 +148,7 @@ class Orchestrator
                     $toolChoice = ['type' => 'auto'];
                 }
                 $thinking = $config->thinkingEffort === 'off' ? ['type' => 'disabled'] : ['type' => 'adaptive'];
-                $request = $this->assembly->build(
+                $build = fn (array $toolChoice) => $this->assembly->build(
                     $config->modelId,
                     $config->maxTokens,
                     $static,
@@ -159,6 +160,7 @@ class Orchestrator
                     $thinking,
                     $config->thinkingEffort
                 );
+                $request = $build($toolChoice);
 
                 $callStart = microtime(true);
                 $aborted = false;
@@ -204,6 +206,16 @@ class Orchestrator
                             }
                         }
                     } catch (Unauthorized|BadRequest $exception) {
+                        if (!$emitted && $toolChoice['type'] === 'tool' && str_contains($exception->getMessage(), 'tool_choice')) {
+                            $this->logger->info(sprintf(
+                                'forced tool not supported, retried with auto session=%s round=%d',
+                                $this->digest($binding->sessionId),
+                                $round
+                            ));
+                            $toolChoice = ['type' => 'auto'];
+                            $request = $build($toolChoice);
+                            continue;
+                        }
                         $this->logger->error(sprintf(
                             'model call failed session=%s round=%d error=%s',
                             $this->digest($binding->sessionId),
@@ -304,7 +316,8 @@ class Orchestrator
                     ];
                 }
                 $closes = $config->closeOnPresentation && $history->roundClosesTurn($toolUses, $settled, $executor);
-                $textOwed = $closes && $textTail === '' && $blocks !== [];
+                $textOwed = $closes && !$textAsked && $textTail === '' && $blocks !== [];
+                $textAsked = $textAsked || $textOwed;
                 if ($textOwed) {
                     $blocks[count($blocks) - 1]['content'] .= self::TEXT_OWED_NOTE;
                 }
