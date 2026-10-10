@@ -5,7 +5,7 @@
     "license": "OSL-3.0",
     "require": {
         "php": "~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
-        "mage-os/module-ai-base": "dev-main",
+        "mage-os/module-ai-base": "^1.0",
         "ext-intl": "*",
         "ext-json": "*",
         "magento/framework": "*",

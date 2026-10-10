@@ -57,13 +57,10 @@ part without a change to the base module.
 
 ```bash
 cd <magento root>
-composer require mage-os/module-ai-base:dev-main
 composer require mage-os/module-ai-shopping-assistant
 bin/magento module:enable MageOS_AiBase MageOS_AiShoppingAssistant
 bin/magento setup:upgrade
 ```
-
-The AI Base constraint moves from `dev-main` to a tagged release before 2.0.0.
 
 For development, clone the repository into
 `app/code/MageOS/AiShoppingAssistant` instead of the module's `composer require`.
@@ -80,7 +77,6 @@ from the model settings below.
 
 ```bash
 composer remove mage-os/module-claude-consumer-agent
-composer require mage-os/module-ai-base:dev-main
 composer require mage-os/module-ai-shopping-assistant
 rm -rf generated/code/* generated/metadata/*
 bin/magento module:enable MageOS_AiBase MageOS_AiShoppingAssistant

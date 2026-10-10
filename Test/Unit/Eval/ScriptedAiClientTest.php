@@ -8,7 +8,7 @@ use MageOS\AiBase\Api\Data\StreamChunkType;
 use MageOS\AiBase\Model\Chat\ChatMessage;
 use MageOS\AiBase\Model\Chat\ChatRequest;
 use MageOS\AiBase\Api\Data\MessageRole;
-use MageOS\AiBase\Model\Client\AiTransientException;
+use MageOS\AiBase\Exceptions\AiTransientException;
 use MageOS\AiShoppingAssistant\Model\Eval\FixedClientResolver;
 use MageOS\AiShoppingAssistant\Test\Unit\Support\AiBaseDoubles;
 use PHPUnit\Framework\TestCase;
