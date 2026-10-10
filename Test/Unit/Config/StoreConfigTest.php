@@ -1,14 +1,14 @@
 <?php
 declare(strict_types=1);
 
-namespace MageOS\ClaudeConsumerAgent\Test\Unit\Config;
+namespace MageOS\AiShoppingAssistant\Test\Unit\Config;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Api\Data\WebsiteInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use MageOS\ClaudeConsumerAgent\Model\Agent\AgentConfig;
-use MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig;
+use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
+use MageOS\AiShoppingAssistant\Model\Config\StoreConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -289,22 +289,6 @@ class StoreConfigTest extends TestCase
         $this->assertTrue($storeConfig->isEnabled(1));
     }
 
-    public function testApiKeyReturnsConfiguredValueTrimmed(): void
-    {
-        $scopeConfig = $this->createMock(ScopeConfigInterface::class);
-        $scopeConfig->method('getValue')->willReturnCallback(
-            static function (string $path) {
-                if ($path === 'ai_integration/aiagent/model/api_key') {
-                    return '  configured-key  ';
-                }
-                return null;
-            }
-        );
-        $storeConfig = $this->buildStoreConfig($scopeConfig);
-
-        $this->assertSame('configured-key', $storeConfig->apiKey(1));
-    }
-
     public function testStoreFactsRowsAreParsedKeywordsLowercasedAndTrimmed(): void
     {
         $rows = [
@@ -417,18 +401,17 @@ class StoreConfigTest extends TestCase
         $this->assertFalse($storeConfig->agent(1)->keepOpen);
     }
 
-    public function testApiKeyReturnsEmptyStringWhenValueIsNullOrEmpty(): void
+    public function testTheAiServiceIdIsReadAtStoreScopeAndTrimmed(): void
     {
         $scopeConfig = $this->createMock(ScopeConfigInterface::class);
-        $scopeConfig->method('getValue')->willReturn(null);
+        $scopeConfig->method('getValue')->willReturnCallback(
+            static fn (string $path, string $scope, int $storeId): ?string =>
+                $path === 'ai_integration/aiagent/model/ai_service' && $scope === 'store' && $storeId === 1
+                    ? ' _row_1 '
+                    : null
+        );
         $storeConfig = $this->buildStoreConfig($scopeConfig);
 
-        $this->assertSame('', $storeConfig->apiKey(1));
-
-        $scopeConfig = $this->createMock(ScopeConfigInterface::class);
-        $scopeConfig->method('getValue')->willReturn('');
-        $storeConfig = $this->buildStoreConfig($scopeConfig);
-
-        $this->assertSame('', $storeConfig->apiKey(1));
+        $this->assertSame('_row_1', $storeConfig->aiServiceId(1));
     }
 }

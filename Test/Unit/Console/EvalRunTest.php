@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace MageOS\ClaudeConsumerAgent\Test\Unit\Console;
+namespace MageOS\AiShoppingAssistant\Test\Unit\Console;
 
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -17,38 +17,41 @@ use Magento\Quote\Api\CartManagementInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\App\Emulation;
 use Magento\Store\Model\StoreManagerInterface;
-use MageOS\ClaudeConsumerAgent\Api\Backend\CatalogMapProviderInterface;
-use MageOS\ClaudeConsumerAgent\Api\Backend\SkuMatcherInterface;
-use MageOS\ClaudeConsumerAgent\Api\Backend\StoreFactTitleResolverInterface;
-use MageOS\ClaudeConsumerAgent\Api\Client\MessagesClientInterface;
-use MageOS\ClaudeConsumerAgent\Api\StorefrontBackendInterface;
-use MageOS\ClaudeConsumerAgent\Console\Command\EvalRun;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Fence;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Sanitizer;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Gate\Options;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Gate\Provenance;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Grounding\SkuCandidates;
-use MageOS\ClaudeConsumerAgent\Model\Eval\Toolkit;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Lexicon;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Checkout;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Comparison;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\OrderStatus;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Products;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Suggestions;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Registry as PresentationRegistry;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\Assembly;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\CatalogMap;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\CoreFacts;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\DynamicContext;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\StaticSystem;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\StoreFactsBlock;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Schema\Validator;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Serializer;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Skill\FrontMatter;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Skill\Loader;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Skill\Registry as SkillRegistry;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Turn\StreamedRoundFactory;
-use MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig;
+use MageOS\AiBase\Api\AiClientFactoryInterface;
+use MageOS\AiShoppingAssistant\Api\Backend\CatalogMapProviderInterface;
+use MageOS\AiShoppingAssistant\Api\Backend\SkuMatcherInterface;
+use MageOS\AiShoppingAssistant\Api\Backend\StoreFactTitleResolverInterface;
+use MageOS\AiShoppingAssistant\Api\Client\ClientResolverInterface;
+use MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface;
+use MageOS\AiShoppingAssistant\Console\Command\EvalRun;
+use MageOS\AiShoppingAssistant\Model\Agent\Fencing\Fence;
+use MageOS\AiShoppingAssistant\Model\Agent\Fencing\Sanitizer;
+use MageOS\AiShoppingAssistant\Model\Agent\Gate\Options;
+use MageOS\AiShoppingAssistant\Model\Agent\Gate\Provenance;
+use MageOS\AiShoppingAssistant\Model\Agent\Grounding\SkuCandidates;
+use MageOS\AiShoppingAssistant\Model\Eval\Toolkit;
+use MageOS\AiShoppingAssistant\Model\Agent\Lexicon;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\Checkout;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\Comparison;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\OrderStatus;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\Products;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\Suggestions;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Registry as PresentationRegistry;
+use MageOS\AiShoppingAssistant\Model\Agent\Prompt\CatalogMap;
+use MageOS\AiShoppingAssistant\Model\Agent\Prompt\CoreFacts;
+use MageOS\AiShoppingAssistant\Model\Agent\Prompt\DynamicContext;
+use MageOS\AiShoppingAssistant\Model\Agent\Prompt\StaticSystem;
+use MageOS\AiShoppingAssistant\Model\Agent\Prompt\StoreFactsBlock;
+use MageOS\AiShoppingAssistant\Model\Agent\Schema\Validator;
+use MageOS\AiShoppingAssistant\Model\Agent\Serializer;
+use MageOS\AiShoppingAssistant\Model\Agent\Skill\FrontMatter;
+use MageOS\AiShoppingAssistant\Model\Agent\Skill\Loader;
+use MageOS\AiShoppingAssistant\Model\Agent\Skill\Registry as SkillRegistry;
+use MageOS\AiShoppingAssistant\Model\Agent\Turn\RequestMapper;
+use MageOS\AiShoppingAssistant\Model\Agent\Turn\StreamedRoundFactory;
+use MageOS\AiShoppingAssistant\Model\Config\StoreConfig;
+use MageOS\AiShoppingAssistant\Model\Eval\ScriptedAiClientFactory;
+use MageOS\AiShoppingAssistant\Test\Unit\Support\AiBaseDoubles;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionMethod;
@@ -56,6 +59,8 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 class EvalRunTest extends TestCase
 {
+    use AiBaseDoubles;
+
     private array $tempCaseDirs = [];
 
     protected function tearDown(): void
@@ -393,7 +398,12 @@ class EvalRunTest extends TestCase
             $this->passthroughTitleResolver()
         );
         $dynamicContext = new DynamicContext($fence);
-        $assembly = new Assembly();
+        $requestMapper = new RequestMapper(
+            $this->chatRequestBuilderFactory(),
+            $this->chatMessageFactory(),
+            $this->chatResponseFactory(),
+            $this->toolCallFactory()
+        );
         $lexicon = new Lexicon($storeConfig);
         $streamedRoundFactory = new StreamedRoundFactory();
 
@@ -413,7 +423,10 @@ class EvalRunTest extends TestCase
         $resourceConnection->method('getConnection')->willReturn($adapter);
 
         $logger = $this->createMock(LoggerInterface::class);
-        $liveClient = $this->createMock(MessagesClientInterface::class);
+        $liveClients = $this->createMock(ClientResolverInterface::class);
+        $clientFactory = $this->createMock(AiClientFactoryInterface::class);
+        $scriptedClientFactory = $this->createMock(ScriptedAiClientFactory::class);
+        $scriptedClientFactory->method('create')->willReturnCallback(fn () => $this->scriptedClient());
         $liveBackend = $this->createMock(StorefrontBackendInterface::class);
         $cartManagement = $this->createMock(CartManagementInterface::class);
         $appState = $this->createMock(State::class);
@@ -426,7 +439,7 @@ class EvalRunTest extends TestCase
                 $storeConfig,
                 $staticSystem,
                 $dynamicContext,
-                $assembly,
+                $requestMapper,
                 $lexicon,
                 new SkuCandidates(),
                 $streamedRoundFactory,
@@ -443,7 +456,9 @@ class EvalRunTest extends TestCase
             $lockManager,
             $resourceConnection,
             $logger,
-            $liveClient,
+            $liveClients,
+            $clientFactory,
+            $scriptedClientFactory,
             $liveBackend,
             $cartManagement,
             $appState,

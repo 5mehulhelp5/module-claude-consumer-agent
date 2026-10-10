@@ -1,27 +1,28 @@
 <?php
 declare(strict_types=1);
 
-namespace MageOS\ClaudeConsumerAgent\Test\Unit\Session;
+namespace MageOS\AiShoppingAssistant\Test\Unit\Session;
 
-use MageOS\ClaudeConsumerAgent\Api\Data\PageContextInterface;
-use MageOS\ClaudeConsumerAgent\Api\Presentation\PresentationExtensionInterface;
-use MageOS\ClaudeConsumerAgent\Api\StorefrontBackendInterface;
-use MageOS\ClaudeConsumerAgent\Model\Agent\AgentConfig;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Exception\PresentationRefused;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Fence;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Sanitizer;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Checkout;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Comparison;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\OrderStatus;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Products;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Suggestions;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\EnrichmentContext;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Registry;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\PageNote;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Serializer;
-use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
-use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
-use MageOS\ClaudeConsumerAgent\Model\Session\TranscriptView;
+use MageOS\AiShoppingAssistant\Api\Data\PageContextInterface;
+use MageOS\AiShoppingAssistant\Api\Presentation\PresentationExtensionInterface;
+use MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface;
+use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
+use MageOS\AiShoppingAssistant\Model\Agent\Exception\PresentationRefused;
+use MageOS\AiShoppingAssistant\Model\Agent\Fencing\Fence;
+use MageOS\AiShoppingAssistant\Model\Agent\Fencing\Sanitizer;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\Checkout;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\Comparison;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\OrderStatus;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\Products;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\Suggestions;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\EnrichmentContext;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Registry;
+use MageOS\AiShoppingAssistant\Model\Agent\Prompt\DynamicContext;
+use MageOS\AiShoppingAssistant\Model\Agent\Prompt\PageNote;
+use MageOS\AiShoppingAssistant\Model\Agent\Serializer;
+use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
+use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
+use MageOS\AiShoppingAssistant\Model\Session\TranscriptView;
 use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -78,6 +79,22 @@ class TranscriptViewTest extends TestCase
         ];
         $messages = (new TranscriptView())->render($rows, $this->registry(), $this->ctx(new SessionState()));
         $this->assertSame([['role' => 'user', 'text' => 'Is this one better for a gift?']], $messages);
+    }
+
+    public function testTheSessionContextBlockIsHiddenFromTheRestoredCustomerMessage(): void
+    {
+        $rows = [
+            [
+                'role' => 'user',
+                'content' => [
+                    ['type' => 'text', 'text' => DynamicContext::PREFIX . "\n\n<storefront_data>{}</storefront_data>"],
+                    ['type' => 'text', 'text' => PageNote::PREFIX . 'the customer is now on the cart page.]'],
+                    ['type' => 'text', 'text' => 'Show me some backpacks'],
+                ],
+            ],
+        ];
+        $messages = (new TranscriptView())->render($rows, $this->registry(), $this->ctx(new SessionState()));
+        $this->assertSame([['role' => 'user', 'text' => 'Show me some backpacks']], $messages);
     }
 
     public function testUserMessageThatIsOnlyAPageNoteIsNotEmittedAtAll(): void

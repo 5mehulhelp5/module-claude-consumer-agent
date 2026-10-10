@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace MageOS\ClaudeConsumerAgent\Test\Unit\Agent;
+namespace MageOS\AiShoppingAssistant\Test\Unit\Agent;
 
-use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
+use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 use PHPUnit\Framework\TestCase;
 
 class SessionStateTest extends TestCase
@@ -73,7 +73,15 @@ class SessionStateTest extends TestCase
         );
         $decoded = json_decode($state->toJson(), true);
         $this->assertSame(
-            ['seen_products', 'turn_counter', 'last_page', 'surface_view', 'recent_customer_text'],
+            [
+                'seen_products',
+                'turn_counter',
+                'last_page',
+                'surface_view',
+                'recent_customer_text',
+                'service_id',
+                'context_hash',
+            ],
             array_keys($decoded)
         );
         $this->assertSame(['A-1' => ['product_id' => 'A-1']], $decoded['seen_products']);
@@ -134,5 +142,23 @@ class SessionStateTest extends TestCase
         $this->assertCount(8, $state->recentCustomerText);
         $this->assertSame('Message 2', $state->recentCustomerText[0]);
         $this->assertSame('Message 9', $state->recentCustomerText[7]);
+    }
+
+    public function testTheServiceIdSurvivesTheJsonRoundTrip(): void
+    {
+        $state = new SessionState();
+        $state->serviceId = '_row_1';
+
+        $this->assertSame('_row_1', SessionState::fromJson($state->toJson())->serviceId);
+        $this->assertSame('', SessionState::fromJson('{}')->serviceId);
+    }
+
+    public function testTheContextHashSurvivesTheJsonRoundTrip(): void
+    {
+        $state = new SessionState();
+        $state->contextHash = 'abc123';
+
+        $this->assertSame('abc123', SessionState::fromJson($state->toJson())->contextHash);
+        $this->assertSame('', SessionState::fromJson('{}')->contextHash);
     }
 }

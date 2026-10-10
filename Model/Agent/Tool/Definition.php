@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace MageOS\ClaudeConsumerAgent\Model\Agent\Tool;
+namespace MageOS\AiShoppingAssistant\Model\Agent\Tool;
 
-use MageOS\ClaudeConsumerAgent\Api\Tool\HandlerInterface;
+use MageOS\AiShoppingAssistant\Api\Tool\HandlerInterface;
 
-class Definition
+class Definition implements \MageOS\AiBase\Api\Data\ToolDefinitionInterface
 {
     public const STATUS_MAX_LENGTH = 60;
     public const STATUS_DESCRIPTION = 'A few plain words the customer sees while this runs';
@@ -15,7 +15,7 @@ class Definition
         private readonly string $description,
         private readonly array $inputSchema,
         private readonly string $kind,
-        private readonly ?\MageOS\ClaudeConsumerAgent\Api\Tool\HandlerInterface $handler,
+        private readonly ?\MageOS\AiShoppingAssistant\Api\Tool\HandlerInterface $handler,
         private readonly array $productIdArguments,
         private readonly bool $remembersProducts,
         private readonly bool $takesStatus,
@@ -68,7 +68,7 @@ class Definition
         return $this->sortOrder;
     }
 
-    public function apiDefinition(): array
+    public function getParameters(): array
     {
         $inputSchema = $this->inputSchema;
         $properties = $inputSchema['properties'] ?? [];
@@ -85,10 +85,6 @@ class Definition
             ] + $properties;
         }
         $inputSchema['properties'] = $properties === [] ? new \stdClass() : $properties;
-        return [
-            'name' => $this->name,
-            'description' => $this->description,
-            'input_schema' => $inputSchema,
-        ];
+        return $inputSchema;
     }
 }

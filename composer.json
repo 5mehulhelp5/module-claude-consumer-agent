@@ -1,10 +1,11 @@
 {
-    "name": "mage-os/module-claude-consumer-agent",
-    "description": "AI shopping assistant for Hyva and Luma storefronts, backed by the Claude Messages API.",
+    "name": "mage-os/module-ai-shopping-assistant",
+    "description": "AI shopping assistant for Hyva and Luma storefronts, on any AI service configured in Mage-OS AI Base.",
     "type": "magento2-module",
     "license": "OSL-3.0",
     "require": {
-        "php": "~8.1.0 || ~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
+        "php": "~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
+        "mage-os/module-ai-base": "^1.0",
         "ext-intl": "*",
         "ext-json": "*",
         "magento/framework": "*",
@@ -20,8 +21,10 @@
         "magento/module-offline-shipping": "*",
         "magento/module-search": "*",
         "magento/module-payment": "*",
-        "magento/module-shipping": "*",
-        "guzzlehttp/guzzle": "^7.5"
+        "magento/module-shipping": "*"
+    },
+    "replace": {
+        "mage-os/module-claude-consumer-agent": "*"
     },
     "suggest": {
         "magento/module-inventory-sales-api": "Reserved stock aware fulfillment facts when MSI is installed",
@@ -32,7 +35,7 @@
             "registration.php"
         ],
         "psr-4": {
-            "MageOS\\ClaudeConsumerAgent\\": ""
+            "MageOS\\AiShoppingAssistant\\": ""
         }
     }
 }

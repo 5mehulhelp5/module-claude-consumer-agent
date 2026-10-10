@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace MageOS\ClaudeConsumerAgent\Test\Unit\Limits;
+namespace MageOS\AiShoppingAssistant\Test\Unit\Limits;
 
-use MageOS\ClaudeConsumerAgent\Model\Limits\BusyEvent;
+use MageOS\AiShoppingAssistant\Model\Limits\BusyEvent;
 use PHPUnit\Framework\TestCase;
 
 class BusyEventTest extends TestCase

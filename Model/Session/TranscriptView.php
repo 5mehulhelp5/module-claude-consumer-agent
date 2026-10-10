@@ -1,14 +1,15 @@
 <?php
 declare(strict_types=1);
 
-namespace MageOS\ClaudeConsumerAgent\Model\Session;
+namespace MageOS\AiShoppingAssistant\Model\Session;
 
-use MageOS\ClaudeConsumerAgent\Model\Agent\Exception\PresentationRefused;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Component;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\EnrichmentContext;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Registry;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\PageNote;
-use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
+use MageOS\AiShoppingAssistant\Model\Agent\Exception\PresentationRefused;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Component;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\EnrichmentContext;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Registry;
+use MageOS\AiShoppingAssistant\Model\Agent\Prompt\DynamicContext;
+use MageOS\AiShoppingAssistant\Model\Agent\Prompt\PageNote;
+use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 
 /**
  * Rebuilds the cards of a restored conversation: products and comparisons from the products the session
@@ -61,7 +62,8 @@ class TranscriptView
             if (!is_array($block) || ($block['type'] ?? null) !== 'text') {
                 return true;
             }
-            return !str_starts_with((string)($block['text'] ?? ''), PageNote::PREFIX);
+            $text = (string)($block['text'] ?? '');
+            return !str_starts_with($text, PageNote::PREFIX) && !str_starts_with($text, DynamicContext::PREFIX);
         }));
     }
 

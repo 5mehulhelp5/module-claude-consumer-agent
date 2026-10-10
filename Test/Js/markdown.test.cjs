@@ -15,7 +15,7 @@ function render(text) {
     const doc = fakeDocument();
     doc.location = {origin: 'https://shop.test'};
     const container = doc.createElement('div');
-    load('MageOS_ClaudeConsumerAgent/js/luma/model/markdown').render(container, text);
+    load('MageOS_AiShoppingAssistant/js/luma/model/markdown').render(container, text);
     return container.childNodes.map(serialize).join(' ');
 }
 
@@ -37,7 +37,7 @@ test('markup in the reply stays text', () => {
 
 test('rendering again replaces the previous content', () => {
     const container = fakeDocument().createElement('div');
-    const markdown = load('MageOS_ClaudeConsumerAgent/js/luma/model/markdown');
+    const markdown = load('MageOS_AiShoppingAssistant/js/luma/model/markdown');
     markdown.render(container, 'First');
     markdown.render(container, 'Second');
     assert.equal(container.childNodes.map(serialize).join(' '), 'P("Second")');

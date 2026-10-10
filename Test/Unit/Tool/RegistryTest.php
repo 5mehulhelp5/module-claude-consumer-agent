@@ -1,15 +1,15 @@
 <?php
 declare(strict_types=1);
 
-namespace MageOS\ClaudeConsumerAgent\Test\Unit\Tool;
+namespace MageOS\AiShoppingAssistant\Test\Unit\Tool;
 
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Store\Model\StoreManagerInterface;
-use MageOS\ClaudeConsumerAgent\Api\Tool\ToolProviderInterface;
-use MageOS\ClaudeConsumerAgent\Model\Agent\AgentConfig;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Definition;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Registry;
-use MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig;
+use MageOS\AiShoppingAssistant\Api\Tool\ToolProviderInterface;
+use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Definition;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Registry;
+use MageOS\AiShoppingAssistant\Model\Config\StoreConfig;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -121,9 +121,8 @@ class RegistryTest extends TestCase
     {
         $core = $this->provider([$this->definition('get_cart', true, 1)]);
         $registry = new Registry([$core], $this->storeConfigWithPolicyPages(''));
-        $apiDefinitions = $registry->apiDefinitions(1);
-        $this->assertSame(['name', 'description', 'input_schema'], array_keys($apiDefinitions[0]));
-        $this->assertArrayHasKey('status', $apiDefinitions[0]['input_schema']['properties']);
+        $definitions = $registry->definitions(1);
+        $this->assertArrayHasKey('status', $definitions[0]->getParameters()['properties']);
     }
 
     public function testDefinitionsAreMemoisedPerStore(): void

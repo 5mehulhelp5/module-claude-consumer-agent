@@ -1,18 +1,16 @@
 <?php
 declare(strict_types=1);
 
-namespace MageOS\ClaudeConsumerAgent\Model\Agent;
+namespace MageOS\AiShoppingAssistant\Model\Agent;
 
 class AgentConfig
 {
     public readonly bool $enablePolicies;
 
     public function __construct(
-        public readonly string $modelId = 'claude-sonnet-5',
+        public readonly string $modelId = '',
         public readonly int $maxTokens = 2048,
         public readonly string $thinkingEffort = 'low',
-        public readonly int $requestTimeout = 120,
-        public readonly int $connectTimeout = 10,
         public readonly string $brandName = '',
         public readonly string $assistantName = 'the shopping assistant',
         public readonly string $brandVoice = 'warm, concise, and plain about trade-offs',

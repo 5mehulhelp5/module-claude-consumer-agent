@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace MageOS\ClaudeConsumerAgent\Model\Agent\Turn;
+namespace MageOS\AiShoppingAssistant\Model\Agent\Turn;
 
-use MageOS\ClaudeConsumerAgent\Model\Agent\Executor;
-use MageOS\ClaudeConsumerAgent\Model\Agent\ToolOutcome;
+use MageOS\AiShoppingAssistant\Model\Agent\Executor;
+use MageOS\AiShoppingAssistant\Model\Agent\ToolOutcome;
 
 class History
 {
@@ -130,6 +130,26 @@ class History
             $this->messages[$index]['content'] = $content;
         }
         return $cleared;
+    }
+
+    public function dropReasoning(): int
+    {
+        $dropped = 0;
+        foreach ($this->messages as $index => $message) {
+            if (($message['role'] ?? null) !== 'assistant' || !is_array($message['content'] ?? null)) {
+                continue;
+            }
+            $kept = [];
+            foreach ($message['content'] as $block) {
+                if (is_array($block) && ($block['type'] ?? null) === 'thinking') {
+                    $dropped++;
+                    continue;
+                }
+                $kept[] = $block;
+            }
+            $this->messages[$index]['content'] = $kept;
+        }
+        return $dropped;
     }
 
     public function roundClosesTurn(array $toolUses, array $settled, Executor $executor): bool

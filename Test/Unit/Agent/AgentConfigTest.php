@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace MageOS\ClaudeConsumerAgent\Test\Unit\Agent;
+namespace MageOS\AiShoppingAssistant\Test\Unit\Agent;
 
-use MageOS\ClaudeConsumerAgent\Model\Agent\AgentConfig;
+use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
 use PHPUnit\Framework\TestCase;
 
 class AgentConfigTest extends TestCase
@@ -11,11 +11,9 @@ class AgentConfigTest extends TestCase
     public function testDefaultsMatchConfigXmlDefaults(): void
     {
         $config = new AgentConfig();
-        $this->assertSame('claude-sonnet-5', $config->modelId);
+        $this->assertSame('', $config->modelId);
         $this->assertSame(2048, $config->maxTokens);
         $this->assertSame('low', $config->thinkingEffort);
-        $this->assertSame(120, $config->requestTimeout);
-        $this->assertSame(10, $config->connectTimeout);
         $this->assertSame('', $config->brandName);
         $this->assertSame('the shopping assistant', $config->assistantName);
         $this->assertSame('warm, concise, and plain about trade-offs', $config->brandVoice);

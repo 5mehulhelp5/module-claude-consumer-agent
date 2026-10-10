@@ -1,52 +1,52 @@
 <?php
 declare(strict_types=1);
 
-namespace MageOS\ClaudeConsumerAgent\Console\Command;
+namespace MageOS\AiShoppingAssistant\Console\Command;
 
 use Magento\Framework\Console\Cli;
-use MageOS\ClaudeConsumerAgent\Api\Backend\SkuMatcherInterface;
-use MageOS\ClaudeConsumerAgent\Api\Client\MessagesClientInterface;
-use MageOS\ClaudeConsumerAgent\Api\Data\CartInterface;
-use MageOS\ClaudeConsumerAgent\Api\StorefrontBackendInterface;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Event;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Gate\CartWrite;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Grounding\Rules;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Enrich\Products;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Presentation\Runner as PresentationRunner;
-use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
-use MageOS\ClaudeConsumerAgent\Model\Agent\SessionState;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\CoreToolProvider;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\AddToCart;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\GetCart;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\GetFulfillmentOptions;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\GetOrders;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\GetOrderStatus;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\GetPreferences;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\GetProductDetails;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\LoadSkill;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\MemoryOff;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\RemoveFromCart;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\SearchCategories;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\SearchPolicies;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\SearchProducts;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Handler\UpdateCartItem;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\PageNote;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Registry as ToolRegistry;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Turn\Orchestrator;
-use MageOS\ClaudeConsumerAgent\Model\Client\FakeClient;
-use MageOS\ClaudeConsumerAgent\Model\Client\RawEvent;
-use MageOS\ClaudeConsumerAgent\Model\Client\Sleeper;
-use MageOS\ClaudeConsumerAgent\Model\Client\SseLineReader;
-use MageOS\ClaudeConsumerAgent\Model\Data\PageContext;
-use MageOS\ClaudeConsumerAgent\Model\Session\Binding;
-use MageOS\ClaudeConsumerAgent\Model\Session\TranscriptRepository;
-use MageOS\ClaudeConsumerAgent\Model\Eval\FakeBackend;
-use MageOS\ClaudeConsumerAgent\Model\Eval\FakeExecutorFactory;
-use MageOS\ClaudeConsumerAgent\Model\Eval\FakeScopeConfig;
-use MageOS\ClaudeConsumerAgent\Model\Eval\InMemorySessions;
-use MageOS\ClaudeConsumerAgent\Model\Eval\InMemorySkuMatcher;
-use MageOS\ClaudeConsumerAgent\Model\Eval\InMemoryTranscripts;
-use MageOS\ClaudeConsumerAgent\Model\Eval\InMemoryTurnLog;
+use MageOS\AiBase\Api\AiClientInterface;
+use MageOS\AiShoppingAssistant\Api\Backend\SkuMatcherInterface;
+use MageOS\AiShoppingAssistant\Api\Data\CartInterface;
+use MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface;
+use MageOS\AiShoppingAssistant\Model\Agent\Event;
+use MageOS\AiShoppingAssistant\Model\Agent\Gate\CartWrite;
+use MageOS\AiShoppingAssistant\Model\Agent\Grounding\Rules;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\Products;
+use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Runner as PresentationRunner;
+use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
+use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\CoreToolProvider;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\AddToCart;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\GetCart;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\GetFulfillmentOptions;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\GetOrders;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\GetOrderStatus;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\GetPreferences;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\GetProductDetails;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\LoadSkill;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\MemoryOff;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\RemoveFromCart;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\SearchCategories;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\SearchPolicies;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\SearchProducts;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\UpdateCartItem;
+use MageOS\AiShoppingAssistant\Model\Agent\Prompt\PageNote;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Registry as ToolRegistry;
+use MageOS\AiShoppingAssistant\Model\Agent\Turn\Orchestrator;
+use MageOS\AiShoppingAssistant\Model\Client\ConfiguredClientResolver;
+use MageOS\AiShoppingAssistant\Model\Client\Sleeper;
+use MageOS\AiShoppingAssistant\Model\Data\PageContext;
+use MageOS\AiShoppingAssistant\Model\Session\Binding;
+use MageOS\AiShoppingAssistant\Model\Session\TranscriptRepository;
+use MageOS\AiShoppingAssistant\Model\Eval\FakeBackend;
+use MageOS\AiShoppingAssistant\Model\Eval\FakeExecutorFactory;
+use MageOS\AiShoppingAssistant\Model\Eval\FakeScopeConfig;
+use MageOS\AiShoppingAssistant\Model\Eval\FixedClientResolver;
+use MageOS\AiShoppingAssistant\Model\Eval\InMemorySessions;
+use MageOS\AiShoppingAssistant\Model\Eval\InMemorySkuMatcher;
+use MageOS\AiShoppingAssistant\Model\Eval\InMemoryTranscripts;
+use MageOS\AiShoppingAssistant\Model\Eval\InMemoryTurnLog;
+use MageOS\AiShoppingAssistant\Model\Eval\ScriptedAiClient;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
@@ -68,21 +68,23 @@ class EvalRun extends Command
     private const OPTION_LIVE = 'live';
     private const OPTION_STORE = 'store';
     private const OPTION_JSON = 'json';
+    private const OPTION_SERVICE = 'service';
 
     private const DEFAULT_CASES_DIR = 'Test/Eval/cases';
-    private const RECORDINGS_DIR = 'Test/Eval/recordings';
     private const HARD_FAIL_PRIORITIES = ['critical', 'high'];
 
     public function __construct(
         private readonly \Magento\Framework\ObjectManagerInterface $objectManager,
         private readonly \Magento\Store\Model\StoreManagerInterface $storeManager,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Eval\Toolkit $toolkit,
-        private readonly \MageOS\ClaudeConsumerAgent\Api\Backend\SkuMatcherInterface $skuMatcher,
+        private readonly \MageOS\AiShoppingAssistant\Model\Eval\Toolkit $toolkit,
+        private readonly \MageOS\AiShoppingAssistant\Api\Backend\SkuMatcherInterface $skuMatcher,
         private readonly \Magento\Framework\Lock\LockManagerInterface $lockManager,
         private readonly \Magento\Framework\App\ResourceConnection $resourceConnection,
         private readonly \Psr\Log\LoggerInterface $logger,
-        private readonly \MageOS\ClaudeConsumerAgent\Api\Client\MessagesClientInterface $liveClient,
-        private readonly \MageOS\ClaudeConsumerAgent\Api\StorefrontBackendInterface $liveBackend,
+        private readonly \MageOS\AiShoppingAssistant\Api\Client\ClientResolverInterface $liveClients,
+        private readonly \MageOS\AiBase\Api\AiClientFactoryInterface $clientFactory,
+        private readonly \MageOS\AiShoppingAssistant\Model\Eval\ScriptedAiClientFactory $scriptedClientFactory,
+        private readonly \MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface $liveBackend,
         private readonly \Magento\Quote\Api\CartManagementInterface $cartManagement,
         private readonly \Magento\Framework\App\State $appState,
         private readonly \Magento\Store\Model\App\Emulation $appEmulation,
@@ -99,7 +101,8 @@ class EvalRun extends Command
             ->addOption(self::OPTION_FILTER, null, InputOption::VALUE_OPTIONAL, 'Glob on the case id')
             ->addOption(self::OPTION_LIVE, null, InputOption::VALUE_NONE, 'Run against the real client and backend')
             ->addOption(self::OPTION_STORE, null, InputOption::VALUE_OPTIONAL, 'Store code')
-            ->addOption(self::OPTION_JSON, null, InputOption::VALUE_NONE, 'Print results as JSON');
+            ->addOption(self::OPTION_JSON, null, InputOption::VALUE_NONE, 'Print results as JSON')
+            ->addOption(self::OPTION_SERVICE, null, InputOption::VALUE_OPTIONAL, 'AI Base service row id for --live');
         parent::configure();
     }
 
@@ -110,6 +113,7 @@ class EvalRun extends Command
         $live = (bool)$input->getOption(self::OPTION_LIVE);
         $filter = $input->getOption(self::OPTION_FILTER);
         $asJson = (bool)$input->getOption(self::OPTION_JSON);
+        $serviceId = (string)($input->getOption(self::OPTION_SERVICE) ?? '');
         $casesDir = $this->resolvePath((string)$input->getOption(self::OPTION_CASES));
 
         $caseFiles = glob($casesDir . '/*.json');
@@ -134,7 +138,7 @@ class EvalRun extends Command
                 if ($filter !== null && !fnmatch((string)$filter, $id)) {
                     continue;
                 }
-                $result = $this->runCase($case, $id, $storeId, $live);
+                $result = $this->runCase($case, $id, $storeId, $live, $serviceId);
                 $results[] = $result;
                 if (!$result['pass'] && in_array($result['priority'], self::HARD_FAIL_PRIORITIES, true)) {
                     $hardFailure = true;
@@ -153,7 +157,7 @@ class EvalRun extends Command
         return $hardFailure ? Cli::RETURN_FAILURE : Cli::RETURN_SUCCESS;
     }
 
-    private function runCase(array $case, string $id, int $storeId, bool $live): array
+    private function runCase(array $case, string $id, int $storeId, bool $live, string $serviceId): array
     {
         $priority = (string)($case['priority'] ?? 'low');
         $state = is_array($case['state'] ?? null) ? $case['state'] : [];
@@ -189,7 +193,7 @@ class EvalRun extends Command
             is_array($state['fulfillment'] ?? null) ? $state['fulfillment'] : [],
             is_array($state['categories'] ?? null) ? $state['categories'] : []
         );
-        $client = $live ? $this->liveClient : new FakeClient();
+        $client = $live ? $this->liveClient($storeId, $serviceId) : $this->scriptedClientFactory->create();
         $skuMatcher = $live ? $this->skuMatcher : new InMemorySkuMatcher(array_map('strval', array_keys($catalog)));
 
         if ($live) {
@@ -208,10 +212,8 @@ class EvalRun extends Command
         $turns = is_array($case['turns'] ?? null) ? array_values($case['turns']) : [];
         foreach ($turns as $index => $message) {
             $turnNumber = $index + 1;
-            if (!$live && $client instanceof FakeClient) {
-                foreach ($this->roundsForTurn($id, $turnNumber, $case) as $rawEvents) {
-                    $client->addRound($rawEvents);
-                }
+            if ($client instanceof ScriptedAiClient) {
+                $this->scriptRounds($client, $id, $turnNumber, $case);
             }
             $events = iterator_to_array($orchestrator->streamTurn($binding, (string)$message, $context), false);
             foreach ($events as $event) {
@@ -244,7 +246,7 @@ class EvalRun extends Command
         ];
     }
 
-    private function storeConfigForCase(array $case): \MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig
+    private function storeConfigForCase(array $case): \MageOS\AiShoppingAssistant\Model\Config\StoreConfig
     {
         $overrides = is_array($case['config'] ?? null) ? $case['config'] : [];
         if ($overrides === []) {
@@ -259,7 +261,7 @@ class EvalRun extends Command
             $values['ai_integration/aiagent/content/include_core_facts'] = $overrides['include_core_facts'] ? '1' : '0';
         }
 
-        return new \MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig(
+        return new \MageOS\AiShoppingAssistant\Model\Config\StoreConfig(
             new FakeScopeConfig($values),
             $this->storeManager
         );
@@ -267,8 +269,8 @@ class EvalRun extends Command
 
     private function buildOrchestrator(
         StorefrontBackendInterface $backend,
-        MessagesClientInterface $client,
-        \MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig $storeConfig,
+        AiClientInterface $client,
+        \MageOS\AiShoppingAssistant\Model\Config\StoreConfig $storeConfig,
         SkuMatcherInterface $skuMatcher
     ): Orchestrator {
         $cartWrite = new CartWrite(
@@ -340,11 +342,11 @@ class EvalRun extends Command
         $rules = new Rules($this->toolkit->lexicon(), $this->toolkit->skuCandidates(), $skuMatcher);
 
         return $this->objectManager->create(Orchestrator::class, [
-            'client' => $client,
+            'clientResolver' => new FixedClientResolver($client),
             'backend' => $backend,
             'staticSystem' => $this->toolkit->staticSystem(),
             'dynamicContext' => $this->toolkit->dynamicContext(),
-            'assembly' => $this->toolkit->assembly(),
+            'requestMapper' => $this->toolkit->requestMapper(),
             'pageNote' => new PageNote($this->toolkit->sanitizer()),
             'toolRegistry' => $toolRegistry,
             'executorFactory' => $executorFactory,
@@ -359,58 +361,35 @@ class EvalRun extends Command
         ]);
     }
 
-    private function roundsForTurn(string $caseId, int $turnNumber, array $case): array
+    private function liveClient(int $storeId, string $serviceId): AiClientInterface
     {
-        $recordingFile = $this->resolvePath(self::RECORDINGS_DIR) . '/' . $caseId . '-turn' . $turnNumber . '.sse';
-        if (is_file($recordingFile)) {
-            return $this->splitRecordingIntoRounds((string)file_get_contents($recordingFile));
+        if ($serviceId === '') {
+            return $this->liveClients->forStore($storeId);
         }
+        return $this->clientFactory->createById($serviceId, ConfiguredClientResolver::CONSUMER);
+    }
+
+    private function scriptRounds(ScriptedAiClient $client, string $caseId, int $turnNumber, array $case): void
+    {
         $definitions = $case['rounds'][$turnNumber - 1] ?? [];
-        $rounds = [];
         foreach ((is_array($definitions) ? $definitions : []) as $index => $round) {
-            $rounds[] = $this->buildRawEventsForRound($caseId, $turnNumber, $index, is_array($round) ? $round : []);
-        }
-        return $rounds;
-    }
-
-    private function buildRawEventsForRound(string $caseId, int $turnNumber, int $index, array $round): array
-    {
-        $text = isset($round['text']) ? (string)$round['text'] : '';
-        $tools = is_array($round['tools'] ?? null) ? $round['tools'] : [];
-        if ($tools === []) {
-            return FakeClient::textRound($text);
-        }
-        $toolUses = [];
-        foreach ($tools as $position => $tool) {
-            $toolUses[] = [
-                'id' => sprintf('toolu_%s_%d_%d_%d', $caseId, $turnNumber, $index, $position),
-                'name' => (string)($tool['name'] ?? ''),
-                'input' => is_array($tool['input'] ?? null) ? $tool['input'] : [],
-            ];
-        }
-        return FakeClient::toolRound($toolUses, $text);
-    }
-
-    private function splitRecordingIntoRounds(string $content): array
-    {
-        $reader = new SseLineReader();
-        $events = iterator_to_array($reader->read([$content]), false);
-        $rounds = [];
-        $current = [];
-        foreach ($events as $event) {
-            if (!$event instanceof RawEvent) {
+            $round = is_array($round) ? $round : [];
+            $text = isset($round['text']) ? (string)$round['text'] : '';
+            $tools = is_array($round['tools'] ?? null) ? $round['tools'] : [];
+            if ($tools === []) {
+                $client->addTextRound($text);
                 continue;
             }
-            if ($event->type === 'message_start' && $current !== []) {
-                $rounds[] = $current;
-                $current = [];
+            $toolUses = [];
+            foreach ($tools as $position => $tool) {
+                $toolUses[] = [
+                    'id' => sprintf('toolu_%s_%d_%d_%d', $caseId, $turnNumber, $index, $position),
+                    'name' => (string)($tool['name'] ?? ''),
+                    'input' => is_array($tool['input'] ?? null) ? $tool['input'] : [],
+                ];
             }
-            $current[] = $event;
+            $client->addToolRound($toolUses, $text);
         }
-        if ($current !== []) {
-            $rounds[] = $current;
-        }
-        return $rounds;
     }
 
     private function gradeCase(

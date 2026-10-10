@@ -1,31 +1,33 @@
 <?php
 declare(strict_types=1);
 
-namespace MageOS\ClaudeConsumerAgent\Model\Agent\Turn;
+namespace MageOS\AiShoppingAssistant\Model\Agent\Turn;
 
 use Generator;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Event;
-use MageOS\ClaudeConsumerAgent\Model\Agent\SessionContext;
-use MageOS\ClaudeConsumerAgent\Model\Agent\ToolOutcome;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Turn\Exception\ApiStreamError;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Turn\Item\TextDelta;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Turn\Item\ToolUseClosed;
-use MageOS\ClaudeConsumerAgent\Model\Agent\Turn\Item\UnreadableToolInput;
-use MageOS\ClaudeConsumerAgent\Model\Client\Exception\BadRequest;
-use MageOS\ClaudeConsumerAgent\Model\Client\Exception\RateLimited;
-use MageOS\ClaudeConsumerAgent\Model\Client\Exception\ServerError;
-use MageOS\ClaudeConsumerAgent\Model\Client\Exception\Transport;
-use MageOS\ClaudeConsumerAgent\Model\Client\Exception\Unauthorized;
-use MageOS\ClaudeConsumerAgent\Model\Session\Binding;
+use Magento\Framework\Exception\LocalizedException;
+use MageOS\AiBase\Api\AiClientInterface;
+use MageOS\AiBase\Exceptions\AiAuthenticationException;
+use MageOS\AiBase\Exceptions\AiContentFilteredException;
+use MageOS\AiBase\Exceptions\AiInvalidRequestException;
+use MageOS\AiBase\Exceptions\AiRateLimitedException;
+use MageOS\AiBase\Exceptions\AiRequestNotSentException;
+use MageOS\AiBase\Exceptions\AiServiceException;
+use MageOS\AiBase\Exceptions\AiToolCallException;
+use MageOS\AiBase\Exceptions\AiTransientException;
+use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
+use MageOS\AiShoppingAssistant\Model\Agent\Event;
+use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
+use MageOS\AiShoppingAssistant\Model\Agent\ToolOutcome;
+use MageOS\AiShoppingAssistant\Model\Agent\Turn\Item\TextDelta;
+use MageOS\AiShoppingAssistant\Model\Agent\Turn\Item\ToolUseClosed;
+use MageOS\AiShoppingAssistant\Model\Config\Source\ThinkingEffort;
+use MageOS\AiShoppingAssistant\Model\Session\Binding;
 
 /**
  * Not final so PHPUnit 9.6 can mock it.
  */
 class Orchestrator
 {
-    private const UNREADABLE_INPUT_TEXT = 'The arguments for this call did not arrive as valid JSON, '
-        . 'so it was not run. Send the call again.';
-
     private const REFUSAL_MESSAGE = 'I cannot help with that request.';
 
     private const UNAVAILABLE_MESSAGE = 'The assistant is not available right now.';
@@ -41,25 +43,27 @@ class Orchestrator
 
     private const ROUND_RETRY_DELAY_SECONDS = 0.75;
 
-    private const RETRYABLE_STREAM_ERROR_TYPES = ['overloaded_error', 'api_error'];
+    private const FORGED_TAG_PATTERN = '~<(\s*/?\s*storefront_data)~i';
+
+    private const FORGED_BLOCK_PATTERN = '~^(\s*)(#+\s*session\s+context|\[\s*page\s*:)~im';
 
     public function __construct(
-        private readonly \MageOS\ClaudeConsumerAgent\Api\Client\MessagesClientInterface $client,
-        private readonly \MageOS\ClaudeConsumerAgent\Api\StorefrontBackendInterface $backend,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\StaticSystem $staticSystem,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\DynamicContext $dynamicContext,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\Assembly $assembly,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Prompt\PageNote $pageNote,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Tool\Registry $toolRegistry,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\ExecutorFactory $executorFactory,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Grounding\Rules $rules,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Session\TranscriptRepository $transcripts,
-        private readonly \MageOS\ClaudeConsumerAgent\Api\Session\SessionRepositoryInterface $sessions,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Config\StoreConfig $storeConfig,
+        private readonly \MageOS\AiShoppingAssistant\Api\Client\ClientResolverInterface $clientResolver,
+        private readonly \MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface $backend,
+        private readonly \MageOS\AiShoppingAssistant\Model\Agent\Prompt\StaticSystem $staticSystem,
+        private readonly \MageOS\AiShoppingAssistant\Model\Agent\Prompt\DynamicContext $dynamicContext,
+        private readonly \MageOS\AiShoppingAssistant\Model\Agent\Turn\RequestMapper $requestMapper,
+        private readonly \MageOS\AiShoppingAssistant\Model\Agent\Prompt\PageNote $pageNote,
+        private readonly \MageOS\AiShoppingAssistant\Model\Agent\Tool\Registry $toolRegistry,
+        private readonly \MageOS\AiShoppingAssistant\Model\Agent\ExecutorFactory $executorFactory,
+        private readonly \MageOS\AiShoppingAssistant\Model\Agent\Grounding\Rules $rules,
+        private readonly \MageOS\AiShoppingAssistant\Model\Session\TranscriptRepository $transcripts,
+        private readonly \MageOS\AiShoppingAssistant\Api\Session\SessionRepositoryInterface $sessions,
+        private readonly \MageOS\AiShoppingAssistant\Model\Config\StoreConfig $storeConfig,
         private readonly \Psr\Log\LoggerInterface $logger,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Turn\StreamedRoundFactory $streamedRoundFactory,
-        private readonly \MageOS\ClaudeConsumerAgent\Api\Turn\TurnLogInterface $turnLog,
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Client\Sleeper $sleeper
+        private readonly \MageOS\AiShoppingAssistant\Model\Agent\Turn\StreamedRoundFactory $streamedRoundFactory,
+        private readonly \MageOS\AiShoppingAssistant\Api\Turn\TurnLogInterface $turnLog,
+        private readonly \MageOS\AiShoppingAssistant\Model\Client\Sleeper $sleeper
     ) {
     }
 
@@ -72,15 +76,6 @@ class Orchestrator
         $config = $this->storeConfig->agent($context->storeId);
         $state = $binding->state;
         $state->rememberCustomerText($message);
-
-        $loaded = $this->transcripts->load($binding->sessionId);
-        $history = new History($loaded, count($loaded));
-        $pageNote = $this->pageNote->text($context->page, $state->lastPage);
-        $userContent = $pageNote !== null
-            ? [['type' => 'text', 'text' => $pageNote], ['type' => 'text', 'text' => $message]]
-            : [['type' => 'text', 'text' => $message]];
-        $history->append(['role' => 'user', 'content' => $userContent]);
-        $state->lastPage = $context->page->toArray();
 
         $turnStart = microtime(true);
         $usage = [
@@ -114,8 +109,25 @@ class Orchestrator
         }
 
         $dynamic = $this->dynamicContext->build($prefs, $cart, $context->page, $context->clockHour());
+
+        $loaded = $this->transcripts->load($binding->sessionId);
+        $history = new History($loaded, count($loaded));
+        $pageNote = $this->pageNote->text($context->page, $state->lastPage);
+        $userContent = [];
+        $contextHash = sha1($dynamic);
+        if ($contextHash !== $state->contextHash) {
+            $userContent[] = ['type' => 'text', 'text' => $dynamic];
+            $state->contextHash = $contextHash;
+        }
+        if ($pageNote !== null) {
+            $userContent[] = ['type' => 'text', 'text' => $pageNote];
+        }
+        $userContent[] = ['type' => 'text', 'text' => $this->customerText($message)];
+        $history->append(['role' => 'user', 'content' => $userContent]);
+        $state->lastPage = $context->page->toArray();
+
         $static = $this->staticSystem->text($context->storeId);
-        $tools = $this->toolRegistry->apiDefinitions($context->storeId);
+        $definitions = $this->toolRegistry->definitions($context->storeId);
         $executor = $this->executorFactory->create(['context' => $context, 'state' => $state, 'config' => $config]);
 
         $forced = $this->rules->firstForcedTool(
@@ -131,36 +143,45 @@ class Orchestrator
         $lastPromptTokens = 0;
         $cleared = 0;
         $rounds = 0;
+        $reasoningDropped = 0;
+        $modelId = $config->modelId;
+        $client = null;
         $textTail = '';
         $textBreak = false;
         $textOwed = false;
         $textAsked = false;
 
         try {
-            for ($round = 0; $round <= $config->maxToolIterations; $round++) {
+            try {
+                $client = $this->clientResolver->forStore($context->storeId);
+            } catch (LocalizedException $exception) {
+                $this->logger->error(sprintf(
+                    'no usable AI service session=%s error=%s',
+                    $this->digest($binding->sessionId),
+                    $exception->getMessage()
+                ));
+                yield Event::error(self::UNAVAILABLE_MESSAGE);
+                $stopReason = 'error';
+            }
+            if ($client !== null) {
+                if ($state->serviceId !== '' && $state->serviceId !== $client->getServiceId()) {
+                    $reasoningDropped = $history->dropReasoning();
+                }
+                $state->serviceId = $client->getServiceId();
+                $modelId = $config->modelId !== '' ? $config->modelId : $client->getModel();
+            }
+            for ($round = 0; $client !== null && $round <= $config->maxToolIterations; $round++) {
                 $now = microtime(true);
                 $forceText = $round === $config->maxToolIterations || $now >= $deadline;
                 if ($forceText) {
-                    $toolChoice = ['type' => 'none'];
+                    $toolChoice = 'none';
                 } elseif ($round === 0 && $forced !== null) {
-                    $toolChoice = ['type' => 'tool', 'name' => $forced];
+                    $toolChoice = ['tool' => $forced];
                 } else {
-                    $toolChoice = ['type' => 'auto'];
+                    $toolChoice = 'auto';
                 }
-                $thinking = $config->thinkingEffort === 'off' ? ['type' => 'disabled'] : ['type' => 'adaptive'];
-                $build = fn (array $toolChoice) => $this->assembly->build(
-                    $config->modelId,
-                    $config->maxTokens,
-                    $static,
-                    $dynamic,
-                    $tools,
-                    $toolChoice,
-                    $history->all(),
-                    $toolChoice['type'] === 'auto',
-                    $thinking,
-                    $config->thinkingEffort
-                );
-                $request = $build($toolChoice);
+                $request = $this->requestMapper->build($static, $definitions, $history->all());
+                $options = $this->roundOptions($config, $toolChoice);
 
                 $callStart = microtime(true);
                 $aborted = false;
@@ -170,62 +191,69 @@ class Orchestrator
                     $streamed = $this->streamedRoundFactory->create();
                     $emitted = false;
                     try {
-                        foreach ($this->client->stream($request, $onWaiting, $context->storeId) as $rawEvent) {
-                            foreach ($streamed->feed($rawEvent) as $item) {
-                                $emitted = true;
-                                if ($item instanceof TextDelta) {
-                                    if ($textBreak && $textTail !== '' && !str_ends_with($textTail, "\n") && !str_starts_with($item->text, "\n")) {
-                                        yield Event::textDelta("\n\n");
-                                    }
-                                    $textBreak = false;
-                                    $textTail = $item->text;
-                                    yield Event::textDelta($item->text);
-                                    continue;
+                        foreach ($streamed->consume($client->streamChat($request, $options), $onWaiting) as $item) {
+                            $emitted = true;
+                            if ($item instanceof TextDelta) {
+                                if ($textBreak && $textTail !== '' && !str_ends_with($textTail, "\n") && !str_starts_with($item->text, "\n")) {
+                                    yield Event::textDelta("\n\n");
                                 }
-                                if ($item instanceof ToolUseClosed) {
-                                    $textBreak = true;
-                                    $outcome = $executor->dispatch($item->name, $item->input, $item->id);
-                                    $settled[$item->id] = $outcome;
-                                    yield Event::toolCall(
-                                        $item->name,
-                                        $item->id,
-                                        $outcome->argumentsShown,
-                                        $outcome->label
-                                    );
-                                    foreach ($outcome->events as $event) {
-                                        yield $event;
-                                    }
-                                    yield $this->toolResultEvent($item->name, $item->id, $outcome);
-                                    continue;
+                                $textBreak = false;
+                                $textTail = $item->text;
+                                yield Event::textDelta($item->text);
+                                continue;
+                            }
+                            if ($item instanceof ToolUseClosed) {
+                                $textBreak = true;
+                                $outcome = $executor->dispatch($item->name, $item->input, $item->id);
+                                $settled[$item->id] = $outcome;
+                                yield Event::toolCall(
+                                    $item->name,
+                                    $item->id,
+                                    $outcome->argumentsShown,
+                                    $outcome->label
+                                );
+                                foreach ($outcome->events as $event) {
+                                    yield $event;
                                 }
-                                if ($item instanceof UnreadableToolInput) {
-                                    $outcome = ToolOutcome::error(self::UNREADABLE_INPUT_TEXT);
-                                    $settled[$item->id] = $outcome;
-                                    yield $this->toolResultEvent($item->name, $item->id, $outcome);
-                                }
+                                yield $this->toolResultEvent($item->name, $item->id, $outcome);
                             }
                         }
-                    } catch (Unauthorized|BadRequest $exception) {
-                        if (!$emitted && $toolChoice['type'] === 'tool' && str_contains($exception->getMessage(), 'tool_choice')) {
+                    } catch (AiContentFilteredException $exception) {
+                        $this->logger->warning(sprintf(
+                            'model call refused session=%s round=%d error=%s',
+                            $this->digest($binding->sessionId),
+                            $round,
+                            $exception->getMessage()
+                        ));
+                        yield Event::error(self::REFUSAL_MESSAGE);
+                        $stopReason = 'refusal';
+                        $aborted = true;
+                    } catch (AiAuthenticationException|AiInvalidRequestException|AiRequestNotSentException $exception) {
+                        if (
+                            $exception instanceof AiInvalidRequestException
+                            && !$emitted
+                            && is_array($toolChoice)
+                            && str_contains($exception->getMessage(), 'tool_choice')
+                        ) {
                             $this->logger->info(sprintf(
                                 'forced tool not supported, retried with auto session=%s round=%d',
                                 $this->digest($binding->sessionId),
                                 $round
                             ));
-                            $toolChoice = ['type' => 'auto'];
-                            $request = $build($toolChoice);
+                            $toolChoice = 'auto';
+                            $options = $this->roundOptions($config, $toolChoice);
                             continue;
                         }
                         $this->logger->error(sprintf(
                             'model call failed session=%s round=%d error=%s',
                             $this->digest($binding->sessionId),
                             $round,
-                            $this->describe($exception)
+                            $exception->getMessage()
                         ));
                         yield Event::error(self::UNAVAILABLE_MESSAGE);
                         $stopReason = 'error';
                         $aborted = true;
-                    } catch (RateLimited $exception) {
+                    } catch (AiRateLimitedException $exception) {
                         $this->logger->warning(sprintf(
                             'model call rate limited session=%s round=%d',
                             $this->digest($binding->sessionId),
@@ -234,13 +262,13 @@ class Orchestrator
                         yield Event::error(self::BUSY_MESSAGE, $exception->getRetryAfter());
                         $stopReason = 'error';
                         $aborted = true;
-                    } catch (ServerError|Transport|ApiStreamError $exception) {
-                        if (!$retried && !$emitted && $this->isWorthRetrying($exception)) {
+                    } catch (AiTransientException|AiToolCallException $exception) {
+                        if (!$retried && !$emitted) {
                             $this->logger->warning(sprintf(
                                 'model call retried session=%s round=%d error=%s',
                                 $this->digest($binding->sessionId),
                                 $round,
-                                $this->describe($exception)
+                                $exception->getMessage()
                             ));
                             $retried = true;
                             $this->sleeper->sleep(self::ROUND_RETRY_DELAY_SECONDS);
@@ -250,7 +278,17 @@ class Orchestrator
                             'model call failed session=%s round=%d error=%s',
                             $this->digest($binding->sessionId),
                             $round,
-                            $this->describe($exception)
+                            $exception->getMessage()
+                        ));
+                        yield Event::error(self::BUSY_MESSAGE);
+                        $stopReason = 'error';
+                        $aborted = true;
+                    } catch (AiServiceException $exception) {
+                        $this->logger->warning(sprintf(
+                            'model call failed session=%s round=%d error=%s',
+                            $this->digest($binding->sessionId),
+                            $round,
+                            $exception->getMessage()
                         ));
                         yield Event::error(self::BUSY_MESSAGE);
                         $stopReason = 'error';
@@ -271,17 +309,15 @@ class Orchestrator
                     break;
                 }
 
-                $lastPromptTokens = $roundUsage['input_tokens']
-                    + $roundUsage['cache_read_input_tokens']
-                    + $roundUsage['cache_creation_input_tokens'];
-                $rawStopReason = $streamed->stopReason();
-                $stopReason = $rawStopReason === 'stop_sequence' ? 'end_turn' : $rawStopReason;
+                $lastPromptTokens = $streamed->promptTokens();
+                $stopReason = $streamed->stopReason();
                 $this->logger->info(sprintf(
-                    'model call session=%s round=%d model=%s stop=%s input=%d cache_read=%d '
+                    'model call session=%s round=%d service=%s model=%s stop=%s input=%d cache_read=%d '
                         . 'cache_write=%d output=%d elapsed_ms=%d',
                     $this->digest($binding->sessionId),
                     $round,
-                    $config->modelId,
+                    $client->getServiceCode(),
+                    $modelId,
                     (string)$stopReason,
                     $roundUsage['input_tokens'],
                     $roundUsage['cache_read_input_tokens'],
@@ -332,7 +368,7 @@ class Orchestrator
             $history->closeOpenToolUses($settled);
             $this->transcripts->append($binding->sessionId, $history->newMessages());
             $cleared = $history->compact($lastPromptTokens, $config->compactAboveTokens);
-            if ($cleared > 0) {
+            if ($cleared > 0 || $reasoningDropped > 0) {
                 $this->transcripts->rewrite($binding->sessionId, $history->all());
             }
             $state->turnCounter++;
@@ -350,7 +386,7 @@ class Orchestrator
                 'session_id' => $binding->sessionId,
                 'store_id' => $context->storeId,
                 'turn_no' => $persistedTurnNo,
-                'model_id' => $config->modelId,
+                'model_id' => $modelId,
                 'rounds' => $rounds,
                 'input_tokens' => $usage['input_tokens'],
                 'output_tokens' => $usage['output_tokens'],
@@ -375,21 +411,17 @@ class Orchestrator
         $this->logger->info(sprintf('turn interrupted session=%s', $this->digest($binding->sessionId)));
     }
 
-    private function isWorthRetrying(\Throwable $exception): bool
+    private function roundOptions(AgentConfig $config, string|array $toolChoice): array
     {
-        if ($exception instanceof Transport) {
-            return true;
+        $options = [
+            'max_tokens' => $config->maxTokens,
+            'tool_choice' => $toolChoice,
+            'reasoning_effort' => $config->thinkingEffort === ThinkingEffort::OFF ? 'none' : $config->thinkingEffort,
+        ];
+        if ($config->modelId !== '') {
+            $options[AiClientInterface::OPTION_MODEL] = $config->modelId;
         }
-        return $exception instanceof ApiStreamError
-            && in_array($exception->getApiType(), self::RETRYABLE_STREAM_ERROR_TYPES, true);
-    }
-
-    private function describe(\Throwable $exception): string
-    {
-        if ($exception instanceof ApiStreamError) {
-            return $exception->getApiType() . ': ' . $exception->getMessage();
-        }
-        return $exception->getMessage();
+        return $options;
     }
 
     private function accumulateUsage(array $totals, array $roundUsage): array
@@ -414,6 +446,12 @@ class Orchestrator
             $outcome->blocked,
             $keepText ? null : mb_substr($outcome->resultText, 0, self::EXCERPT_MAX_CHARS)
         );
+    }
+
+    private function customerText(string $message): string
+    {
+        $text = preg_replace(self::FORGED_TAG_PATTERN, '‹$1', $message) ?? $message;
+        return preg_replace(self::FORGED_BLOCK_PATTERN, '$1\\\\$2', $text) ?? $text;
     }
 
     private function digest(string $sessionId): string

@@ -1,18 +1,20 @@
 <?php
 declare(strict_types=1);
 
-namespace MageOS\ClaudeConsumerAgent\Model\Agent\Prompt;
+namespace MageOS\AiShoppingAssistant\Model\Agent\Prompt;
 
-use MageOS\ClaudeConsumerAgent\Api\Data\CartInterface;
-use MageOS\ClaudeConsumerAgent\Api\Data\PageContextInterface;
-use MageOS\ClaudeConsumerAgent\Api\Data\UserPreferencesInterface;
+use MageOS\AiShoppingAssistant\Api\Data\CartInterface;
+use MageOS\AiShoppingAssistant\Api\Data\PageContextInterface;
+use MageOS\AiShoppingAssistant\Api\Data\UserPreferencesInterface;
 
 class DynamicContext
 {
+    public const PREFIX = '# Session context';
+
     private const MAX_CHARS = 6000;
 
     public function __construct(
-        private readonly \MageOS\ClaudeConsumerAgent\Model\Agent\Fencing\Fence $fence
+        private readonly \MageOS\AiShoppingAssistant\Model\Agent\Fencing\Fence $fence
     ) {
     }
 
@@ -42,7 +44,7 @@ class DynamicContext
         $payload['current_page'] = $page->toArray();
         $payload['local_time'] = $hourIso;
 
-        return "# Session context\n\n" . $this->fence->fencePayload($payload, self::MAX_CHARS);
+        return self::PREFIX . "\n\n" . $this->fence->fencePayload($payload, self::MAX_CHARS);
     }
 
     private function cartItems(CartInterface $cart): array
