@@ -453,6 +453,7 @@ class OrchestratorTest extends TestCase
         $this->assertSame('auto', $client->calls[1]['options']['tool_choice']);
         $messages = $client->calls[1]['request']->getMessages();
         $this->assertStringContainsString('no reply text yet', $messages[count($messages) - 1]->getContent());
+        $this->assertStringContainsString('Nothing you wrote this turn reached them', $messages[count($messages) - 1]->getContent());
         $texts =array_values(array_filter($events, static fn ($event): bool => $event->type === 'text_delta'));
         $this->assertSame('There are 110 of them.', $texts[0]->data['text']);
         $this->assertSame('turn_complete', $events[count($events) - 1]->type);

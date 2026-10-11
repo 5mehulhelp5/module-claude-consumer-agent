@@ -34,8 +34,9 @@ class Orchestrator
 
     private const BUSY_MESSAGE = 'The assistant is busy. Please try again in a few seconds.';
 
-    private const TEXT_OWED_NOTE = ' The customer sees these components but no reply text yet. Write one or two sentences now that answer their message, '
-        . 'without repeating what the components show.';
+    private const TEXT_OWED_NOTE = ' The customer sees these components but no reply text yet. Nothing you wrote this turn reached them, '
+        . 'including your reasoning. Write one or two sentences now that answer their message in full, without referring '
+        . 'to earlier text and without repeating what the components show.';
 
     private const SUMMARY_MAX_CHARS = 200;
 
