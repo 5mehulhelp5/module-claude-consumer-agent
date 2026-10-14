@@ -34,9 +34,9 @@ class Orchestrator
 
     private const BUSY_MESSAGE = 'The assistant is busy. Please try again in a few seconds.';
 
-    private const TEXT_OWED_NOTE = ' The customer sees these components but no reply text yet. Nothing you wrote this turn reached them, '
-        . 'including your reasoning. Write one or two sentences now that answer their message in full, without referring '
-        . 'to earlier text and without repeating what the components show.';
+    private const TEXT_OWED_NOTE = ' The customer sees these components but no text from you this turn. Notes you write before a tool call '
+        . 'are hidden from the customer, so they have not read any answer yet. Write your complete answer to their message now, '
+        . 'as if for the first time, without referring to earlier text and without repeating what the components show.';
 
     private const SUMMARY_MAX_CHARS = 200;
 

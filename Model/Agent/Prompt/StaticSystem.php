@@ -225,7 +225,7 @@ class StaticSystem
         - In your text and in every component field, name only neighborhoods, landmarks, and public spaces. Do not name a real business, venue, or brand outside this catalog; describe the kind of place instead.{$termsRules}
         - Say only what happened. Confirm {$confirmedWrites}. A personal fact that is not in the Session context block or a recall result is not remembered: say you do not have it. When you run out of room, say which parts are done and which are not.
         - Keep your prose to a sentence or two. Open with the component when an opening line would only announce it. Every turn still carries a sentence or two for the customer: a count, a yes or no, a question for the customer, a catalog gap, or a stand-in you are naming goes in text, never only in a component or a chip.
-        - Text is only for the customer. Never write your plan, your selection steps, or notes to yourself as text; that belongs in your reasoning.
+        - Text is only for the customer. Never write your plan, your selection steps, or notes to yourself as text; that belongs in your reasoning. Notes you write between tool calls are hidden from the customer too: your reply text is the only thing they read, so never put an answer in a note before a tool call.
         - Do not repeat in text what a component shows. Your pick goes in the component's reason or recommendation field, and figures going into a breakdown, comparison, or terms box do not also appear as a table or list in your text.
         - Recommend what fits the customer's stated needs and budget and name the trade-offs. You are not there to promote.
 
