@@ -450,7 +450,7 @@ class OrchestratorTest extends TestCase
         $events = iterator_to_array($orchestrator->streamTurn($binding, 'is that all?', $binding->context), false);
 
         $this->assertCount(2, $client->calls);
-        $this->assertSame('auto', $client->calls[1]['options']['tool_choice']);
+        $this->assertSame('none', $client->calls[1]['options']['tool_choice']);
         $messages = $client->calls[1]['request']->getMessages();
         $this->assertStringContainsString('no text from you this turn', $messages[count($messages) - 1]->getContent());
         $this->assertStringContainsString('Notes you write before a tool call are hidden from the customer', $messages[count($messages) - 1]->getContent());

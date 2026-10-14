@@ -173,7 +173,7 @@ class Orchestrator
             }
             for ($round = 0; $client !== null && $round <= $config->maxToolIterations; $round++) {
                 $now = microtime(true);
-                $forceText = $round === $config->maxToolIterations || $now >= $deadline;
+                $forceText = $textOwed || $round === $config->maxToolIterations || $now >= $deadline;
                 if ($forceText) {
                     $toolChoice = 'none';
                 } elseif ($round === 0 && $forced !== null) {
