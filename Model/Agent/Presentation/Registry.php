@@ -139,8 +139,9 @@ class Registry
 
     public static function checkoutDescription(): string
     {
-        return 'Stage the current cart as an order summary the customer confirms in the '
-            . 'app; it places no order and charges nothing. Use only when the customer '
+        return 'Stage the current cart as an order summary with a button to the store\'s checkout '
+            . 'page, where the customer reviews and places the order; it places no order and '
+            . 'charges nothing. Use only when the customer '
             . 'asks to check out.';
     }
 

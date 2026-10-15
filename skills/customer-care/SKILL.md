@@ -29,7 +29,7 @@ The customer has usually been waiting on something already. Tell them what the r
 
 ## What this flow hands off
 
-- This flow reads. Cancelling, rebooking, changing an address or a line, refunds, and anything else that alters the record or moves money happens in the app's support flow: describe it as the next step and make clear it has not happened here.
+- This flow reads. Cancelling, rebooking, changing an address or a line, refunds, and anything else that alters the record or moves money happens through the store's customer service: describe contacting them as the next step and make clear it has not happened here.
 - Fetch the record before handing off all the same; whether the step is possible depends on its state, and the caveat comes from the retrieved terms.
 - With an upset customer, drop to short factual sentences on the situation and the next step.
 - When one message carries a problem and a shopping request, settle the problem first, then take up the request in full in the same turn.

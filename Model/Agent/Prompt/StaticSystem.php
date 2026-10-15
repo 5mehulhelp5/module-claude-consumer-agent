@@ -161,8 +161,9 @@ class StaticSystem
                 . "\n- A cart with a discount has a store promotion or code applied: it then comes "
                 . "to subtotal_after_discount, before shipping and tax, which is never the order total."
                 . $reorderRule
-                . "\n- checkout stages a summary the customer confirms in the app; it places no "
-                . "order and charges nothing, and your text must not suggest otherwise. Once they "
+                . "\n- checkout stages a summary with a button to the store's checkout page, where "
+                . "the customer reviews and places the order; it places no order and charges "
+                . "nothing, and your text must not suggest otherwise. Once they "
                 . "ask for it, finish the staging this turn: add anything they settled on that "
                 . "never reached the cart, point out anything in the cart the conversation does "
                 . "not account for (a duplicate line, an unexplained quantity)" . $fulfillmentClause
