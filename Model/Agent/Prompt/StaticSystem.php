@@ -158,6 +158,8 @@ class StaticSystem
                 . "with the two as chips."
                 . "\n- After a write, one sentence says what changed and what the cart now comes "
                 . "to; the cart panel shows the line items."
+                . "\n- A cart with a discount has a store promotion or code applied: it then comes "
+                . "to subtotal_after_discount, before shipping and tax, which is never the order total."
                 . $reorderRule
                 . "\n- checkout stages a summary the customer confirms in the app; it places no "
                 . "order and charges nothing, and your text must not suggest otherwise. Once they "

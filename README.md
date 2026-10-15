@@ -272,7 +272,8 @@ with `bin/magento config:set`.
    sessions. Tool calls run against the store through
    `Api\StorefrontBackendInterface`:
    - catalog: `search_products`, `search_categories`, `get_product_details`
-   - cart: `get_cart`, `add_to_cart`, `update_cart_item`, `remove_from_cart`
+   - cart: `get_cart`, `add_to_cart`, `update_cart_item`, `remove_from_cart`,
+     `apply_coupon`
    - orders and store: `get_orders`, `get_order_status`, `search_policies`,
      `get_fulfillment_options`
    - memory and skills: `get_preferences`, `save_memory`, `recall_memories`,
@@ -462,7 +463,8 @@ preference on a base concrete class.
 
 6. Cart writes. `Api\Cart\BuyRequestBuilderInterface` builds the
    `DataObject` that `Quote::addProduct()` receives. Replace it or decorate
-   it with a plugin.
+   it with a plugin. `Api\Cart\CouponApplierInterface` applies a code from
+   `apply_coupon`; the default goes through `CouponManagementInterface::set()`.
 
 7. Templates. Every surface and card template resolves through the theme
    fallback. Override by path in a child theme under

@@ -16,6 +16,7 @@
         "magento/module-quote": "*",
         "magento/module-customer": "*",
         "magento/module-sales": "*",
+        "magento/module-sales-rule": "*",
         "magento/module-cms": "*",
         "magento/module-config": "*",
         "magento/module-offline-shipping": "*",

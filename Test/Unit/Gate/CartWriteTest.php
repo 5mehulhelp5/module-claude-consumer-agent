@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace MageOS\AiShoppingAssistant\Test\Unit\Gate;
 
 use Magento\Framework\Lock\LockManagerInterface;
+use MageOS\AiShoppingAssistant\Api\Cart\CouponApplierInterface;
 use MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface;
 use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
 use MageOS\AiShoppingAssistant\Model\Agent\Fencing\Fence;
@@ -26,7 +27,8 @@ class CartWriteTest extends TestCase
     private function buildGate(
         StorefrontBackendInterface&MockObject $backend,
         LockManagerInterface&MockObject $lockManager,
-        ?LoggerInterface $logger = null
+        ?LoggerInterface $logger = null,
+        ?CouponApplierInterface $couponApplier = null
     ): CartWrite {
         return new CartWrite(
             $backend,
@@ -34,7 +36,8 @@ class CartWriteTest extends TestCase
             new Options(new Sanitizer()),
             new Provenance(),
             new Serializer(new Fence(new Sanitizer())),
-            $logger ?? $this->createMock(LoggerInterface::class)
+            $logger ?? $this->createMock(LoggerInterface::class),
+            $couponApplier ?? $this->createMock(CouponApplierInterface::class)
         );
     }
 

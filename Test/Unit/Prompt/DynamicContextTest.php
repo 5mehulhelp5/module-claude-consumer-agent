@@ -84,4 +84,32 @@ class DynamicContextTest extends TestCase
         $text = $context->build(null, $cart, new PageContext(), '2026-05-30T10:00+01:00');
         $this->assertStringContainsString('...[truncated]', $text);
     }
+
+    public function testCartWithoutDiscountOrCodeCarriesNoDiscountKeys(): void
+    {
+        $cart = new Cart([new CartItem('p-1', 'Chair', 2395.0, 1)], 'CAD');
+        $text = $this->buildContext()->build(null, $cart, new PageContext(), '2026-05-30T10:00+01:00');
+        $this->assertStringNotContainsString('discount', $text);
+        $this->assertStringNotContainsString('coupon_code', $text);
+        $this->assertStringNotContainsString('shipping_and_tax', $text);
+    }
+
+    public function testCartWithAnAutomaticDiscountCarriesTheDiscountedSubtotal(): void
+    {
+        $cart = new Cart([new CartItem('p-1', 'Chair', 2395.0, 1)], 'CAD', 359.25);
+        $text = str_replace(' ', '', $this->buildContext()->build(null, $cart, new PageContext(), '2026-05-30T10:00+01:00'));
+        $this->assertStringContainsString('"subtotal":2395', $text);
+        $this->assertStringContainsString('"discount":359.25', $text);
+        $this->assertStringContainsString('"subtotal_after_discount":2035.75', $text);
+        $this->assertStringContainsString('"coupon_code":""', $text);
+        $this->assertStringContainsString('"shipping_and_tax":"notincluded,addedatcheckout"', $text);
+    }
+
+    public function testCartWithACodeButNoDiscountStillCarriesTheCode(): void
+    {
+        $cart = new Cart([new CartItem('p-1', 'Chair', 2395.0, 1)], 'CAD', 0.0, 'FREESHIP');
+        $text = $this->buildContext()->build(null, $cart, new PageContext(), '2026-05-30T10:00+01:00');
+        $this->assertStringContainsString('FREESHIP', $text);
+        $this->assertStringContainsString('subtotal_after_discount', $text);
+    }
 }

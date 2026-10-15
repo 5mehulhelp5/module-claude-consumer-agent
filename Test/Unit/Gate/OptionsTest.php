@@ -291,4 +291,99 @@ class OptionsTest extends TestCase
         $this->assertSame(Options::NAME, $held->blocked);
         $this->assertStringContainsString('do not add it here', $held->resultText);
     }
+
+    private function lampFamily(bool $withFamilyRecord = true, bool $withSiblings = true): SessionState
+    {
+        $records = [];
+        if ($withFamilyRecord) {
+            $records[] = [
+                'product_id' => 'lp-panthella',
+                'title' => 'Louis Poulsen Panthella',
+                'price' => 900.0,
+                'options' => [
+                    'Model' => ['160', '250'],
+                    'Colour' => ['Original Opal Green', 'White Opal', 'Pale Rose', 'Black'],
+                ],
+            ];
+        }
+        $records[] = [
+            'product_id' => 'lp-160-green',
+            'title' => 'Louis Poulsen Panthella',
+            'price' => 900.0,
+            'option_values' => ['Model' => '160', 'Colour' => 'Original Opal Green'],
+            'variant_of' => 'lp-panthella',
+        ];
+        if ($withSiblings) {
+            $records[] = [
+                'product_id' => 'lp-160-white',
+                'title' => 'Louis Poulsen Panthella',
+                'price' => 900.0,
+                'option_values' => ['Model' => '160', 'Colour' => 'White Opal'],
+                'variant_of' => 'lp-panthella',
+            ];
+        }
+        $state = new SessionState();
+        $state->rememberProducts($records);
+        return $state;
+    }
+
+    public function testADistinctiveWordOfTheValueConfirmsIt(): void
+    {
+        $state = $this->lampFamily();
+        $state->rememberCustomerText('green');
+        $state->rememberCustomerText('160');
+        $state->rememberCustomerText('add it');
+        $this->assertNull($this->gate->check($state, 'lp-160-green'));
+    }
+
+    public function testAWordSharedWithAnotherValueDoesNotConfirm(): void
+    {
+        $state = $this->lampFamily();
+        $state->rememberCustomerText('the 160 in opal please');
+        $held = $this->gate->check($state, 'lp-160-green');
+        $this->assertNotNull($held);
+        $this->assertSame(Options::NAME, $held->blocked);
+    }
+
+    public function testAChipThatShortensTheValueConfirmsIt(): void
+    {
+        $state = $this->lampFamily();
+        $state->rememberCustomerText('Model 160, Opal Green');
+        $this->assertNull($this->gate->check($state, 'lp-160-green'));
+    }
+
+    public function testSiblingVariantsAloneSupplyTheOtherValues(): void
+    {
+        $state = $this->lampFamily(false, true);
+        $state->rememberCustomerText('160 in green');
+        $this->assertNull($this->gate->check($state, 'lp-160-green'));
+    }
+
+    public function testWithoutSiblingValuesOnlyTheFullValueConfirms(): void
+    {
+        $state = $this->lampFamily(false, false);
+        $state->rememberCustomerText('160 in green');
+        $this->assertNotNull($this->gate->check($state, 'lp-160-green'));
+
+        $state->rememberCustomerText('original opal green');
+        $this->assertNull($this->gate->check($state, 'lp-160-green'));
+    }
+
+    public function testADistinctiveWordForOneOptionDoesNotStandInForAnother(): void
+    {
+        $state = $this->lampFamily();
+        $state->rememberCustomerText('green');
+        $this->assertNotNull($this->gate->check($state, 'lp-160-green'));
+    }
+
+    public function testTheVariantMessageAsksForConfirmationWithExactValueChips(): void
+    {
+        $state = $this->lampFamily();
+        $state->rememberCustomerText('the lamp please');
+        $held = $this->gate->check($state, 'lp-160-green');
+        $this->assertNotNull($held);
+        $this->assertStringContainsString('present_suggestions chips', $held->resultText);
+        $this->assertStringContainsString('exact value titles (160 / Original Opal Green)', $held->resultText);
+        $this->assertStringContainsString('Never tell the customer the store refused', $held->resultText);
+    }
 }

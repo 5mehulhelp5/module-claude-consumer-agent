@@ -13,6 +13,7 @@
     <preference for="MageOS\AiShoppingAssistant\Api\Backend\OrderStatusMapperInterface" type="MageOS\AiShoppingAssistant\Model\Backend\Provider\OrderStatusMapper"/>
     <preference for="MageOS\AiShoppingAssistant\Api\Backend\SkuMatcherInterface" type="MageOS\AiShoppingAssistant\Model\Backend\Provider\SkuMatcher"/>
     <preference for="MageOS\AiShoppingAssistant\Api\Cart\BuyRequestBuilderInterface" type="MageOS\AiShoppingAssistant\Model\Backend\BuyRequestBuilder"/>
+    <preference for="MageOS\AiShoppingAssistant\Api\Cart\CouponApplierInterface" type="MageOS\AiShoppingAssistant\Model\Backend\CouponApplier"/>
     <preference for="MageOS\AiShoppingAssistant\Api\Client\ClientResolverInterface" type="MageOS\AiShoppingAssistant\Model\Client\ConfiguredClientResolver"/>
     <preference for="MageOS\AiShoppingAssistant\Api\Session\SessionRepositoryInterface" type="MageOS\AiShoppingAssistant\Model\Session\Repository"/>
     <preference for="MageOS\AiShoppingAssistant\Api\Turn\TurnLogInterface" type="MageOS\AiShoppingAssistant\Model\Session\TurnLog"/>
@@ -212,6 +213,7 @@
             <argument name="clientFactory" xsi:type="object">MageOS\AiBase\Api\AiClientFactoryInterface\Proxy</argument>
             <argument name="liveBackend" xsi:type="object">MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface\Proxy</argument>
             <argument name="cartManagement" xsi:type="object">Magento\Quote\Api\CartManagementInterface\Proxy</argument>
+            <argument name="liveCouponApplier" xsi:type="object">MageOS\AiShoppingAssistant\Api\Cart\CouponApplierInterface\Proxy</argument>
         </arguments>
     </type>
 </config>

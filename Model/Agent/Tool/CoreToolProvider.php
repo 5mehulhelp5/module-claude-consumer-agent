@@ -5,6 +5,7 @@ namespace MageOS\AiShoppingAssistant\Model\Agent\Tool;
 
 use MageOS\AiShoppingAssistant\Api\Tool\ToolProviderInterface;
 use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
+use MageOS\AiShoppingAssistant\Model\Agent\Gate\CartWrite;
 
 /**
  * Ports shopping_agent.tools.registry.build_tools for v1: the built-in tools every
@@ -22,6 +23,7 @@ class CoreToolProvider implements ToolProviderInterface
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\AddToCart $addToCart,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\UpdateCartItem $updateCartItem,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\RemoveFromCart $removeFromCart,
+        private readonly \MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\ApplyCoupon $applyCoupon,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\GetPreferences $getPreferences,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\GetOrders $getOrders,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\GetOrderStatus $getOrderStatus,
@@ -237,6 +239,30 @@ class CoreToolProvider implements ToolProviderInterface
                 8
             ),
             new Definition(
+                'apply_coupon',
+                'Apply a discount code the customer typed in this conversation to their cart. The '
+                    . 'store decides whether the code is valid. Use only a code the customer wrote; '
+                    . 'never guess, suggest, name, or list codes.',
+                [
+                    'type' => 'object',
+                    'properties' => [
+                        'code' => [
+                            'type' => 'string',
+                            'maxLength' => CartWrite::COUPON_MAX_LENGTH,
+                            'description' => 'The code exactly as the customer typed it.',
+                        ],
+                    ],
+                    'required' => ['code'],
+                    'additionalProperties' => false,
+                ],
+                'write',
+                $this->applyCoupon,
+                [],
+                false,
+                true,
+                9
+            ),
+            new Definition(
                 'get_preferences',
                 "The customer's profile and saved preferences. Usually already in the "
                     . 'Session context block; call this only when it is missing there.',
@@ -246,7 +272,7 @@ class CoreToolProvider implements ToolProviderInterface
                 [],
                 false,
                 true,
-                9
+                10
             ),
             new Definition(
                 'get_orders',
@@ -269,7 +295,7 @@ class CoreToolProvider implements ToolProviderInterface
                 [],
                 true,
                 true,
-                10
+                11
             ),
             new Definition(
                 'get_order_status',
@@ -287,7 +313,7 @@ class CoreToolProvider implements ToolProviderInterface
                 [],
                 true,
                 true,
-                11
+                12
             ),
             new Definition(
                 'search_policies',
@@ -307,7 +333,7 @@ class CoreToolProvider implements ToolProviderInterface
                 [],
                 false,
                 true,
-                12
+                13
             ),
             new Definition(
                 'get_fulfillment_options',
@@ -331,7 +357,7 @@ class CoreToolProvider implements ToolProviderInterface
                 ['product_ids[]'],
                 false,
                 true,
-                13
+                14
             ),
             new Definition(
                 'save_memory',
@@ -368,7 +394,7 @@ class CoreToolProvider implements ToolProviderInterface
                 [],
                 false,
                 true,
-                14
+                15
             ),
             new Definition(
                 'recall_memories',
@@ -392,7 +418,7 @@ class CoreToolProvider implements ToolProviderInterface
                 [],
                 false,
                 true,
-                15
+                16
             ),
         ];
         return array_merge($tools, $this->presentationDefinitions());
@@ -404,11 +430,11 @@ class CoreToolProvider implements ToolProviderInterface
     private function presentationDefinitions(): array
     {
         $sortOrders = [
-            'present_products' => 16,
-            'present_comparison' => 17,
-            'present_order_status' => 18,
-            'checkout' => 19,
-            'present_suggestions' => 20,
+            'present_products' => 17,
+            'present_comparison' => 18,
+            'present_order_status' => 19,
+            'checkout' => 20,
+            'present_suggestions' => 21,
         ];
         $components = $this->presentation->components();
         $definitions = [];

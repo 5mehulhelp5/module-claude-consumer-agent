@@ -14,6 +14,8 @@ class Options
 
     private const STANDALONE_VALUE_MIN_LENGTH = 2;
 
+    private const DISTINCTIVE_WORD_MIN_LENGTH = 3;
+
     public function __construct(
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Fencing\Sanitizer $sanitizer
     ) {
@@ -40,7 +42,13 @@ class Options
             }
         }
         $optionValues = is_array($product['option_values'] ?? null) ? $product['option_values'] : [];
-        if ($optionValues !== [] && !$this->valuesConfirmed($optionValues, $state->recentCustomerText)) {
+        if ($optionValues !== []
+            && !$this->valuesConfirmed(
+                $optionValues,
+                $this->familyValues($state, $product, $optionValues),
+                $state->recentCustomerText
+            )
+        ) {
             return ToolOutcome::held(self::NAME, $this->variantMessage($productId, $product, $optionValues));
         }
         return null;
@@ -127,10 +135,13 @@ class Options
         return 'product_id ' . $productId . ' is the ' . $values . ' variant of ' . $familyRef
             . ', but the customer has not chosen these values in this conversation. Show the '
             . "variants with present_products (put the option values in each pick's reason), ask "
-            . 'which ' . $names . ' they want, and add the matching variant only after they choose.';
+            . 'which ' . $names . ' they want, and add the matching variant only after they choose. '
+            . 'When they seem to have chosen already, ask them to confirm with present_suggestions chips '
+            . 'that use the exact value titles (' . $values . '). Never tell the customer the store refused '
+            . 'the item or that you do not know why.';
     }
 
-    private function valuesConfirmed(array $optionValues, array $recentCustomerText): bool
+    private function valuesConfirmed(array $optionValues, array $familyValues, array $recentCustomerText): bool
     {
         $haystack = ' ' . $this->normalize(implode(' ', $recentCustomerText)) . ' ';
         foreach ($optionValues as $name => $label) {
@@ -138,11 +149,67 @@ class Options
             if ($needle === '') {
                 return false;
             }
-            if (!$this->valuePresent($haystack, $needle, $this->normalize((string)$name))) {
+            if ($this->valuePresent($haystack, $needle, $this->normalize((string)$name))) {
+                continue;
+            }
+            if (!$this->distinctiveWordPresent($haystack, $needle, $familyValues[$name] ?? [])) {
                 return false;
             }
         }
         return true;
+    }
+
+    private function familyValues(SessionState $state, array $product, array $optionValues): array
+    {
+        $variantOf = (string)($product['variant_of'] ?? '');
+        if ($variantOf === '') {
+            return [];
+        }
+        $family = $state->seen($variantOf) ?? [];
+        $familyOptions = is_array($family['options'] ?? null) ? $family['options'] : [];
+        $values = [];
+        foreach (array_keys($optionValues) as $name) {
+            $listed = is_array($familyOptions[$name] ?? null) ? $familyOptions[$name] : [];
+            $values[$name] = array_map('strval', array_values($listed));
+        }
+        foreach ($state->seenProducts as $record) {
+            if ((string)($record['variant_of'] ?? '') !== $variantOf) {
+                continue;
+            }
+            $recordValues = is_array($record['option_values'] ?? null) ? $record['option_values'] : [];
+            foreach ($recordValues as $name => $value) {
+                if (array_key_exists($name, $values)) {
+                    $values[$name][] = (string)$value;
+                }
+            }
+        }
+        return $values;
+    }
+
+    private function distinctiveWordPresent(string $haystack, string $needle, array $siblingValues): bool
+    {
+        $otherWords = [];
+        foreach ($siblingValues as $sibling) {
+            $normalized = $this->normalize((string)$sibling);
+            if ($normalized === '' || $normalized === $needle) {
+                continue;
+            }
+            foreach (explode(' ', $normalized) as $word) {
+                $otherWords[] = $word;
+            }
+        }
+        if ($otherWords === []) {
+            return false;
+        }
+        foreach (array_unique(explode(' ', $needle)) as $word) {
+            if (mb_strlen($word) < self::DISTINCTIVE_WORD_MIN_LENGTH || in_array($word, $otherWords, true)) {
+                continue;
+            }
+            if (str_contains($haystack, ' ' . $word . ' ')) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private function valuePresent(string $haystack, string $needle, string $name): bool

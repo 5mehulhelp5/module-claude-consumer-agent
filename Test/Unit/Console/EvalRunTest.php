@@ -462,7 +462,8 @@ class EvalRunTest extends TestCase
             $liveBackend,
             $cartManagement,
             $appState,
-            $appEmulation
+            $appEmulation,
+            new \MageOS\AiShoppingAssistant\Model\Eval\FakeCouponApplier()
         );
     }
 }

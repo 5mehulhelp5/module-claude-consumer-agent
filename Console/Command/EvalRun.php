@@ -6,6 +6,7 @@ namespace MageOS\AiShoppingAssistant\Console\Command;
 use Magento\Framework\Console\Cli;
 use MageOS\AiBase\Api\AiClientInterface;
 use MageOS\AiShoppingAssistant\Api\Backend\SkuMatcherInterface;
+use MageOS\AiShoppingAssistant\Api\Cart\CouponApplierInterface;
 use MageOS\AiShoppingAssistant\Api\Data\CartInterface;
 use MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface;
 use MageOS\AiShoppingAssistant\Model\Agent\Event;
@@ -17,6 +18,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\CoreToolProvider;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\AddToCart;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\ApplyCoupon;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\GetCart;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\GetFulfillmentOptions;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\GetOrders;
@@ -39,6 +41,7 @@ use MageOS\AiShoppingAssistant\Model\Data\PageContext;
 use MageOS\AiShoppingAssistant\Model\Session\Binding;
 use MageOS\AiShoppingAssistant\Model\Session\TranscriptRepository;
 use MageOS\AiShoppingAssistant\Model\Eval\FakeBackend;
+use MageOS\AiShoppingAssistant\Model\Eval\FakeCouponApplier;
 use MageOS\AiShoppingAssistant\Model\Eval\FakeExecutorFactory;
 use MageOS\AiShoppingAssistant\Model\Eval\FakeScopeConfig;
 use MageOS\AiShoppingAssistant\Model\Eval\FixedClientResolver;
@@ -88,6 +91,7 @@ class EvalRun extends Command
         private readonly \Magento\Quote\Api\CartManagementInterface $cartManagement,
         private readonly \Magento\Framework\App\State $appState,
         private readonly \Magento\Store\Model\App\Emulation $appEmulation,
+        private readonly \MageOS\AiShoppingAssistant\Api\Cart\CouponApplierInterface $liveCouponApplier,
         ?string $name = null
     ) {
         parent::__construct($name);
@@ -203,7 +207,8 @@ class EvalRun extends Command
         }
 
         $storeConfig = $this->storeConfigForCase($case);
-        $orchestrator = $this->buildOrchestrator($backend, $client, $storeConfig, $skuMatcher);
+        $couponApplier = $live ? $this->liveCouponApplier : new FakeCouponApplier();
+        $orchestrator = $this->buildOrchestrator($backend, $client, $storeConfig, $skuMatcher, $couponApplier);
 
         $toolCalls = [];
         $uiComponents = [];
@@ -271,7 +276,8 @@ class EvalRun extends Command
         StorefrontBackendInterface $backend,
         AiClientInterface $client,
         \MageOS\AiShoppingAssistant\Model\Config\StoreConfig $storeConfig,
-        SkuMatcherInterface $skuMatcher
+        SkuMatcherInterface $skuMatcher,
+        CouponApplierInterface $couponApplier
     ): Orchestrator {
         $cartWrite = new CartWrite(
             $backend,
@@ -279,7 +285,8 @@ class EvalRun extends Command
             $this->toolkit->options(),
             $this->toolkit->provenance(),
             $this->toolkit->serializer(),
-            $this->logger
+            $this->logger,
+            $couponApplier
         );
         $handlers = [
             'load_skill' => new LoadSkill($this->toolkit->skillRegistry()),
@@ -294,6 +301,7 @@ class EvalRun extends Command
             'add_to_cart' => new AddToCart($cartWrite),
             'update_cart_item' => new UpdateCartItem($cartWrite),
             'remove_from_cart' => new RemoveFromCart($cartWrite),
+            'apply_coupon' => new ApplyCoupon($cartWrite),
             'get_preferences' => new GetPreferences($backend, $this->toolkit->fence()),
             'get_orders' => new GetOrders($backend, $this->toolkit->serializer(), $this->toolkit->fence()),
             'get_order_status' => new GetOrderStatus($backend, $this->toolkit->serializer(), $this->toolkit->fence()),
@@ -315,6 +323,7 @@ class EvalRun extends Command
             $handlers['add_to_cart'],
             $handlers['update_cart_item'],
             $handlers['remove_from_cart'],
+            $handlers['apply_coupon'],
             $handlers['get_preferences'],
             $handlers['get_orders'],
             $handlers['get_order_status'],

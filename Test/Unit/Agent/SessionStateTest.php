@@ -81,6 +81,7 @@ class SessionStateTest extends TestCase
                 'recent_customer_text',
                 'service_id',
                 'context_hash',
+                'coupon_rejections',
             ],
             array_keys($decoded)
         );
@@ -160,5 +161,23 @@ class SessionStateTest extends TestCase
 
         $this->assertSame('abc123', SessionState::fromJson($state->toJson())->contextHash);
         $this->assertSame('', SessionState::fromJson('{}')->contextHash);
+    }
+
+    public function testCouponRejectionsSurviveTheJsonRoundTrip(): void
+    {
+        $state = new SessionState();
+        $state->couponRejections = 3;
+
+        $this->assertSame(3, SessionState::fromJson($state->toJson())->couponRejections);
+    }
+
+    public function testJsonWithoutCouponRejectionsStartsTheCountAtZero(): void
+    {
+        $legacy = '{"seen_products":{},"turn_counter":2,"last_page":[],"surface_view":"","recent_customer_text":[],'
+            . '"service_id":"","context_hash":""}';
+
+        $this->assertSame(0, SessionState::fromJson($legacy)->couponRejections);
+        $this->assertSame(2, SessionState::fromJson($legacy)->turnCounter);
+        $this->assertSame(0, SessionState::fromJson('{"coupon_rejections":"junk"}')->couponRejections);
     }
 }

@@ -23,6 +23,8 @@ class SessionState
 
     public string $contextHash;
 
+    public int $couponRejections;
+
     public function __construct(
         array $seenProducts = [],
         int $turnCounter = 0,
@@ -30,7 +32,8 @@ class SessionState
         string $surfaceView = '',
         array $recentCustomerText = [],
         string $serviceId = '',
-        string $contextHash = ''
+        string $contextHash = '',
+        int $couponRejections = 0
     ) {
         $this->seenProducts = $seenProducts;
         $this->turnCounter = $turnCounter;
@@ -39,6 +42,7 @@ class SessionState
         $this->recentCustomerText = $recentCustomerText;
         $this->serviceId = $serviceId;
         $this->contextHash = $contextHash;
+        $this->couponRejections = $couponRejections;
     }
 
     public function rememberProducts(array $records): void
@@ -93,6 +97,7 @@ class SessionState
                 'recent_customer_text' => $this->recentCustomerText,
                 'service_id' => $this->serviceId,
                 'context_hash' => $this->contextHash,
+                'coupon_rejections' => $this->couponRejections,
             ],
             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
         );
@@ -112,6 +117,7 @@ class SessionState
         $recentCustomerText = $decoded['recent_customer_text'] ?? [];
         $serviceId = $decoded['service_id'] ?? '';
         $contextHash = $decoded['context_hash'] ?? '';
+        $couponRejections = $decoded['coupon_rejections'] ?? 0;
         return new self(
             is_array($seenProducts) ? $seenProducts : [],
             is_int($turnCounter) ? $turnCounter : (int)$turnCounter,
@@ -119,7 +125,8 @@ class SessionState
             is_string($surfaceView) ? $surfaceView : '',
             is_array($recentCustomerText) ? $recentCustomerText : [],
             is_string($serviceId) ? $serviceId : '',
-            is_string($contextHash) ? $contextHash : ''
+            is_string($contextHash) ? $contextHash : '',
+            is_numeric($couponRejections) ? (int)$couponRejections : 0
         );
     }
 }

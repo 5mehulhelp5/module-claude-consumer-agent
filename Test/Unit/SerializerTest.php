@@ -358,4 +358,36 @@ class SerializerTest extends TestCase
         $cart = new Cart([$item], 'USD');
         $this->assertSame('2 item(s), subtotal 10.00 USD', $this->serializer->cartSummary($cart));
     }
+
+    public function testCartSummaryAddsTheDiscountAndCode(): void
+    {
+        $cart = new Cart([new CartItem('p-1', 'Chair', 2395.0, 1)], 'CAD', 359.25, 'SAVE15');
+        $this->assertSame(
+            '1 item(s), subtotal 2395.00 CAD, discount 359.25 (code SAVE15), after discount 2035.75 CAD '
+            . 'before shipping and tax',
+            $this->serializer->cartSummary($cart)
+        );
+    }
+
+    public function testCartSummaryOfAnAutomaticDiscountNamesNoCode(): void
+    {
+        $cart = new Cart([new CartItem('p-1', 'Chair', 2395.0, 1)], 'CAD', 359.25);
+        $this->assertSame(
+            '1 item(s), subtotal 2395.00 CAD, discount 359.25, after discount 2035.75 CAD before shipping and tax',
+            $this->serializer->cartSummary($cart)
+        );
+    }
+
+    public function testCartPayloadCarriesTheDiscountOnlyWhenThereIsOne(): void
+    {
+        $plain = $this->serializer->cart(new Cart([new CartItem('p-1', 'Chair', 2395.0, 1)], 'CAD'));
+        $this->assertArrayNotHasKey('discount', $plain);
+        $this->assertArrayNotHasKey('coupon_code', $plain);
+
+        $discounted = $this->serializer->cart(new Cart([new CartItem('p-1', 'Chair', 2395.0, 1)], 'CAD', 359.25, 'SAVE15'));
+        $this->assertSame(359.25, $discounted['discount']);
+        $this->assertSame(2035.75, $discounted['subtotal_after_discount']);
+        $this->assertSame('SAVE15', $discounted['coupon_code']);
+        $this->assertSame('not included, added at checkout', $discounted['shipping_and_tax']);
+    }
 }

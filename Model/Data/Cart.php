@@ -10,7 +10,9 @@ class Cart implements CartInterface
 {
     public function __construct(
         private readonly array $items = [],
-        private readonly string $currency = 'USD'
+        private readonly string $currency = 'USD',
+        private readonly float $discount = 0.0,
+        private readonly string $couponCode = ''
     ) {
     }
 
@@ -21,7 +23,12 @@ class Cart implements CartInterface
             $items[] = is_array($item) ? CartItem::fromArray($item) : $item;
         }
 
-        return new self($items, (string)($data['currency'] ?? 'USD'));
+        return new self(
+            $items,
+            (string)($data['currency'] ?? 'USD'),
+            (float)($data['discount'] ?? 0.0),
+            (string)($data['coupon_code'] ?? '')
+        );
     }
 
     public function getItems(): array
@@ -50,6 +57,21 @@ class Cart implements CartInterface
         )), 2);
     }
 
+    public function getDiscount(): float
+    {
+        return round(max(0.0, $this->discount), 2);
+    }
+
+    public function getCouponCode(): string
+    {
+        return $this->couponCode;
+    }
+
+    public function getSubtotalAfterDiscount(): float
+    {
+        return round(max(0.0, $this->getSubtotal() - $this->getDiscount()), 2);
+    }
+
     public function find(string $productId): ?CartItemInterface
     {
         foreach ($this->items as $item) {
@@ -76,6 +98,9 @@ class Cart implements CartInterface
             'currency' => $this->currency,
             'item_count' => $this->getItemCount(),
             'subtotal' => $this->getSubtotal(),
+            'discount' => $this->getDiscount(),
+            'coupon_code' => $this->couponCode,
+            'subtotal_after_discount' => $this->getSubtotalAfterDiscount(),
         ];
     }
 }

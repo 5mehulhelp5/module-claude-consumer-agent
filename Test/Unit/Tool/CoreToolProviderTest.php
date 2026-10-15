@@ -6,6 +6,7 @@ namespace MageOS\AiShoppingAssistant\Test\Unit\Tool;
 use Magento\Framework\Component\ComponentRegistrar;
 use Magento\Framework\Filesystem\Driver\File;
 use Magento\Framework\Lock\LockManagerInterface;
+use MageOS\AiShoppingAssistant\Api\Cart\CouponApplierInterface;
 use MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface;
 use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
 use MageOS\AiShoppingAssistant\Model\Agent\Fencing\Fence;
@@ -26,6 +27,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Skill\Registry as SkillRegistry;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\CoreToolProvider;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Definition;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\AddToCart;
+use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\ApplyCoupon;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\GetCart;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\GetFulfillmentOptions;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\GetOrders;
@@ -68,7 +70,8 @@ class CoreToolProviderTest extends TestCase
             new Options(new Sanitizer()),
             new Provenance(),
             $serializer,
-            $logger
+            $logger,
+            $this->createMock(CouponApplierInterface::class)
         );
         $skills = $this->realSkillRegistry();
         $presentation = new PresentationRegistry(
@@ -88,6 +91,7 @@ class CoreToolProviderTest extends TestCase
             new AddToCart($cartWrite),
             new UpdateCartItem($cartWrite),
             new RemoveFromCart($cartWrite),
+            new ApplyCoupon($cartWrite),
             new GetPreferences($backend, $fence),
             new GetOrders($backend, $serializer, $fence),
             new GetOrderStatus($backend, $serializer, $fence),
@@ -125,7 +129,7 @@ class CoreToolProviderTest extends TestCase
         }
     }
 
-    public function testTwentyToolsInTheFixedOrder(): void
+    public function testTwentyOneToolsInTheFixedOrder(): void
     {
         $expectedOrder = [
             'load_skill',
@@ -136,6 +140,7 @@ class CoreToolProviderTest extends TestCase
             'add_to_cart',
             'update_cart_item',
             'remove_from_cart',
+            'apply_coupon',
             'get_preferences',
             'get_orders',
             'get_order_status',
@@ -150,8 +155,39 @@ class CoreToolProviderTest extends TestCase
             'present_suggestions',
         ];
         $definitions = $this->buildProvider()->getTools($this->config());
-        $this->assertCount(20, $definitions);
+        $this->assertCount(21, $definitions);
         $this->assertSame($expectedOrder, array_map(static fn (Definition $d): string => $d->getName(), $definitions));
+    }
+
+    public function testSortOrdersAreUniqueAndFollowTheFixedOrder(): void
+    {
+        $sortOrders = array_map(
+            static fn (Definition $d): int => $d->getSortOrder(),
+            $this->buildProvider()->getTools($this->config())
+        );
+        $this->assertSame(range(1, 21), $sortOrders);
+    }
+
+    public function testApplyCouponIsAWriteToolThatTakesOnlyTheCode(): void
+    {
+        foreach ($this->buildProvider()->getTools($this->config()) as $definition) {
+            if ($definition->getName() !== 'apply_coupon') {
+                continue;
+            }
+            $schema = $definition->getInputSchema();
+            $this->assertSame('write', $definition->getKind());
+            $this->assertInstanceOf(ApplyCoupon::class, $definition->getHandler());
+            $this->assertSame([], $definition->getProductIdArguments());
+            $this->assertFalse($definition->remembersProducts());
+            $this->assertSame(['code'], array_keys($schema['properties']));
+            $this->assertSame('string', $schema['properties']['code']['type']);
+            $this->assertSame(64, $schema['properties']['code']['maxLength']);
+            $this->assertFalse($schema['additionalProperties']);
+            $this->assertStringContainsString('the customer typed', $definition->getDescription());
+            $this->assertStringContainsString('never guess, suggest, name, or list codes', $definition->getDescription());
+            return;
+        }
+        $this->fail('apply_coupon definition not found');
     }
 
     public function testAdditionalPropertiesFalseEverywhere(): void
@@ -175,6 +211,7 @@ class CoreToolProviderTest extends TestCase
             'add_to_cart' => ['product_id'],
             'update_cart_item' => ['product_id', 'quantity'],
             'remove_from_cart' => ['product_id'],
+            'apply_coupon' => ['code'],
             'get_preferences' => null,
             'get_orders' => null,
             'get_order_status' => ['order_id'],

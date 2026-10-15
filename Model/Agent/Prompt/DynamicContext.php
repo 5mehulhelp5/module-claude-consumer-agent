@@ -38,6 +38,7 @@ class DynamicContext
             $payload['cart'] = [
                 'item_count' => $cart->getItemCount(),
                 'subtotal' => $cart->getSubtotal(),
+            ] + $this->cartDiscount($cart) + [
                 'items' => $this->cartItems($cart),
             ];
         }
@@ -45,6 +46,19 @@ class DynamicContext
         $payload['local_time'] = $hourIso;
 
         return self::PREFIX . "\n\n" . $this->fence->fencePayload($payload, self::MAX_CHARS);
+    }
+
+    private function cartDiscount(CartInterface $cart): array
+    {
+        if ($cart->getDiscount() <= 0.0 && $cart->getCouponCode() === '') {
+            return [];
+        }
+        return [
+            'discount' => $cart->getDiscount(),
+            'subtotal_after_discount' => $cart->getSubtotalAfterDiscount(),
+            'coupon_code' => $cart->getCouponCode(),
+            'shipping_and_tax' => 'not included, added at checkout',
+        ];
     }
 
     private function cartItems(CartInterface $cart): array

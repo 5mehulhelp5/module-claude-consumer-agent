@@ -16,6 +16,12 @@ interface CartInterface
 
     public function getSubtotal(): float;
 
+    public function getDiscount(): float;
+
+    public function getCouponCode(): string;
+
+    public function getSubtotalAfterDiscount(): float;
+
     public function find(string $productId): ?CartItemInterface;
 
     public function isEmpty(): bool;

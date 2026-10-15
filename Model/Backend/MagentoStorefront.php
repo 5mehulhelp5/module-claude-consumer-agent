@@ -336,8 +336,10 @@ class MagentoStorefront implements StorefrontBackendInterface
     {
         $quote = $this->cartRepository->get($ctx->quoteId);
         $items = [];
+        $discount = 0.0;
 
         foreach ($quote->getAllVisibleItems() as $item) {
+            $discount += abs((float)$item->getDiscountAmount());
             $isConfigurable = $item->getProductType() === Configurable::TYPE_CODE;
             $purchasable = $isConfigurable ? $this->childProduct($item) : $item->getProduct();
             if ($purchasable === null) {
@@ -358,7 +360,7 @@ class MagentoStorefront implements StorefrontBackendInterface
         }
 
         $currency = $this->storeManager->getStore($ctx->storeId)->getCurrentCurrencyCode();
-        return new Cart($items, $currency);
+        return new Cart($items, $currency, round($discount, 2), (string)$quote->getCouponCode());
     }
 
     private function itemPrice(QuoteItem $item): float

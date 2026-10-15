@@ -191,17 +191,42 @@ class Serializer
         foreach ($c->getItems() as $item) {
             $items[] = $this->cartLine($item);
         }
-        return [
+        $cart = [
             'items' => $items,
             'item_count' => $c->getItemCount(),
             'subtotal' => $c->getSubtotal(),
             'currency' => $c->getCurrency(),
         ];
+        if (!$this->hasDiscount($c)) {
+            return $cart;
+        }
+        return $cart + [
+            'discount' => $c->getDiscount(),
+            'subtotal_after_discount' => $c->getSubtotalAfterDiscount(),
+            'coupon_code' => $c->getCouponCode(),
+            'shipping_and_tax' => 'not included, added at checkout',
+        ];
     }
 
     public function cartSummary(CartInterface $c): string
     {
-        return sprintf('%d item(s), subtotal %.2f %s', $c->getItemCount(), $c->getSubtotal(), $c->getCurrency());
+        $summary = sprintf('%d item(s), subtotal %.2f %s', $c->getItemCount(), $c->getSubtotal(), $c->getCurrency());
+        if (!$this->hasDiscount($c)) {
+            return $summary;
+        }
+        $code = $c->getCouponCode() !== '' ? ' (code ' . $c->getCouponCode() . ')' : '';
+        return $summary . sprintf(
+            ', discount %.2f%s, after discount %.2f %s before shipping and tax',
+            $c->getDiscount(),
+            $code,
+            $c->getSubtotalAfterDiscount(),
+            $c->getCurrency()
+        );
+    }
+
+    private function hasDiscount(CartInterface $c): bool
+    {
+        return $c->getDiscount() > 0.0 || $c->getCouponCode() !== '';
     }
 
     public function orders(array $orders): array

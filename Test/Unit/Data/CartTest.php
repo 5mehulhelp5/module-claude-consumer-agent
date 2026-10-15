@@ -68,4 +68,57 @@ class CartTest extends TestCase
         $this->assertSame(20.0, $cart->getSubtotal());
         $this->assertNotNull($cart->find('SKU-1'));
     }
+
+    public function testDiscountDefaultsToNothing(): void
+    {
+        $cart = new Cart(items: [new CartItem(productId: 'SKU-1', title: 'One', price: 10.0, quantity: 1)]);
+
+        $this->assertSame(0.0, $cart->getDiscount());
+        $this->assertSame('', $cart->getCouponCode());
+        $this->assertSame(10.0, $cart->getSubtotalAfterDiscount());
+    }
+
+    public function testSubtotalAfterDiscountTakesTheDiscountOff(): void
+    {
+        $cart = new Cart(
+            items: [new CartItem(productId: 'SKU-1', title: 'Chair', price: 2395.0, quantity: 1)],
+            currency: 'CAD',
+            discount: 359.25,
+            couponCode: 'SAVE15'
+        );
+
+        $this->assertSame(359.25, $cart->getDiscount());
+        $this->assertSame('SAVE15', $cart->getCouponCode());
+        $this->assertSame(2035.75, $cart->getSubtotalAfterDiscount());
+    }
+
+    public function testSubtotalAfterDiscountNeverGoesBelowZero(): void
+    {
+        $cart = new Cart(
+            items: [new CartItem(productId: 'SKU-1', title: 'One', price: 10.0, quantity: 1)],
+            discount: 25.0
+        );
+
+        $this->assertSame(0.0, $cart->getSubtotalAfterDiscount());
+    }
+
+    public function testDiscountAndCouponRoundTripThroughArrays(): void
+    {
+        $cart = new Cart(
+            items: [new CartItem(productId: 'SKU-1', title: 'Chair', price: 2395.0, quantity: 1)],
+            currency: 'CAD',
+            discount: 359.25,
+            couponCode: 'SAVE15'
+        );
+        $array = $cart->toArray();
+
+        $this->assertSame(359.25, $array['discount']);
+        $this->assertSame('SAVE15', $array['coupon_code']);
+        $this->assertSame(2035.75, $array['subtotal_after_discount']);
+
+        $restored = Cart::fromArray($array);
+        $this->assertSame(359.25, $restored->getDiscount());
+        $this->assertSame('SAVE15', $restored->getCouponCode());
+        $this->assertSame(2035.75, $restored->getSubtotalAfterDiscount());
+    }
 }
