@@ -259,6 +259,43 @@ class SerializerTest extends TestCase
         $this->assertSame('AR-0003', $items[1]['variant_of']);
     }
 
+    public function testOrderAgeIsComputedFromTheTurnClock(): void
+    {
+        $order = Order::fromArray([
+            'order_id' => '1000077639',
+            'status' => 'processing',
+            'placed_at' => '2026-10-12T18:11:36+00:00',
+            'total' => 500.0,
+            'currency' => 'CAD',
+            'items' => [],
+        ]);
+
+        $aged = $this->serializer->order($order, new \DateTimeImmutable('2026-10-15T16:02:42+00:00'));
+        $this->assertSame(69, $aged['placed_hours_ago']);
+        $this->assertSame(2, $aged['placed_days_ago']);
+
+        $this->assertArrayNotHasKey('placed_hours_ago', $this->serializer->order($order));
+        $this->assertSame(
+            69,
+            $this->serializer->orders([$order], new \DateTimeImmutable('2026-10-15T16:02:42+00:00'))[0]['placed_hours_ago']
+        );
+    }
+
+    public function testOrderAgeIsNeverNegative(): void
+    {
+        $order = Order::fromArray([
+            'order_id' => 'o-1',
+            'status' => 'pending',
+            'placed_at' => '2026-10-15T17:00:00+00:00',
+            'total' => 1.0,
+            'currency' => 'CAD',
+            'items' => [],
+        ]);
+
+        $aged = $this->serializer->order($order, new \DateTimeImmutable('2026-10-15T16:00:00+00:00'));
+        $this->assertSame(0, $aged['placed_hours_ago']);
+    }
+
     public function testOrdersReturnsANoteWhenEmpty(): void
     {
         $this->assertSame(['note' => 'No orders found.'], $this->serializer->orders([]));

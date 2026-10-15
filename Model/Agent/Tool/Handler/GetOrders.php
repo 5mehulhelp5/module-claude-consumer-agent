@@ -27,7 +27,7 @@ class GetOrders implements HandlerInterface
     {
         $limit = max(1, min((int)($input['limit'] ?? self::DEFAULT_LIMIT), self::MAX_LIMIT));
         $orders = $this->backend->getOrders($context, $limit);
-        $payload = $this->serializer->orders($orders);
+        $payload = $this->serializer->orders($orders, $context->now);
         $text = "Order history:\n" . $this->fence->fencePayload($payload, $config->maxFencedChars);
         return ToolOutcome::ok($text, [], $this->orderItemsToProducts($orders));
     }

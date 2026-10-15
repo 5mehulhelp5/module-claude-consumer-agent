@@ -26,7 +26,7 @@ class GetOrderStatus implements HandlerInterface
         if ($order === null) {
             return ToolOutcome::error("No order with id {$orderId} for this customer.");
         }
-        $payload = $this->serializer->order($order);
+        $payload = $this->serializer->order($order, $context->now);
         $text = "Order status:\n" . $this->fence->fencePayload($payload, $config->maxFencedChars);
         return ToolOutcome::ok($text, [], $this->orderItemsToProducts($order));
     }

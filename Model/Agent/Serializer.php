@@ -229,15 +229,15 @@ class Serializer
         return $c->getDiscount() > 0.0 || $c->getCouponCode() !== '';
     }
 
-    public function orders(array $orders): array
+    public function orders(array $orders, ?\DateTimeImmutable $now = null): array
     {
         if ($orders === []) {
             return ['note' => 'No orders found.'];
         }
-        return array_map(fn (OrderInterface $order): array => $this->order($order), $orders);
+        return array_map(fn (OrderInterface $order): array => $this->order($order, $now), $orders);
     }
 
-    public function order(OrderInterface $o): array
+    public function order(OrderInterface $o, ?\DateTimeImmutable $now = null): array
     {
         $items = [];
         foreach ($o->getItems() as $item) {
@@ -251,10 +251,20 @@ class Serializer
             'order_id' => $o->getOrderId(),
             'status' => $o->getStatus(),
             'placed_at' => $o->getPlacedAt()->format(\DateTimeInterface::ATOM),
+        ] + $this->orderAge($o, $now) + [
             'items' => $items,
             'total' => $o->getTotal(),
             'currency' => $o->getCurrency(),
         ] + $optional;
+    }
+
+    private function orderAge(OrderInterface $o, ?\DateTimeImmutable $now): array
+    {
+        if ($now === null) {
+            return [];
+        }
+        $hours = intdiv(max(0, $now->getTimestamp() - $o->getPlacedAt()->getTimestamp()), 3600);
+        return ['placed_hours_ago' => $hours, 'placed_days_ago' => intdiv($hours, 24)];
     }
 
     public function policies(array $policies): array
