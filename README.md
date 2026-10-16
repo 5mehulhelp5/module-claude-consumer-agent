@@ -297,6 +297,12 @@ detects the page from the full action name (`Model\Surface\PageDetector`).
 When the page changes between turns, a hidden `[Page: ...]` note is
 prepended to the customer message.
 
+A customer message of one to eight words also runs as a product search, a
+second time with "and" read as "&". Products whose names contain every word
+the customer typed (as word prefixes, ignoring case and accents) go into a
+hidden `[Name match: ...]` note, so a name such as "neat chair" reaches the
+model as a name.
+
 ### Catalog map
 
 `Model\Agent\Prompt\CatalogMap` prints the category tree with ids into the
@@ -420,8 +426,10 @@ preference on a base concrete class.
    The same works for `CatalogMapProviderInterface`,
    `CategorySearchProviderInterface`, `BestsellerRankInterface`,
    `ProductOptionsProviderInterface`, `SkuMatcherInterface`,
-   `PolicySourceInterface`, `FulfillmentProviderInterface` and
-   `OrderStatusMapperInterface`.
+   `PolicySourceInterface`, `FulfillmentProviderInterface`,
+   `OrderStatusMapperInterface` and `GuestOrderLookupInterface` (the guest
+   order lookup behind `get_order_status`: order number, store, guest flag
+   and checkout email).
 
 2. Tools. `Api\Tool\ToolProviderInterface` items pool on
    `Model\Agent\Tool\Registry`:

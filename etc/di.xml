@@ -11,6 +11,7 @@
     <preference for="MageOS\AiShoppingAssistant\Api\Backend\PolicySourceInterface" type="MageOS\AiShoppingAssistant\Model\Backend\Provider\CmsPagePolicySource"/>
     <preference for="MageOS\AiShoppingAssistant\Api\Backend\StoreFactTitleResolverInterface" type="MageOS\AiShoppingAssistant\Model\Backend\Provider\StoreFactTitleResolver"/>
     <preference for="MageOS\AiShoppingAssistant\Api\Backend\OrderStatusMapperInterface" type="MageOS\AiShoppingAssistant\Model\Backend\Provider\OrderStatusMapper"/>
+    <preference for="MageOS\AiShoppingAssistant\Api\Backend\GuestOrderLookupInterface" type="MageOS\AiShoppingAssistant\Model\Backend\GuestOrderLookup"/>
     <preference for="MageOS\AiShoppingAssistant\Api\Backend\SkuMatcherInterface" type="MageOS\AiShoppingAssistant\Model\Backend\Provider\SkuMatcher"/>
     <preference for="MageOS\AiShoppingAssistant\Api\Cart\BuyRequestBuilderInterface" type="MageOS\AiShoppingAssistant\Model\Backend\BuyRequestBuilder"/>
     <preference for="MageOS\AiShoppingAssistant\Api\Cart\CouponApplierInterface" type="MageOS\AiShoppingAssistant\Model\Backend\CouponApplier"/>

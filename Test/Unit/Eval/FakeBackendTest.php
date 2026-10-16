@@ -202,6 +202,19 @@ class FakeBackendTest extends TestCase
         $this->assertSame(5, $matches[0]->getCategoryId());
     }
 
+    public function testFindReturnsOnlyAGuestFixtureOrderWithTheSameEmail(): void
+    {
+        $backend = new FakeBackend([], [], [
+            ['order_id' => 'G-1', 'status' => 'shipped', 'customer_is_guest' => true, 'customer_email' => 'Jane@Example.com'],
+            ['order_id' => 'R-1', 'status' => 'shipped', 'customer_email' => 'jane@example.com'],
+        ]);
+
+        $this->assertSame('G-1', $backend->find($this->context(), 'G-1', ' jane@example.com')?->getOrderId());
+        $this->assertNull($backend->find($this->context(), 'G-1', 'john@example.com'));
+        $this->assertNull($backend->find($this->context(), 'R-1', 'jane@example.com'));
+        $this->assertNull($backend->find($this->context(), 'G-1', ''));
+    }
+
     private function context(?int $customerId = null): SessionContext
     {
         return new SessionContext('sess-1', $customerId, 1, 1, new PageContext(), new \DateTimeImmutable());

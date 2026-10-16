@@ -6,6 +6,7 @@ namespace MageOS\AiShoppingAssistant\Test\Unit\Tool;
 use Magento\Framework\Component\ComponentRegistrar;
 use Magento\Framework\Filesystem\Driver\File;
 use Magento\Framework\Lock\LockManagerInterface;
+use MageOS\AiShoppingAssistant\Api\Backend\GuestOrderLookupInterface;
 use MageOS\AiShoppingAssistant\Api\Cart\CouponApplierInterface;
 use MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface;
 use MageOS\AiShoppingAssistant\Model\Agent\AgentConfig;
@@ -94,7 +95,7 @@ class CoreToolProviderTest extends TestCase
             new ApplyCoupon($cartWrite),
             new GetPreferences($backend, $fence),
             new GetOrders($backend, $serializer, $fence),
-            new GetOrderStatus($backend, $serializer, $fence),
+            new GetOrderStatus($backend, $serializer, $fence, $this->createMock(GuestOrderLookupInterface::class)),
             new SearchPolicies($backend, $serializer, $fence),
             new GetFulfillmentOptions($backend, $serializer, $fence),
             new MemoryOff(),

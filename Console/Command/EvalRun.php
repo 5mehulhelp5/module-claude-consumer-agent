@@ -32,6 +32,8 @@ use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\SearchCategories;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\SearchPolicies;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\SearchProducts;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\UpdateCartItem;
+use MageOS\AiShoppingAssistant\Api\Backend\GuestOrderLookupInterface;
+use MageOS\AiShoppingAssistant\Model\Agent\Prompt\NameMatch;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\PageNote;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Registry as ToolRegistry;
 use MageOS\AiShoppingAssistant\Model\Agent\Turn\Orchestrator;
@@ -92,6 +94,7 @@ class EvalRun extends Command
         private readonly \Magento\Framework\App\State $appState,
         private readonly \Magento\Store\Model\App\Emulation $appEmulation,
         private readonly \MageOS\AiShoppingAssistant\Api\Cart\CouponApplierInterface $liveCouponApplier,
+        private readonly \MageOS\AiShoppingAssistant\Api\Backend\GuestOrderLookupInterface $liveGuestOrders,
         ?string $name = null
     ) {
         parent::__construct($name);
@@ -208,7 +211,8 @@ class EvalRun extends Command
 
         $storeConfig = $this->storeConfigForCase($case);
         $couponApplier = $live ? $this->liveCouponApplier : new FakeCouponApplier();
-        $orchestrator = $this->buildOrchestrator($backend, $client, $storeConfig, $skuMatcher, $couponApplier);
+        $guestOrders = $backend instanceof FakeBackend ? $backend : $this->liveGuestOrders;
+        $orchestrator = $this->buildOrchestrator($backend, $client, $storeConfig, $skuMatcher, $couponApplier, $guestOrders);
 
         $toolCalls = [];
         $uiComponents = [];
@@ -277,7 +281,8 @@ class EvalRun extends Command
         AiClientInterface $client,
         \MageOS\AiShoppingAssistant\Model\Config\StoreConfig $storeConfig,
         SkuMatcherInterface $skuMatcher,
-        CouponApplierInterface $couponApplier
+        CouponApplierInterface $couponApplier,
+        GuestOrderLookupInterface $guestOrders
     ): Orchestrator {
         $cartWrite = new CartWrite(
             $backend,
@@ -304,7 +309,12 @@ class EvalRun extends Command
             'apply_coupon' => new ApplyCoupon($cartWrite),
             'get_preferences' => new GetPreferences($backend, $this->toolkit->fence()),
             'get_orders' => new GetOrders($backend, $this->toolkit->serializer(), $this->toolkit->fence()),
-            'get_order_status' => new GetOrderStatus($backend, $this->toolkit->serializer(), $this->toolkit->fence()),
+            'get_order_status' => new GetOrderStatus(
+                $backend,
+                $this->toolkit->serializer(),
+                $this->toolkit->fence(),
+                $guestOrders
+            ),
             'search_policies' => new SearchPolicies($backend, $this->toolkit->serializer(), $this->toolkit->fence()),
             'get_fulfillment_options' => new GetFulfillmentOptions(
                 $backend,
@@ -357,6 +367,7 @@ class EvalRun extends Command
             'dynamicContext' => $this->toolkit->dynamicContext(),
             'requestMapper' => $this->toolkit->requestMapper(),
             'pageNote' => new PageNote($this->toolkit->sanitizer()),
+            'nameMatch' => new NameMatch($backend, $this->toolkit->sanitizer(), $this->logger),
             'toolRegistry' => $toolRegistry,
             'executorFactory' => $executorFactory,
             'rules' => $rules,

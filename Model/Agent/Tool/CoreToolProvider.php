@@ -299,11 +299,17 @@ class CoreToolProvider implements ToolProviderInterface
             ),
             new Definition(
                 'get_order_status',
-                'Status, items, and tracking for one order the customer named.',
+                'Status, items, and tracking for one order the customer named. A customer who is not signed in '
+                    . 'gives the order number and the email address used at checkout; pass both.',
                 [
                     'type' => 'object',
                     'properties' => [
                         'order_id' => ['type' => 'string', 'description' => 'Order id to look up.'],
+                        'email' => [
+                            'type' => 'string',
+                            'description' => 'Email address used at checkout, as the customer typed it. Needed '
+                                . 'only when the customer is not signed in.',
+                        ],
                     ],
                     'required' => ['order_id'],
                     'additionalProperties' => false,

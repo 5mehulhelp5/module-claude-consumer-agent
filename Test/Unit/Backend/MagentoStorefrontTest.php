@@ -67,6 +67,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Exception\Unavailable;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
 use MageOS\AiShoppingAssistant\Model\Backend\BuyRequestBuilder;
 use MageOS\AiShoppingAssistant\Model\Backend\MagentoStorefront;
+use MageOS\AiShoppingAssistant\Model\Backend\OrderRecords;
 use MageOS\AiShoppingAssistant\Model\Backend\Provider\AllowedCategories;
 use MageOS\AiShoppingAssistant\Model\Backend\Provider\CoreOptions;
 use MageOS\AiShoppingAssistant\Model\Backend\Provider\HelperImageUrl;
@@ -329,6 +330,16 @@ class MagentoStorefrontTest extends TestCase
     private function buildStorefront(array $overrides = []): MagentoStorefront
     {
         $deps = array_merge($this->defaultDependencies(), $overrides);
+        $deps['orderRecords'] = new OrderRecords(
+            $deps['productRepository'],
+            $deps['searchCriteriaBuilder'],
+            $deps['storeManager'],
+            $deps['orderStatusMapper'],
+            $deps['shippingHelper'],
+            $deps['shipmentTrackRepository'],
+            $deps['shipmentRepository']
+        );
+        unset($deps['orderStatusMapper'], $deps['shippingHelper'], $deps['shipmentTrackRepository'], $deps['shipmentRepository']);
         return new MagentoStorefront(...$deps);
     }
 

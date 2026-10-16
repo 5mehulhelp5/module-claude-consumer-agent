@@ -82,6 +82,7 @@ class SessionStateTest extends TestCase
                 'service_id',
                 'context_hash',
                 'coupon_rejections',
+                'guest_order_failures',
             ],
             array_keys($decoded)
         );
@@ -179,5 +180,23 @@ class SessionStateTest extends TestCase
         $this->assertSame(0, SessionState::fromJson($legacy)->couponRejections);
         $this->assertSame(2, SessionState::fromJson($legacy)->turnCounter);
         $this->assertSame(0, SessionState::fromJson('{"coupon_rejections":"junk"}')->couponRejections);
+    }
+
+    public function testGuestOrderFailuresSurviveTheJsonRoundTrip(): void
+    {
+        $state = new SessionState();
+        $state->guestOrderFailures = 4;
+
+        $this->assertSame(4, SessionState::fromJson($state->toJson())->guestOrderFailures);
+    }
+
+    public function testJsonWithoutGuestOrderFailuresStartsTheCountAtZero(): void
+    {
+        $legacy = '{"seen_products":{},"turn_counter":2,"last_page":[],"surface_view":"","recent_customer_text":[],'
+            . '"service_id":"","context_hash":"","coupon_rejections":1}';
+
+        $this->assertSame(0, SessionState::fromJson($legacy)->guestOrderFailures);
+        $this->assertSame(1, SessionState::fromJson($legacy)->couponRejections);
+        $this->assertSame(0, SessionState::fromJson('{"guest_order_failures":"junk"}')->guestOrderFailures);
     }
 }

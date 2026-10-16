@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace MageOS\AiShoppingAssistant\Model\Eval;
 
+use MageOS\AiShoppingAssistant\Api\Backend\GuestOrderLookupInterface;
 use MageOS\AiShoppingAssistant\Api\Data\CartInterface;
 use MageOS\AiShoppingAssistant\Api\Data\CategoryMatchInterface;
 use MageOS\AiShoppingAssistant\Api\Data\FulfillmentOptionInterface;
@@ -26,10 +27,11 @@ use MageOS\AiShoppingAssistant\Model\Data\UserPreferences;
 
 /**
  * Backs the eval runner's fixture mode: a product catalog, order history and policy set
- * seeded from a case's state, with cart writes mutating an in-memory line list. No tool
+ * seeded from a case's state, with cart writes mutating an in-memory line list. Guest order lookups
+ * match a fixture order flagged customer_is_guest by its customer_email. No tool
  * call ever leaves this object, so a fixture run never touches the real storefront.
  */
-class FakeBackend implements StorefrontBackendInterface
+class FakeBackend implements StorefrontBackendInterface, GuestOrderLookupInterface
 {
     private array $cart = [];
 
@@ -156,6 +158,23 @@ class FakeBackend implements StorefrontBackendInterface
         }
         foreach ($this->orders as $order) {
             if ((string)($order['order_id'] ?? '') === $orderId) {
+                return Order::fromArray($order);
+            }
+        }
+        return null;
+    }
+
+    public function find(SessionContext $ctx, string $orderId, string $email): ?OrderInterface
+    {
+        $email = mb_strtolower(trim($email));
+        if ($email === '') {
+            return null;
+        }
+        foreach ($this->orders as $order) {
+            if ((string)($order['order_id'] ?? '') === trim($orderId)
+                && (bool)($order['customer_is_guest'] ?? false)
+                && mb_strtolower(trim((string)($order['customer_email'] ?? ''))) === $email
+            ) {
                 return Order::fromArray($order);
             }
         }

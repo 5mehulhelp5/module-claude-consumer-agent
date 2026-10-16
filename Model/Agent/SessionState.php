@@ -25,6 +25,8 @@ class SessionState
 
     public int $couponRejections;
 
+    public int $guestOrderFailures;
+
     public function __construct(
         array $seenProducts = [],
         int $turnCounter = 0,
@@ -33,7 +35,8 @@ class SessionState
         array $recentCustomerText = [],
         string $serviceId = '',
         string $contextHash = '',
-        int $couponRejections = 0
+        int $couponRejections = 0,
+        int $guestOrderFailures = 0
     ) {
         $this->seenProducts = $seenProducts;
         $this->turnCounter = $turnCounter;
@@ -43,6 +46,7 @@ class SessionState
         $this->serviceId = $serviceId;
         $this->contextHash = $contextHash;
         $this->couponRejections = $couponRejections;
+        $this->guestOrderFailures = $guestOrderFailures;
     }
 
     public function rememberProducts(array $records): void
@@ -98,6 +102,7 @@ class SessionState
                 'service_id' => $this->serviceId,
                 'context_hash' => $this->contextHash,
                 'coupon_rejections' => $this->couponRejections,
+                'guest_order_failures' => $this->guestOrderFailures,
             ],
             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
         );
@@ -118,6 +123,7 @@ class SessionState
         $serviceId = $decoded['service_id'] ?? '';
         $contextHash = $decoded['context_hash'] ?? '';
         $couponRejections = $decoded['coupon_rejections'] ?? 0;
+        $guestOrderFailures = $decoded['guest_order_failures'] ?? 0;
         return new self(
             is_array($seenProducts) ? $seenProducts : [],
             is_int($turnCounter) ? $turnCounter : (int)$turnCounter,
@@ -126,7 +132,8 @@ class SessionState
             is_array($recentCustomerText) ? $recentCustomerText : [],
             is_string($serviceId) ? $serviceId : '',
             is_string($contextHash) ? $contextHash : '',
-            is_numeric($couponRejections) ? (int)$couponRejections : 0
+            is_numeric($couponRejections) ? (int)$couponRejections : 0,
+            is_numeric($guestOrderFailures) ? (int)$guestOrderFailures : 0
         );
     }
 }

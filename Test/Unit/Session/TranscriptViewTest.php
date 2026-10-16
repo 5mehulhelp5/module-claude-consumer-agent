@@ -18,6 +18,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Enrich\Suggestions;
 use MageOS\AiShoppingAssistant\Model\Agent\Presentation\EnrichmentContext;
 use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Registry;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\DynamicContext;
+use MageOS\AiShoppingAssistant\Model\Agent\Prompt\NameMatch;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\PageNote;
 use MageOS\AiShoppingAssistant\Model\Agent\Serializer;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionContext;
@@ -95,6 +96,22 @@ class TranscriptViewTest extends TestCase
         ];
         $messages = (new TranscriptView())->render($rows, $this->registry(), $this->ctx(new SessionState()));
         $this->assertSame([['role' => 'user', 'text' => 'Show me some backpacks']], $messages);
+    }
+
+    public function testTheNameMatchBlockIsHiddenFromTheRestoredCustomerMessage(): void
+    {
+        $rows = [
+            [
+                'role' => 'user',
+                'content' => [
+                    ['type' => 'text', 'text' => PageNote::PREFIX . 'the customer is now on the cart page.]'],
+                    ['type' => 'text', 'text' => NameMatch::PREFIX . 'products whose names contain every word the customer typed: Neat Chair (product_id 1).]'],
+                    ['type' => 'text', 'text' => 'neat chair'],
+                ],
+            ],
+        ];
+        $messages = (new TranscriptView())->render($rows, $this->registry(), $this->ctx(new SessionState()));
+        $this->assertSame([['role' => 'user', 'text' => 'neat chair']], $messages);
     }
 
     public function testUserMessageThatIsOnlyAPageNoteIsNotEmittedAtAll(): void
