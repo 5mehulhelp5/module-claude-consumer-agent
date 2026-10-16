@@ -83,6 +83,7 @@ class SessionStateTest extends TestCase
                 'context_hash',
                 'coupon_rejections',
                 'guest_order_failures',
+                'guest_orders',
             ],
             array_keys($decoded)
         );

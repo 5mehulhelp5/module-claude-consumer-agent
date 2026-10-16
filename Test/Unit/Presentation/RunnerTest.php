@@ -56,7 +56,7 @@ class RunnerTest extends TestCase
         $registry = new Registry(
             new Products($logger ?? $this->createMock(LoggerInterface::class), $sanitizer),
             new Comparison(),
-            new OrderStatus($serializer),
+            new OrderStatus($serializer, $this->createMock(\MageOS\AiShoppingAssistant\Api\Backend\GuestOrderLookupInterface::class)),
             new Checkout($serializer, $url ?? $this->createMock(UrlInterface::class)),
             new Suggestions($sanitizer)
         );

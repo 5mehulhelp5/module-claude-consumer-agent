@@ -78,7 +78,7 @@ class CoreToolProviderTest extends TestCase
         $presentation = new PresentationRegistry(
             new Products($logger, new Sanitizer()),
             new Comparison(),
-            new OrderStatus($serializer),
+            new OrderStatus($serializer, $this->createMock(\MageOS\AiShoppingAssistant\Api\Backend\GuestOrderLookupInterface::class)),
             new Checkout($serializer, $this->createMock(\Magento\Framework\UrlInterface::class)),
             new Suggestions(new Sanitizer())
         );

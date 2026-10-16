@@ -9,6 +9,8 @@ class SessionState
 
     public const RECENT_CUSTOMER_TEXT_CAP = 8;
 
+    public const GUEST_ORDERS_CAP = 5;
+
     public array $seenProducts;
 
     public int $turnCounter;
@@ -27,6 +29,8 @@ class SessionState
 
     public int $guestOrderFailures;
 
+    public array $guestOrders;
+
     public function __construct(
         array $seenProducts = [],
         int $turnCounter = 0,
@@ -36,7 +40,8 @@ class SessionState
         string $serviceId = '',
         string $contextHash = '',
         int $couponRejections = 0,
-        int $guestOrderFailures = 0
+        int $guestOrderFailures = 0,
+        array $guestOrders = []
     ) {
         $this->seenProducts = $seenProducts;
         $this->turnCounter = $turnCounter;
@@ -47,6 +52,16 @@ class SessionState
         $this->contextHash = $contextHash;
         $this->couponRejections = $couponRejections;
         $this->guestOrderFailures = $guestOrderFailures;
+        $this->guestOrders = $guestOrders;
+    }
+
+    public function rememberGuestOrder(string $orderId, string $email): void
+    {
+        unset($this->guestOrders[$orderId]);
+        $this->guestOrders[$orderId] = $email;
+        while (count($this->guestOrders) > self::GUEST_ORDERS_CAP) {
+            unset($this->guestOrders[array_key_first($this->guestOrders)]);
+        }
     }
 
     public function rememberProducts(array $records): void
@@ -103,6 +118,7 @@ class SessionState
                 'context_hash' => $this->contextHash,
                 'coupon_rejections' => $this->couponRejections,
                 'guest_order_failures' => $this->guestOrderFailures,
+                'guest_orders' => $this->guestOrders,
             ],
             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
         );
@@ -124,6 +140,7 @@ class SessionState
         $contextHash = $decoded['context_hash'] ?? '';
         $couponRejections = $decoded['coupon_rejections'] ?? 0;
         $guestOrderFailures = $decoded['guest_order_failures'] ?? 0;
+        $guestOrders = $decoded['guest_orders'] ?? [];
         return new self(
             is_array($seenProducts) ? $seenProducts : [],
             is_int($turnCounter) ? $turnCounter : (int)$turnCounter,
@@ -133,7 +150,8 @@ class SessionState
             is_string($serviceId) ? $serviceId : '',
             is_string($contextHash) ? $contextHash : '',
             is_numeric($couponRejections) ? (int)$couponRejections : 0,
-            is_numeric($guestOrderFailures) ? (int)$guestOrderFailures : 0
+            is_numeric($guestOrderFailures) ? (int)$guestOrderFailures : 0,
+            is_array($guestOrders) ? array_map('strval', $guestOrders) : []
         );
     }
 }

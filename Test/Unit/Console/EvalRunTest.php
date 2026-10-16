@@ -410,7 +410,7 @@ class EvalRunTest extends TestCase
         $presentationRegistry = new PresentationRegistry(
             new Products($this->createMock(LoggerInterface::class), $sanitizer),
             new Comparison(),
-            new OrderStatus($serializer),
+            new OrderStatus($serializer, $this->createMock(\MageOS\AiShoppingAssistant\Api\Backend\GuestOrderLookupInterface::class)),
             new Checkout($serializer, $this->createMock(\Magento\Framework\UrlInterface::class)),
             new Suggestions($sanitizer)
         );

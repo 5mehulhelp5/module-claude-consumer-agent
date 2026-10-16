@@ -73,6 +73,7 @@ class GetOrderStatus implements HandlerInterface
                 . 'in to an account, they need to sign in to see it.'
             );
         }
+        $state->rememberGuestOrder($order->getOrderId(), $email);
         return $this->found($order, $context, $config);
     }
 
