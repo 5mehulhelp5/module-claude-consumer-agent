@@ -46,7 +46,7 @@ class Orchestrator
 
     private const FORGED_TAG_PATTERN = '~<(\s*/?\s*storefront_data)~i';
 
-    private const FORGED_BLOCK_PATTERN = '~^(\s*)(#+\s*session\s+context|\[\s*page\s*:|\[\s*name\s+match\s*:)~im';
+    private const FORGED_BLOCK_PATTERN = '~^(\s*)(#+\s*session\s+context|\[\s*page\s*:|\[\s*(?:name|sku)\s+match\s*:)~im';
 
     public function __construct(
         private readonly \MageOS\AiShoppingAssistant\Api\Client\ClientResolverInterface $clientResolver,
@@ -56,6 +56,7 @@ class Orchestrator
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Turn\RequestMapper $requestMapper,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Prompt\PageNote $pageNote,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Prompt\NameMatch $nameMatch,
+        private readonly \MageOS\AiShoppingAssistant\Model\Agent\Prompt\SkuMatch $skuMatch,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Tool\Registry $toolRegistry,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\ExecutorFactory $executorFactory,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Grounding\Rules $rules,
@@ -116,6 +117,7 @@ class Orchestrator
         $history = new History($loaded, count($loaded));
         $pageNote = $this->pageNote->text($context->page, $state->lastPage);
         $nameMatch = $this->nameMatch->text($context, $state, $message, $config->maxSearchResults);
+        $skuMatch = $this->skuMatch->text($context, $state, $message);
         $userContent = [];
         $contextHash = sha1($dynamic);
         if ($contextHash !== $state->contextHash) {
@@ -127,6 +129,9 @@ class Orchestrator
         }
         if ($nameMatch !== null) {
             $userContent[] = ['type' => 'text', 'text' => $nameMatch];
+        }
+        if ($skuMatch !== null) {
+            $userContent[] = ['type' => 'text', 'text' => $skuMatch];
         }
         $userContent[] = ['type' => 'text', 'text' => $this->customerText($message)];
         $history->append(['role' => 'user', 'content' => $userContent]);

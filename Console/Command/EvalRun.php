@@ -35,6 +35,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Tool\Handler\UpdateCartItem;
 use MageOS\AiShoppingAssistant\Api\Backend\GuestOrderLookupInterface;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\NameMatch;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\PageNote;
+use MageOS\AiShoppingAssistant\Model\Agent\Prompt\SkuMatch;
 use MageOS\AiShoppingAssistant\Model\Agent\Tool\Registry as ToolRegistry;
 use MageOS\AiShoppingAssistant\Model\Agent\Turn\Orchestrator;
 use MageOS\AiShoppingAssistant\Model\Client\ConfiguredClientResolver;
@@ -356,7 +357,8 @@ class EvalRun extends Command
             $this->toolkit->validator(),
             $this->toolkit->provenance(),
             $this->toolkit->sanitizer(),
-            $this->logger
+            $this->logger,
+            $backend
         );
         $rules = new Rules($this->toolkit->lexicon(), $this->toolkit->skuCandidates(), $skuMatcher);
 
@@ -368,6 +370,7 @@ class EvalRun extends Command
             'requestMapper' => $this->toolkit->requestMapper(),
             'pageNote' => new PageNote($this->toolkit->sanitizer()),
             'nameMatch' => new NameMatch($backend, $this->toolkit->sanitizer(), $this->logger),
+            'skuMatch' => new SkuMatch($this->toolkit->skuCandidates(), $skuMatcher, $backend, $this->toolkit->sanitizer(), $this->logger),
             'toolRegistry' => $toolRegistry,
             'executorFactory' => $executorFactory,
             'rules' => $rules,

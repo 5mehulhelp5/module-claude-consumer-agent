@@ -10,6 +10,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Presentation\Registry;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\DynamicContext;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\NameMatch;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\PageNote;
+use MageOS\AiShoppingAssistant\Model\Agent\Prompt\SkuMatch;
 use MageOS\AiShoppingAssistant\Model\Agent\SessionState;
 
 /**
@@ -66,6 +67,7 @@ class TranscriptView
             $text = (string)($block['text'] ?? '');
             return !str_starts_with($text, PageNote::PREFIX)
                 && !str_starts_with($text, NameMatch::PREFIX)
+                && !str_starts_with($text, SkuMatch::PREFIX)
                 && !str_starts_with($text, DynamicContext::PREFIX);
         }));
     }

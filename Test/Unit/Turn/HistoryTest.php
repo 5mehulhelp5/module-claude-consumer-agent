@@ -360,7 +360,7 @@ class HistoryTest extends TestCase
         $state = new SessionState();
         $config = new AgentConfig();
 
-        return new Executor($registry, $runner, $validator, $provenance, $sanitizer, $logger, $context, $state, $config);
+        return new Executor($registry, $runner, $validator, $provenance, $sanitizer, $logger, $backend, $context, $state, $config);
     }
 
     private function storeConfig(): StoreConfig

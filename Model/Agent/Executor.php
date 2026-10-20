@@ -20,6 +20,7 @@ class Executor
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Gate\Provenance $provenance,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Fencing\Sanitizer $sanitizer,
         private readonly \Psr\Log\LoggerInterface $logger,
+        private readonly \MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface $backend,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\SessionContext $context,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\SessionState $state,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\AgentConfig $config
@@ -44,7 +45,7 @@ class Executor
                 foreach ($definition->getProductIdArguments() as $path) {
                     foreach ($this->valuesAt($args, $path) as $productId) {
                         $held = $this->provenance->check($this->state, $productId);
-                        if ($held !== null) {
+                        if ($held !== null && !$this->isInSessionContext($productId)) {
                             return $held->withLabel($label);
                         }
                     }
@@ -96,6 +97,19 @@ class Executor
             && !$outcome->isError
             && $outcome->blocked === null
             && $outcome->resultText === self::DISPLAYED_TEXT;
+    }
+
+    private function isInSessionContext(string $productId): bool
+    {
+        if ($productId === $this->context->page->getProductId()) {
+            return true;
+        }
+        try {
+            return $this->backend->getCart($this->context)->find($productId) !== null;
+        } catch (\Throwable $exception) {
+            $this->logger->warning('cart lookup failed', ['exception' => $exception]);
+            return false;
+        }
     }
 
     private function splitStatus(Definition $def, array $input): array

@@ -56,6 +56,7 @@ use MageOS\AiShoppingAssistant\Model\Agent\Prompt\CoreFacts;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\DynamicContext;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\NameMatch;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\PageNote;
+use MageOS\AiShoppingAssistant\Model\Agent\Prompt\SkuMatch;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\StaticSystem;
 use MageOS\AiShoppingAssistant\Model\Agent\Prompt\StoreFactsBlock;
 use MageOS\AiShoppingAssistant\Model\Agent\Schema\Validator;
@@ -1094,6 +1095,7 @@ class OrchestratorTest extends TestCase
             $provenance,
             $sanitizer,
             $executorLogger,
+            $this->createMock(StorefrontBackendInterface::class),
             $context,
             $state,
             $config
@@ -1158,6 +1160,7 @@ class OrchestratorTest extends TestCase
             ),
             new PageNote($sanitizer),
             new NameMatch($backend, $sanitizer, $this->createMock(LoggerInterface::class)),
+            $this->createMock(SkuMatch::class),
             $toolRegistry,
             $executorFactory,
             $rules,

@@ -6,6 +6,8 @@ namespace MageOS\AiShoppingAssistant\Test\Unit;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use MageOS\AiShoppingAssistant\Api\Data\CartInterface;
+use MageOS\AiShoppingAssistant\Api\Data\CartItemInterface;
 use MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface;
 use MageOS\AiShoppingAssistant\Api\Tool\HandlerInterface;
 use MageOS\AiShoppingAssistant\Api\Tool\ToolProviderInterface;
@@ -103,7 +105,9 @@ class ExecutorTest extends TestCase
         Definition $definition,
         ?SessionState $state = null,
         ?LoggerInterface $logger = null,
-        ?Runner $runner = null
+        ?Runner $runner = null,
+        ?SessionContext $context = null,
+        ?StorefrontBackendInterface $backend = null
     ): Executor {
         $registry = new Registry([new ExecutorTestFakeToolProvider([$definition])], $this->storeConfig());
         return new Executor(
@@ -113,7 +117,8 @@ class ExecutorTest extends TestCase
             new Provenance(),
             new Sanitizer(),
             $logger ?? $this->createMock(LoggerInterface::class),
-            $this->context(),
+            $backend ?? $this->createMock(StorefrontBackendInterface::class),
+            $context ?? $this->context(),
             $state ?? new SessionState(),
             new AgentConfig()
         );
@@ -141,6 +146,7 @@ class ExecutorTest extends TestCase
             new Provenance(),
             new Sanitizer(),
             $this->createMock(LoggerInterface::class),
+            $this->createMock(StorefrontBackendInterface::class),
             $this->context(),
             new SessionState(),
             new AgentConfig()
@@ -301,6 +307,65 @@ class ExecutorTest extends TestCase
         );
         $executor = $this->buildExecutor($definition);
         $result = $executor->dispatch('get_fulfillment_options', ['product_ids' => ['ghost-1']]);
+        $this->assertSame(Provenance::NAME, $result->blocked);
+    }
+
+    public function testThePageProductPassesTheProvenanceGateWithoutALookup(): void
+    {
+        $handler = new ExecutorTestFakeHandler(static fn (): ToolOutcome => ToolOutcome::ok('options'));
+        $definition = $this->definition(
+            'get_fulfillment_options',
+            ['type' => 'object', 'properties' => []],
+            'read',
+            $handler,
+            ['product_ids[]']
+        );
+        $page = PageContext::fromArray(['page_type' => 'product', 'product_id' => '33110']);
+        $context = new SessionContext('s-1', null, 1, 1, $page, new \DateTimeImmutable('now'));
+        $executor = $this->buildExecutor($definition, null, null, null, $context);
+        $result = $executor->dispatch('get_fulfillment_options', ['product_ids' => ['33110']]);
+        $this->assertNull($result->blocked);
+        $this->assertSame('options', $result->resultText);
+    }
+
+    public function testACartLineProductPassesTheProvenanceGateWithoutALookup(): void
+    {
+        $handler = new ExecutorTestFakeHandler(static fn (): ToolOutcome => ToolOutcome::ok('options'));
+        $definition = $this->definition(
+            'get_fulfillment_options',
+            ['type' => 'object', 'properties' => []],
+            'read',
+            $handler,
+            ['product_ids[]']
+        );
+        $cart = $this->createMock(CartInterface::class);
+        $cart->method('find')->willReturnCallback(
+            fn (string $id): ?CartItemInterface => $id === '44194' ? $this->createMock(CartItemInterface::class) : null
+        );
+        $backend = $this->createMock(StorefrontBackendInterface::class);
+        $backend->method('getCart')->willReturn($cart);
+        $executor = $this->buildExecutor($definition, null, null, null, null, $backend);
+        $this->assertNull($executor->dispatch('get_fulfillment_options', ['product_ids' => ['44194']])->blocked);
+        $this->assertSame(
+            Provenance::NAME,
+            $executor->dispatch('get_fulfillment_options', ['product_ids' => ['ghost-1']])->blocked
+        );
+    }
+
+    public function testACartLookupFailureKeepsTheProvenanceHold(): void
+    {
+        $handler = new ExecutorTestFakeHandler(static fn (): ToolOutcome => ToolOutcome::ok('unused'));
+        $definition = $this->definition(
+            'get_fulfillment_options',
+            ['type' => 'object', 'properties' => []],
+            'read',
+            $handler,
+            ['product_ids[]']
+        );
+        $backend = $this->createMock(StorefrontBackendInterface::class);
+        $backend->method('getCart')->willThrowException(new \RuntimeException('down'));
+        $executor = $this->buildExecutor($definition, null, null, null, null, $backend);
+        $result = $executor->dispatch('get_fulfillment_options', ['product_ids' => ['44194']]);
         $this->assertSame(Provenance::NAME, $result->blocked);
     }
 

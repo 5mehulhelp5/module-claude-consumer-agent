@@ -22,7 +22,8 @@ class FakeExecutorFactory extends ExecutorFactory
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Schema\Validator $validator,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Gate\Provenance $provenance,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Fencing\Sanitizer $sanitizer,
-        private readonly \Psr\Log\LoggerInterface $logger
+        private readonly \Psr\Log\LoggerInterface $logger,
+        private readonly \MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface $backend
     ) {
     }
 
@@ -35,6 +36,7 @@ class FakeExecutorFactory extends ExecutorFactory
             $this->provenance,
             $this->sanitizer,
             $this->logger,
+            $this->backend,
             $data['context'],
             $data['state'],
             $data['config']
