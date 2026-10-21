@@ -39,6 +39,14 @@
         </arguments>
     </type>
 
+    <type name="MageOS\AiShoppingAssistant\Model\Backend\Provider\FulltextSearch">
+        <arguments>
+            <argument name="priceConditionEngines" xsi:type="array">
+                <item name="elasticsuite" xsi:type="string">elasticsuite</item>
+            </argument>
+        </arguments>
+    </type>
+
     <type name="MageOS\AiShoppingAssistant\Model\Agent\Tool\Registry">
         <arguments>
             <argument name="providers" xsi:type="array">

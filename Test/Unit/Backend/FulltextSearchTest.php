@@ -13,13 +13,17 @@ use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCo
 use Magento\Framework\Api\Filter;
 use Magento\Framework\Api\FilterBuilder;
 use Magento\Framework\Api\Search\DocumentInterface;
+use Magento\Framework\Api\Search\FilterGroup;
 use Magento\Framework\Api\Search\SearchCriteria;
 use Magento\Framework\Api\Search\SearchCriteriaBuilder;
 use Magento\Framework\Api\Search\SearchCriteriaBuilderFactory;
+use Magento\Framework\Api\Search\SearchCriteriaInterfaceFactory;
 use Magento\Framework\Api\Search\SearchResultInterface;
 use Magento\Framework\Api\SearchCriteria as PlainSearchCriteria;
 use Magento\Framework\Api\SearchCriteriaBuilder as PlainSearchCriteriaBuilder;
+use Magento\Framework\Api\SortOrder;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Search\EngineResolverInterface;
 use Magento\Search\Api\SearchInterface;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
@@ -104,7 +108,7 @@ class FulltextSearchTest extends TestCase
     private function filterBuilder(): FilterBuilder&MockObject
     {
         $builder = $this->createMock(FilterBuilder::class);
-        $current = ['field' => null, 'value' => null];
+        $current = ['field' => null, 'value' => null, 'condition' => null];
         $builder->method('setField')->willReturnCallback(function (string $field) use ($builder, &$current): FilterBuilder {
             $current['field'] = $field;
             return $builder;
@@ -113,9 +117,24 @@ class FulltextSearchTest extends TestCase
             $current['value'] = $value;
             return $builder;
         });
+        $builder->method('setConditionType')->willReturnCallback(
+            function (string $condition) use ($builder, &$current): FilterBuilder {
+                $current['condition'] = $condition;
+                return $builder;
+            }
+        );
         $builder->method('create')->willReturnCallback(function () use (&$current): Filter {
-            $this->filterCalls[] = $current;
-            return (new Filter())->setField($current['field'])->setValue($current['value']);
+            $call = ['field' => $current['field'], 'value' => $current['value']];
+            if ($current['condition'] !== null) {
+                $call['condition'] = $current['condition'];
+            }
+            $this->filterCalls[] = $call;
+            $filter = (new Filter())->setField($current['field'])->setValue($current['value']);
+            if ($current['condition'] !== null) {
+                $filter->setConditionType($current['condition']);
+            }
+            $current = ['field' => null, 'value' => null, 'condition' => null];
+            return $filter;
         });
         return $builder;
     }
@@ -146,6 +165,20 @@ class FulltextSearchTest extends TestCase
         $factory = $this->createMock(SearchCriteriaBuilderFactory::class);
         $factory->method('create')->willReturn($builder);
         return $factory;
+    }
+
+    private function searchCriteriaFactory(): SearchCriteriaInterfaceFactory&MockObject
+    {
+        $factory = $this->createMock(SearchCriteriaInterfaceFactory::class);
+        $factory->method('create')->willReturnCallback(static fn (): SearchCriteria => new SearchCriteria());
+        return $factory;
+    }
+
+    private function engineResolver(string $engine = 'opensearch'): EngineResolverInterface&MockObject
+    {
+        $engineResolver = $this->createMock(EngineResolverInterface::class);
+        $engineResolver->method('getCurrentSearchEngine')->willReturn($engine);
+        return $engineResolver;
     }
 
     private function categorySearchCriteriaBuilder(): PlainSearchCriteriaBuilder&MockObject
@@ -199,6 +232,9 @@ class FulltextSearchTest extends TestCase
         $bestsellerRank = $overrides['bestsellerRank'] ?? $this->passthroughBestsellerRank();
         $categoryList = $overrides['categoryList'] ?? $this->createMock(CategoryListInterface::class);
         $allowedCategories = $overrides['allowedCategories'] ?? $this->allowedCategories();
+        $searchCriteriaFactory = $overrides['searchCriteriaFactory'] ?? $this->searchCriteriaFactory();
+        $engineResolver = $overrides['engineResolver'] ?? $this->engineResolver();
+        $priceConditionEngines = $overrides['priceConditionEngines'] ?? ['elasticsuite'];
 
         $provider = new FulltextSearch(
             $searchCriteriaBuilderFactory,
@@ -208,7 +244,10 @@ class FulltextSearchTest extends TestCase
             $this->categorySearchCriteriaBuilder(),
             $storeManager,
             $allowedCategories,
-            $bestsellerRank
+            $bestsellerRank,
+            $searchCriteriaFactory,
+            $engineResolver,
+            $priceConditionEngines
         );
 
         return [$provider, $search, $storeManager, $bestsellerRank];
@@ -271,6 +310,62 @@ class FulltextSearchTest extends TestCase
         $fields = array_column($this->filterCalls, 'field');
         $this->assertNotContains('price.from', $fields);
         $this->assertNotContains('price.to', $fields);
+    }
+
+    public function testAnEngineThatReadsBoundsFromTheConditionGetsThePriceFieldWithFromAndTo(): void
+    {
+        $search = $this->createMock(SearchInterface::class);
+        $search->method('search')->willReturn($this->searchResult([]));
+
+        [$provider] = $this->build(['search' => $search, 'engineResolver' => $this->engineResolver('elasticsuite')]);
+
+        $filters = SearchFilters::fromArray(['min_price' => 10.0, 'max_price' => 50.0]);
+        $provider->search($this->context(), 'widget', $filters, 10);
+
+        $this->assertContains(['field' => 'price', 'value' => '10', 'condition' => 'from'], $this->filterCalls);
+        $this->assertContains(['field' => 'price', 'value' => '50', 'condition' => 'to'], $this->filterCalls);
+        $fields = array_column($this->filterCalls, 'field');
+        $this->assertNotContains('price.from', $fields);
+        $this->assertNotContains('price.to', $fields);
+    }
+
+    public function testSearchGetsTheCriteriaObjectOfTheInterfaceFactoryWithTheBuiltValues(): void
+    {
+        $engineCriteria = new SearchCriteria();
+        $searchCriteriaFactory = $this->createMock(SearchCriteriaInterfaceFactory::class);
+        $searchCriteriaFactory->expects($this->once())->method('create')->willReturn($engineCriteria);
+
+        $filterGroups = [new FilterGroup()];
+        $sortOrders = [new SortOrder()];
+        $built = new SearchCriteria();
+        $built->setFilterGroups($filterGroups);
+        $built->setSortOrders($sortOrders);
+        $built->setPageSize(10);
+        $searchCriteriaBuilder = $this->createMock(SearchCriteriaBuilder::class);
+        $searchCriteriaBuilder->method('addFilter')->willReturnSelf();
+        $searchCriteriaBuilder->method('addSortOrder')->willReturnSelf();
+        $searchCriteriaBuilder->method('setPageSize')->willReturnSelf();
+        $searchCriteriaBuilder->method('create')->willReturn($built);
+
+        $search = $this->createMock(SearchInterface::class);
+        $search->expects($this->once())
+            ->method('search')
+            ->with($this->identicalTo($engineCriteria))
+            ->willReturn($this->searchResult([]));
+
+        [$provider] = $this->build([
+            'search' => $search,
+            'searchCriteriaBuilder' => $searchCriteriaBuilder,
+            'searchCriteriaFactory' => $searchCriteriaFactory,
+        ]);
+
+        $provider->search($this->context(), 'widget', null, 10);
+
+        $this->assertSame($filterGroups, $engineCriteria->getFilterGroups());
+        $this->assertSame($sortOrders, $engineCriteria->getSortOrders());
+        $this->assertSame(10, $engineCriteria->getPageSize());
+        $this->assertSame('quick_search_container', $engineCriteria->getRequestName());
+        $this->assertNull($engineCriteria->getCurrentPage());
     }
 
     public function testSwapsToTheContextStoreAndRestoresThePreviousStoreAfterSearch(): void
@@ -476,7 +571,9 @@ class FulltextSearchTest extends TestCase
             $this->categorySearchCriteriaBuilder(),
             $this->defaultStoreManager(),
             $this->allowedCategories(),
-            $this->passthroughBestsellerRank()
+            $this->passthroughBestsellerRank(),
+            $this->searchCriteriaFactory(),
+            $this->engineResolver()
         );
 
         $filters = SearchFilters::fromArray(['category_id' => 175, 'category' => 'Seating']);

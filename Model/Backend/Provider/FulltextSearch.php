@@ -4,8 +4,10 @@ declare(strict_types=1);
 namespace MageOS\AiShoppingAssistant\Model\Backend\Provider;
 
 use Magento\Catalog\Model\Product\Visibility;
+use Magento\Framework\Api\Filter;
 use Magento\Framework\Api\Search\SearchCriteria;
 use Magento\Framework\Api\Search\SearchCriteriaBuilder;
+use Magento\Framework\Api\Search\SearchCriteriaInterface;
 use Magento\Framework\Api\SortOrder;
 use MageOS\AiShoppingAssistant\Api\Backend\SearchProviderInterface;
 use MageOS\AiShoppingAssistant\Api\Data\SearchFiltersInterface;
@@ -25,7 +27,10 @@ class FulltextSearch implements SearchProviderInterface
         private readonly \Magento\Framework\Api\SearchCriteriaBuilder $categorySearchCriteriaBuilder,
         private readonly \Magento\Store\Model\StoreManagerInterface $storeManager,
         private readonly \MageOS\AiShoppingAssistant\Model\Backend\Provider\AllowedCategories $allowedCategories,
-        private readonly \MageOS\AiShoppingAssistant\Api\Backend\BestsellerRankInterface $bestsellerRank
+        private readonly \MageOS\AiShoppingAssistant\Api\Backend\BestsellerRankInterface $bestsellerRank,
+        private readonly \Magento\Framework\Api\Search\SearchCriteriaInterfaceFactory $searchCriteriaFactory,
+        private readonly \Magento\Framework\Search\EngineResolverInterface $engineResolver,
+        private readonly array $priceConditionEngines = []
     ) {
     }
 
@@ -154,15 +159,21 @@ class FulltextSearch implements SearchProviderInterface
         ?SearchFiltersInterface $filters
     ): void {
         if ($filters !== null && $filters->getMinPrice() !== null) {
-            $criteria->addFilter(
-                $this->filterBuilder->setField('price.from')->setValue((string)$filters->getMinPrice())->create()
-            );
+            $criteria->addFilter($this->priceFilter('from', $filters->getMinPrice()));
         }
         if ($filters !== null && $filters->getMaxPrice() !== null) {
-            $criteria->addFilter(
-                $this->filterBuilder->setField('price.to')->setValue((string)$filters->getMaxPrice())->create()
-            );
+            $criteria->addFilter($this->priceFilter('to', $filters->getMaxPrice()));
         }
+    }
+
+    private function priceFilter(string $bound, float $price): Filter
+    {
+        $this->filterBuilder->setValue((string)$price);
+        if (!in_array($this->engineResolver->getCurrentSearchEngine(), $this->priceConditionEngines, true)) {
+            return $this->filterBuilder->setField('price.' . $bound)->create();
+        }
+
+        return $this->filterBuilder->setField('price')->setConditionType($bound)->create();
     }
 
     private function listSortOrder(string $sort): array
@@ -189,7 +200,7 @@ class FulltextSearch implements SearchProviderInterface
         $this->storeManager->setCurrentStore($ctx->storeId);
 
         try {
-            $result = $this->search->search($searchCriteria);
+            $result = $this->search->search($this->engineCriteria($searchCriteria));
         } finally {
             $this->storeManager->setCurrentStore($previousStoreId);
         }
@@ -199,6 +210,16 @@ class FulltextSearch implements SearchProviderInterface
             $ids[] = (int)$document->getId();
         }
         return $ids;
+    }
+
+    private function engineCriteria(SearchCriteria $built): SearchCriteriaInterface
+    {
+        $criteria = $this->searchCriteriaFactory->create();
+        $criteria->setFilterGroups($built->getFilterGroups());
+        $criteria->setSortOrders($built->getSortOrders());
+        $criteria->setPageSize($built->getPageSize());
+        $criteria->setRequestName($built->getRequestName());
+        return $criteria;
     }
 
     private function categoryFilterValues(?SearchFiltersInterface $filters, int $storeId): array
