@@ -35,7 +35,16 @@ class NameMatch
         'out', 'up', 'only', 'still', 'same', 'different',
     ];
 
-    private const CATEGORY_CHECK_LIMIT = 5;
+    private const DESCRIPTIVE_WORDS = [
+        'black', 'white', 'grey', 'gray', 'red', 'orange', 'yellow', 'green', 'blue', 'navy', 'purple', 'pink',
+        'brown', 'beige', 'cream', 'ivory', 'tan', 'gold', 'golden', 'silver', 'bronze', 'brass', 'copper',
+        'chrome', 'clear', 'natural', 'oak', 'walnut', 'ash', 'teak', 'birch', 'maple', 'cherry', 'pine', 'bamboo',
+        'rattan', 'wicker', 'cane', 'leather', 'velvet', 'wool', 'linen', 'cotton', 'boucle', 'fabric', 'marble',
+        'stone', 'concrete', 'ceramic', 'porcelain', 'glass', 'metal', 'steel', 'aluminum', 'aluminium', 'iron',
+        'wood', 'wooden', 'plastic', 'acrylic', 'outdoor', 'indoor', 'small', 'large', 'round', 'square',
+    ];
+
+    private const CATEGORY_CHECK_LIMIT = 10;
 
     public function __construct(
         private readonly \MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface $backend,
@@ -56,7 +65,8 @@ class NameMatch
             return null;
         }
         try {
-            if ($this->isCategoryName($context, $query)) {
+            $categoryNames = $this->categoryNames($context, $query);
+            if ($this->isCategoryName($query, $categoryNames) || $this->describesAKind($needles, $categoryNames)) {
                 return null;
             }
             $records = $this->matches($context, $this->queries($query), $needles, max(1, $limit));
@@ -151,11 +161,50 @@ class NameMatch
         return false;
     }
 
-    private function isCategoryName(SessionContext $context, string $query): bool
+    private function categoryNames(SessionContext $context, string $query): array
+    {
+        $names = [];
+        foreach ($this->backend->searchCategories($context, $query, self::CATEGORY_CHECK_LIMIT) as $category) {
+            $names[] = $category->getName();
+        }
+        return $names;
+    }
+
+    private function describesAKind(array $needles, array $categoryNames): bool
+    {
+        $categoryWords = [];
+        foreach ($categoryNames as $name) {
+            array_push($categoryWords, ...$this->words($name));
+        }
+        $describes = false;
+        foreach ($needles as $needle) {
+            if (in_array($needle, self::DESCRIPTIVE_WORDS, true)) {
+                $describes = true;
+                continue;
+            }
+            if (in_array($needle, self::COMMON_WORDS, true) || $this->inWords($needle, $categoryWords)) {
+                continue;
+            }
+            return false;
+        }
+        return $describes;
+    }
+
+    private function inWords(string $needle, array $words): bool
+    {
+        foreach ($words as $word) {
+            if ($this->sameWord($needle, $word)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function isCategoryName(string $query, array $categoryNames): bool
     {
         $queryWords = $this->words($query);
-        foreach ($this->backend->searchCategories($context, $query, self::CATEGORY_CHECK_LIMIT) as $category) {
-            $nameWords = $this->words($category->getName());
+        foreach ($categoryNames as $categoryName) {
+            $nameWords = $this->words($categoryName);
             if (count($nameWords) !== count($queryWords)) {
                 continue;
             }

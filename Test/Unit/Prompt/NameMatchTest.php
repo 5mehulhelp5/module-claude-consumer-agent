@@ -227,6 +227,32 @@ class NameMatchTest extends TestCase
         $this->assertNull($this->nameMatch($backend)->text($this->context(), new SessionState(), 'wine glasses', 12));
     }
 
+    public function testAColourOrMaterialWithAKindOfProductRunsNoProductSearch(): void
+    {
+        $backend = $this->createMock(StorefrontBackendInterface::class);
+        $backend->method('searchCategories')->willReturn([
+            new \MageOS\AiShoppingAssistant\Model\Data\CategoryMatch(31, 'Table Lamps'),
+            new \MageOS\AiShoppingAssistant\Model\Data\CategoryMatch(14, 'Sofas'),
+        ]);
+        $backend->expects($this->never())->method('searchProducts');
+
+        foreach (['orange lamps', 'leather sofas', 'Orange Lamp'] as $message) {
+            $this->assertNull($this->nameMatch($backend)->text($this->context(), new SessionState(), $message, 12));
+        }
+    }
+
+    public function testABrandWithACategoryOfItsOwnStillMatchesItsProducts(): void
+    {
+        $backend = $this->backendReturning(['emeco on & on' => [$this->product('202', 'Emeco On & On Stacking Chair')]]);
+        $backend->method('searchCategories')->willReturn([
+            new \MageOS\AiShoppingAssistant\Model\Data\CategoryMatch(388, 'Emeco'),
+        ]);
+
+        $note = $this->nameMatch($backend)->text($this->context(), new SessionState(), 'emeco on and on', 12);
+
+        $this->assertStringContainsString('Emeco On & On Stacking Chair (product_id 202)', (string)$note);
+    }
+
     public function testACategoryThatOnlySharesSomeWordsStillSearchesProducts(): void
     {
         $backend = $this->backendReturning(['neat chair' => [$this->product('101', 'Blu Dot Neat Chair')]]);
