@@ -79,7 +79,7 @@ class NameMatchTest extends TestCase
         $this->assertTrue($state->hasSeen('202'));
     }
 
-    public function testAccentsAndPluralsMatchAsWordPrefixes(): void
+    public function testAccentsAndPluralsMatchAsWholeWords(): void
     {
         $backend = $this->backendReturning(['10 autre chaise' => [
             $this->product('301', '10 Autres Chaises'),
@@ -191,5 +191,51 @@ class NameMatchTest extends TestCase
             ->willReturn([]);
 
         $this->nameMatch($backend)->text($this->context(), new SessionState(), '  neat chair ', 12);
+    }
+
+    public function testAWordFragmentDoesNotMatchALongerTitleWord(): void
+    {
+        $backend = $this->backendReturning([
+            'a gen t' => [$this->product('701', 'The Gentle Art of Swedish Death Cleaning')],
+            'more' => [$this->product('702', 'Blu Dot Moreover Extension Dining Table')],
+        ]);
+        $state = new SessionState();
+
+        $this->assertNull($this->nameMatch($backend)->text($this->context(), $state, 'a gen t', 12));
+        $this->assertSame([], $state->seenProducts);
+    }
+
+    public function testAMessageOfCommonWordsRunsNoSearch(): void
+    {
+        $backend = $this->createMock(StorefrontBackendInterface::class);
+        $backend->expects($this->never())->method('searchProducts');
+        $backend->expects($this->never())->method('searchCategories');
+
+        foreach (['more', 'ok', 'is the', 'yes', 'agent', 'OK!'] as $message) {
+            $this->assertNull($this->nameMatch($backend)->text($this->context(), new SessionState(), $message, 12));
+        }
+    }
+
+    public function testACategoryNameRunsNoProductSearch(): void
+    {
+        $backend = $this->createMock(StorefrontBackendInterface::class);
+        $backend->method('searchCategories')->willReturn([
+            new \MageOS\AiShoppingAssistant\Model\Data\CategoryMatch(772, 'Wine Glasses'),
+        ]);
+        $backend->expects($this->never())->method('searchProducts');
+
+        $this->assertNull($this->nameMatch($backend)->text($this->context(), new SessionState(), 'wine glasses', 12));
+    }
+
+    public function testACategoryThatOnlySharesSomeWordsStillSearchesProducts(): void
+    {
+        $backend = $this->backendReturning(['neat chair' => [$this->product('101', 'Blu Dot Neat Chair')]]);
+        $backend->method('searchCategories')->willReturn([
+            new \MageOS\AiShoppingAssistant\Model\Data\CategoryMatch(14, 'Dining Chairs'),
+        ]);
+
+        $note = $this->nameMatch($backend)->text($this->context(), new SessionState(), 'neat chair', 12);
+
+        $this->assertStringContainsString('Blu Dot Neat Chair (product_id 101)', (string)$note);
     }
 }

@@ -15,7 +15,7 @@ function loadComponents(store) {
         'window',
         'Alpine',
         'hyva',
-        source + '\nreturn {initAiAgentTranscript: initAiAgentTranscript, initAiAgentDrawer: initAiAgentDrawer};'
+        source + '\nreturn {initAiAgentTranscript: initAiAgentTranscript, initAiAgentDrawer: initAiAgentDrawer, initAiAgentCard: initAiAgentCard};'
     )(window, Alpine, {});
 }
 
@@ -75,4 +75,50 @@ test('the Hyvä transcript turns a markdown link to the store into an anchor and
     assert.equal(paragraph.childNodes[1].tagName, 'A');
     assert.equal(paragraph.childNodes[1].href, 'https://shop.test/contact/');
     assert.equal(paragraph.childNodes[3].nodeValue, 'them');
+});
+
+function card(message) {
+    const component = loadComponents({transcript: [message]}).initAiAgentCard();
+    const attributes = {};
+    const watchers = [];
+    component.m = message;
+    component.card = {component: 'products', id: 'c1'};
+    component.$el = {
+        inert: false,
+        style: {},
+        attributes: attributes,
+        setAttribute: (name, value) => {
+            attributes[name] = value;
+        },
+        removeAttribute: (name) => {
+            delete attributes[name];
+        },
+        appendChild: () => undefined
+    };
+    component.$nextTick = () => undefined;
+    component.$watch = (getter, callback) => watchers.push({getter: getter, callback: callback});
+    component.init();
+    return {component: component, watchers: watchers};
+}
+
+test('a card is held, dimmed and inert while its reply text has not arrived', () => {
+    const {component} = card({role: 'assistant', text: '', cards: [{}], streaming: true});
+    assert.equal(component.$el.inert, true);
+    assert.equal(component.$el.style.opacity, '0.45');
+    assert.equal(component.$el.attributes['aria-busy'], 'true');
+});
+
+test('a card is released when the reply text arrives', () => {
+    const message = {role: 'assistant', text: '', cards: [{}], streaming: true};
+    const {component, watchers} = card(message);
+    message.text = 'Here are three.';
+    watchers.forEach((watcher) => watcher.callback(watcher.getter()));
+    assert.equal(component.$el.inert, false);
+    assert.equal(component.$el.style.opacity, '');
+    assert.equal(component.$el.attributes['aria-busy'], undefined);
+});
+
+test('a card in a finished turn without text is not held', () => {
+    const {component} = card({role: 'assistant', text: '', cards: [{}], streaming: false});
+    assert.equal(component.$el.inert, false);
 });

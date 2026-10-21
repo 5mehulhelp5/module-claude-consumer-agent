@@ -419,7 +419,18 @@ class Orchestrator
 
     public function interrupt(Binding $binding): void
     {
-        $this->logger->info(sprintf('turn interrupted session=%s', $this->digest($binding->sessionId)));
+        $this->logger->info(sprintf(
+            'turn interrupted session=%s, the client left; finishing the turn without streaming',
+            $this->digest($binding->sessionId)
+        ));
+    }
+
+    public function finishedAfterInterrupt(Binding $binding): void
+    {
+        $this->logger->info(sprintf(
+            'turn finished after the client left session=%s, the reply is stored for the next visit',
+            $this->digest($binding->sessionId)
+        ));
     }
 
     private function roundOptions(AgentConfig $config, string|array $toolChoice): array

@@ -96,9 +96,10 @@ class EventStream extends AbstractResult
     {
         $agentConfig = $this->storeConfig->agent($this->context->storeId);
         $lastBeat = time();
-        $onWaiting = function () use (&$lastBeat, $agentConfig): void {
+        $clientLeft = false;
+        $onWaiting = function () use (&$lastBeat, &$clientLeft, $agentConfig): void {
             $now = time();
-            if ($now - $lastBeat < $agentConfig->heartbeatSeconds) {
+            if ($clientLeft || $now - $lastBeat < $agentConfig->heartbeatSeconds) {
                 return;
             }
             $this->write(": ping\n\n");
@@ -106,12 +107,18 @@ class EventStream extends AbstractResult
         };
         try {
             foreach ($this->orchestrator->streamTurn($this->binding, $this->message, $this->context, $onWaiting) as $event) {
-                $this->write(SseFrame::encode($event));
-                if (!connection_aborted()) {
+                if ($clientLeft) {
                     continue;
                 }
+                $this->write(SseFrame::encode($event));
+                if (!$this->clientLeft()) {
+                    continue;
+                }
+                $clientLeft = true;
                 $this->orchestrator->interrupt($this->binding);
-                break;
+            }
+            if ($clientLeft) {
+                $this->orchestrator->finishedAfterInterrupt($this->binding);
             }
         } catch (\Throwable $exception) {
             $this->logError($exception);
@@ -194,5 +201,10 @@ class EventStream extends AbstractResult
     {
         echo $frame;
         flush();
+    }
+
+    protected function clientLeft(): bool
+    {
+        return connection_aborted() === 1;
     }
 }

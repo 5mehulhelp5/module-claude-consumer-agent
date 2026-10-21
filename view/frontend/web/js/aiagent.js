@@ -635,6 +635,21 @@ function initAiAgentCard() {
                 }
                 this.$el.appendChild(template.content.cloneNode(true));
             });
+            this.hold(this.waitsForText());
+            this.$watch(() => this.waitsForText(), (waiting) => this.hold(waiting));
+        },
+        waitsForText() {
+            return this.m.streaming === true && this.m.text === '';
+        },
+        hold(waiting) {
+            this.$el.inert = waiting;
+            this.$el.style.transition = 'opacity 150ms';
+            this.$el.style.opacity = waiting ? '0.45' : '';
+            if (waiting) {
+                this.$el.setAttribute('aria-busy', 'true');
+                return;
+            }
+            this.$el.removeAttribute('aria-busy');
         }
     };
 }

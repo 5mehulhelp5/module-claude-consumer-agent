@@ -23,6 +23,20 @@ class NameMatch
 
     private const STOPWORDS = ['and', 'the', 'a', 'an', 'of', 'for', 'with', '&'];
 
+    private const COMMON_WORDS = [
+        'ok', 'okay', 'yes', 'yeah', 'yep', 'no', 'nope', 'not', 'more', 'less', 'is', 'are', 'was', 'be',
+        'it', 'its', 'this', 'that', 'these', 'those', 'what', 'which', 'who', 'how', 'why', 'when', 'where',
+        'agent', 'human', 'person', 'help', 'hi', 'hello', 'hey', 'thanks', 'thank', 'you', 'your', 'please',
+        'sure', 'show', 'me', 'my', 'can', 'do', 'does', 'have', 'has', 'any', 'some', 'all', 'other', 'others',
+        'else', 'again', 'next', 'back', 'good', 'great', 'nice', 'fine', 'maybe', 'just', 'also', 'too', 'very',
+        'much', 'many', 'one', 'there', 'here', 'in', 'on', 'at', 'to', 'from', 'by', 'about', 'like', 'want',
+        'need', 'see', 'look', 'find', 'get', 'buy', 'price', 'cost', 'stock', 'sale', 'new', 'now', 'or',
+        'will', 'would', 'could', 'should', 'them', 'they', 'we', 'us', 'our', 'so', 'if', 'then', 'than',
+        'out', 'up', 'only', 'still', 'same', 'different',
+    ];
+
+    private const CATEGORY_CHECK_LIMIT = 5;
+
     public function __construct(
         private readonly \MageOS\AiShoppingAssistant\Api\StorefrontBackendInterface $backend,
         private readonly \MageOS\AiShoppingAssistant\Model\Agent\Fencing\Sanitizer $sanitizer,
@@ -38,10 +52,13 @@ class NameMatch
             return null;
         }
         $needles = $this->significantWords($query);
-        if ($needles === []) {
+        if (!$this->hasDistinctiveWord($needles)) {
             return null;
         }
         try {
+            if ($this->isCategoryName($context, $query)) {
+                return null;
+            }
             $records = $this->matches($context, $this->queries($query), $needles, max(1, $limit));
         } catch (\Throwable $exception) {
             $this->logger->warning(sprintf(
@@ -99,7 +116,7 @@ class NameMatch
         foreach ($needles as $needle) {
             $found = false;
             foreach ($titleWords as $titleWord) {
-                if (str_starts_with($titleWord, $needle)) {
+                if ($this->sameWord($needle, $titleWord)) {
                     $found = true;
                     break;
                 }
@@ -109,6 +126,51 @@ class NameMatch
             }
         }
         return true;
+    }
+
+    private function sameWord(string $a, string $b): bool
+    {
+        if ($a === $b) {
+            return true;
+        }
+        foreach (['s', 'es'] as $suffix) {
+            if ($a . $suffix === $b || $b . $suffix === $a) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function hasDistinctiveWord(array $needles): bool
+    {
+        foreach ($needles as $needle) {
+            if (!in_array($needle, self::COMMON_WORDS, true)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function isCategoryName(SessionContext $context, string $query): bool
+    {
+        $queryWords = $this->words($query);
+        foreach ($this->backend->searchCategories($context, $query, self::CATEGORY_CHECK_LIMIT) as $category) {
+            $nameWords = $this->words($category->getName());
+            if (count($nameWords) !== count($queryWords)) {
+                continue;
+            }
+            $same = true;
+            foreach ($queryWords as $index => $word) {
+                if (!$this->sameWord($word, $nameWords[$index])) {
+                    $same = false;
+                    break;
+                }
+            }
+            if ($same) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private function significantWords(string $text): array

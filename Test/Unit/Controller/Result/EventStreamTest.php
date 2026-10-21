@@ -137,6 +137,45 @@ class EventStreamTest extends \PHPUnit\Framework\TestCase
         return $result->setTurn($binding, $message, $context, $slot);
     }
 
+    public function testAClientThatLeavesStopsTheWritesButTheTurnRunsToTheEnd(): void
+    {
+        $consumed = [];
+        $generator = (static function () use (&$consumed): \Generator {
+            foreach (['cards', 'text', 'done'] as $step) {
+                $consumed[] = $step;
+                yield $step === 'done' ? Event::turnComplete('end_turn', [], 10, 0) : Event::textDelta($step);
+            }
+        })();
+        $orchestrator = $this->createMock(Orchestrator::class);
+        $orchestrator->method('streamTurn')->willReturn($generator);
+        $orchestrator->expects($this->once())->method('interrupt');
+        $orchestrator->expects($this->once())->method('finishedAfterInterrupt');
+        $result = new class($orchestrator, $this->storeConfig(), $this->createMock(LoggerInterface::class)) extends EventStream {
+            public array $writes = [];
+
+            protected function write(string $frame): void
+            {
+                $this->writes[] = $frame;
+            }
+
+            protected function drainOutputBuffers(): void
+            {
+            }
+
+            protected function clientLeft(): bool
+            {
+                return count($this->writes) >= 2;
+            }
+        };
+        $result->setTurn($this->binding(), 'hello', $this->context(), null);
+
+        $result->renderResult($this->responseMock());
+
+        $this->assertSame(['cards', 'text', 'done'], $consumed);
+        $this->assertCount(2, $result->writes);
+        $this->assertStringContainsString('cards', $result->writes[1]);
+    }
+
     public function testTwoEventsWriteTheOpenCommentTwoFramesAndReleaseTheSlot(): void
     {
         $lockManager = $this->createMock(LockManagerInterface::class);
