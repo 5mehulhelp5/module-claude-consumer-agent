@@ -15,7 +15,7 @@ function loadComponents(store) {
         'window',
         'Alpine',
         'hyva',
-        source + '\nreturn {initAiAgentTranscript: initAiAgentTranscript, initAiAgentDrawer: initAiAgentDrawer, initAiAgentCard: initAiAgentCard};'
+        source + '\nreturn {initAiAgentTranscript: initAiAgentTranscript, initAiAgentDrawer: initAiAgentDrawer, initAiAgentCard: initAiAgentCard, initAiAgentAfterTyping: initAiAgentAfterTyping};'
     )(window, Alpine, {});
 }
 
@@ -121,4 +121,28 @@ test('a card is released when the reply text arrives', () => {
 test('a card in a finished turn without text is not held', () => {
     const {component} = card({role: 'assistant', text: '', cards: [{}], streaming: false});
     assert.equal(component.$el.inert, false);
+});
+
+test('an assistant message with only text below its cards keeps its bubble', () => {
+    assert.equal(bubble({role: 'assistant', text: '', after: 'The store has 116.', cards: [], streaming: false}).isVisible(), true);
+});
+
+test('typing dots show below the cards while the answer after them is pending', () => {
+    const components = loadComponents({transcript: []});
+    const typing = components.initAiAgentAfterTyping();
+    typing.m = {streaming: true, afterCards: true, after: ''};
+    assert.equal(typing.isTyping(), true);
+    typing.m = {streaming: true, afterCards: true, after: 'The store has 116.'};
+    assert.equal(typing.isTyping(), false);
+    typing.m = {streaming: true, afterCards: false, after: ''};
+    assert.equal(typing.isTyping(), false);
+});
+
+test('the cart view summary prefers the answer below the cards', () => {
+    const drawer = loadComponents({transcript: [
+        {role: 'user', text: 'orange lamps'},
+        {role: 'assistant', text: 'Let me look.', after: 'The store has 116 lighting products in orange.', cards: [{component: 'products', payload: {}, id: 'p1'}]}
+    ]}).initAiAgentDrawer();
+
+    assert.equal(drawer.lastLine(), 'The store has 116 lighting products in orange.');
 });

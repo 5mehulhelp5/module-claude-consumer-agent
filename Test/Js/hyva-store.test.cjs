@@ -91,3 +91,31 @@ test('an error with a wait holds every send until the wait ends', async () => {
     assert.equal(store.transcript.length, 4);
     assert.deepEqual(store.window.aiAgentReader.runs, ['hello', 'my order came broken']);
 });
+
+test('reply text that follows cards after a note goes below the cards', () => {
+    const store = loadStore({});
+    store.ready = true;
+    store.started = true;
+    store.send('orange lamps');
+    store.apply('text_delta', {text: 'Let me look across lighting for orange.'});
+    store.apply('ui', {component: 'products', payload: {}, stream_id: 'p1'});
+    store.apply('text_delta', {text: '\n\n'});
+    store.apply('text_delta', {text: 'The store has 116 lighting products in orange.'});
+
+    const last = store.transcript[store.transcript.length - 1];
+    assert.equal(last.text, 'Let me look across lighting for orange.');
+    assert.equal(last.after.trim(), 'The store has 116 lighting products in orange.');
+});
+
+test('reply text that arrives after cards with no earlier text stays above the cards', () => {
+    const store = loadStore({});
+    store.ready = true;
+    store.started = true;
+    store.send('tell me about this product');
+    store.apply('ui', {component: 'products', payload: {}, stream_id: 'p1'});
+    store.apply('text_delta', {text: 'It starts at $1,102 CAD.'});
+
+    const last = store.transcript[store.transcript.length - 1];
+    assert.equal(last.text, 'It starts at $1,102 CAD.');
+    assert.equal(last.after, '');
+});
