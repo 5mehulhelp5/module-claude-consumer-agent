@@ -22,6 +22,12 @@ use Magento\Framework\Escaper;
             <template x-for="card in m.cards" :key="card.id">
                 <div x-data="initAiAgentCard"></div>
             </template>
+            <div x-data="initAiAgentAfterBubble" x-show="m.after" class="mt-2"></div>
+            <div x-data="initAiAgentAfterTyping" x-show="isTyping" class="flex items-center gap-1 py-1" aria-hidden="true">
+                <span class="w-2 h-2 rounded-full bg-secondary animate-bounce"></span>
+                <span class="w-2 h-2 rounded-full bg-secondary animate-bounce [animation-delay:150ms]"></span>
+                <span class="w-2 h-2 rounded-full bg-secondary animate-bounce [animation-delay:300ms]"></span>
+            </div>
             <p x-show="m.notice" x-text="m.notice" class="mt-2 text-sm text-status-error"></p>
             <button
                 type="button"

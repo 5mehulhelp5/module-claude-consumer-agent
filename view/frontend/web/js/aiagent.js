@@ -234,9 +234,9 @@ function initAiAgentDrawer() {
         },
         lastLine() {
             const transcript = Alpine.store('aiAgent').transcript;
-            const assistantMessages = transcript.filter((message) => message.role === 'assistant' && !!message.text);
+            const assistantMessages = transcript.filter((message) => message.role === 'assistant' && (!!message.text || !!message.after));
             const lastMessage = assistantMessages[assistantMessages.length - 1];
-            return lastMessage ? lastMessage.text.slice(0, 80) : '';
+            return lastMessage ? (lastMessage.after || lastMessage.text).slice(0, 80) : '';
         },
         listeners: {
             ['@ai-agent:open.window'](event) {
@@ -469,12 +469,13 @@ function renderAiAgentMarkdown(container, text) {
 
 function initAiAgentBubble() {
     return {
+        field: 'text',
         rafId: null,
         pendingText: null,
         init() {
-            this.renderText(this.m.text);
-            this.$watch('m.text', (value) => {
-                this.scheduleRender(value);
+            this.renderText(this.m[this.field] || '');
+            this.$watch(() => this.m[this.field], (value) => {
+                this.scheduleRender(value || '');
             });
             this.$watch('m.streaming', (streaming) => {
                 if (!streaming) {
@@ -501,13 +502,25 @@ function initAiAgentBubble() {
                 window.cancelAnimationFrame(this.rafId);
                 this.rafId = null;
             }
-            this.renderText(this.pendingText !== null ? this.pendingText : this.m.text);
+            this.renderText(this.pendingText !== null ? this.pendingText : (this.m[this.field] || ''));
         },
         renderText(text) {
             while (this.$el.firstChild) {
                 this.$el.removeChild(this.$el.firstChild);
             }
             renderAiAgentMarkdown(this.$el, text);
+        }
+    };
+}
+
+function initAiAgentAfterBubble() {
+    return Object.assign(initAiAgentBubble(), {field: 'after'});
+}
+
+function initAiAgentAfterTyping() {
+    return {
+        isTyping() {
+            return this.m.streaming === true && this.m.afterCards === true && !this.m.after;
         }
     };
 }
@@ -533,6 +546,7 @@ function initAiAgentTranscript() {
             return this.m.role !== 'assistant'
                 || this.m.streaming === true
                 || !!this.m.text
+                || !!this.m.after
                 || (Array.isArray(this.m.cards) && this.m.cards.length > 0)
                 || !!this.m.notice;
         },
@@ -569,7 +583,7 @@ function initAiAgentTranscript() {
             if (!last) {
                 return 0;
             }
-            const textLength = last.text ? last.text.length : 0;
+            const textLength = (last.text ? last.text.length : 0) + (last.after ? last.after.length : 0);
             const cardCount = Array.isArray(last.cards) ? last.cards.length : 0;
             return textLength + cardCount;
         },
@@ -966,6 +980,8 @@ function registerAiAgentComponents() {
     Alpine.data('initAiAgentOverlay', initAiAgentOverlay);
     Alpine.data('initAiAgentStart', initAiAgentStart);
     Alpine.data('initAiAgentBubble', initAiAgentBubble);
+    Alpine.data('initAiAgentAfterBubble', initAiAgentAfterBubble);
+    Alpine.data('initAiAgentAfterTyping', initAiAgentAfterTyping);
     Alpine.data('initAiAgentTranscript', initAiAgentTranscript);
     Alpine.data('initAiAgentTypingIndicator', initAiAgentTypingIndicator);
     Alpine.data('initAiAgentCard', initAiAgentCard);

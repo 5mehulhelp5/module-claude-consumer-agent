@@ -508,11 +508,91 @@ class OrchestratorTest extends TestCase
         $this->assertCount(2, $client->calls);
         $this->assertSame('none', $client->calls[1]['options']['tool_choice']);
         $messages = $client->calls[1]['request']->getMessages();
-        $this->assertStringContainsString('no text from you this turn', $messages[count($messages) - 1]->getContent());
-        $this->assertStringContainsString('Notes you write before a tool call are hidden from the customer', $messages[count($messages) - 1]->getContent());
+        $this->assertStringContainsString('no answer from you yet', $messages[count($messages) - 1]->getContent());
+        $this->assertStringContainsString('notes you write before a tool call can be hidden from the customer', $messages[count($messages) - 1]->getContent());
         $texts =array_values(array_filter($events, static fn ($event): bool => $event->type === 'text_delta'));
         $this->assertSame('There are 110 of them.', $texts[0]->data['text']);
         $this->assertSame('turn_complete', $events[count($events) - 1]->type);
+    }
+
+    public function testANoteBeforeALookupDoesNotCountAsTheAnswer(): void
+    {
+        $client = $this->scriptedClient()
+            ->addToolRound([['id' => 'tu1', 'name' => 'browse', 'input' => []]], 'Let me look across lighting for orange.')
+            ->addToolRound([['id' => 'tu2', 'name' => 'present_suggestions', 'input' => ['suggestions' => ['Orange pendants']]]])
+            ->addTextRound('The store has 116 lighting products in orange.');
+        $definitions = [
+            $this->definitionForHandler('browse', ToolOutcome::ok('116 products')),
+            $this->presentationDefinition('present_suggestions'),
+        ];
+        [$orchestrator] = $this->buildOrchestrator($client, $definitions);
+        $binding = $this->binding();
+
+        $events = iterator_to_array($orchestrator->streamTurn($binding, 'orange lamps', $binding->context), false);
+
+        $this->assertCount(3, $client->calls);
+        $this->assertSame('none', $client->calls[2]['options']['tool_choice']);
+        $messages = $client->calls[2]['request']->getMessages();
+        $this->assertStringContainsString('Anything you wrote before your last lookup was a working note', $messages[count($messages) - 1]->getContent());
+        $texts = implode('', array_map(
+            static fn ($event): string => $event->data['text'],
+            array_values(array_filter($events, static fn ($event): bool => $event->type === 'text_delta'))
+        ));
+        $this->assertStringContainsString('The store has 116 lighting products in orange.', $texts);
+        $this->assertSame('turn_complete', $events[count($events) - 1]->type);
+    }
+
+    public function testTextAfterTheLastLookupNeedsNoExtraRound(): void
+    {
+        $client = $this->scriptedClient()
+            ->addToolRound([['id' => 'tu1', 'name' => 'browse', 'input' => []]], 'Let me look.')
+            ->addToolRound(
+                [['id' => 'tu2', 'name' => 'present_suggestions', 'input' => ['suggestions' => ['Orange pendants']]]],
+                'The store has 116 lighting products in orange.'
+            );
+        $definitions = [
+            $this->definitionForHandler('browse', ToolOutcome::ok('116 products')),
+            $this->presentationDefinition('present_suggestions'),
+        ];
+        [$orchestrator] = $this->buildOrchestrator($client, $definitions);
+        $binding = $this->binding();
+
+        $events = iterator_to_array($orchestrator->streamTurn($binding, 'orange lamps', $binding->context), false);
+
+        $this->assertCount(2, $client->calls);
+        $this->assertSame('end_turn', $events[count($events) - 1]->data['stop_reason']);
+    }
+
+    public function testAnAnswerBesideThePresentationNeedsNoExtraRound(): void
+    {
+        $client = $this->scriptedClient()->addToolRound(
+            [['id' => 'tu1', 'name' => 'present_suggestions', 'input' => ['suggestions' => ['Show more']]]],
+            'It ships in 8 to 10 weeks.'
+        );
+        [$orchestrator] = $this->buildOrchestrator($client, [$this->presentationDefinition('present_suggestions')]);
+        $binding = $this->binding();
+
+        $events = iterator_to_array($orchestrator->streamTurn($binding, 'lead time?', $binding->context), false);
+
+        $this->assertCount(1, $client->calls);
+        $this->assertSame('end_turn', $events[count($events) - 1]->data['stop_reason']);
+    }
+
+    public function testTheLastRoundCarriesTheOwedNoteWhenNoAnswerFollowedTheLookups(): void
+    {
+        $client = $this->scriptedClient()
+            ->addToolRound([['id' => 'tu1', 'name' => 'browse', 'input' => []]], 'Checking the cart line.')
+            ->addTextRound('It ships within 48 hours.');
+        $definitions = [$this->definitionForHandler('browse', ToolOutcome::ok('ships in 48 hours'))];
+        [$orchestrator] = $this->buildOrchestrator($client, $definitions, ['ai_integration/aiagent/limits/max_tool_iterations' => '1']);
+        $binding = $this->binding();
+
+        iterator_to_array($orchestrator->streamTurn($binding, 'when will it arrive?', $binding->context), false);
+
+        $this->assertCount(2, $client->calls);
+        $this->assertSame('none', $client->calls[1]['options']['tool_choice']);
+        $messages = $client->calls[1]['request']->getMessages();
+        $this->assertStringContainsString('no answer from you yet', $messages[count($messages) - 1]->getContent());
     }
 
     public function testMaxTokensEndsTheTurn(): void

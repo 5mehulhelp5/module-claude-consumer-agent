@@ -34,9 +34,10 @@ class Orchestrator
 
     private const BUSY_MESSAGE = 'The assistant is busy. Please try again in a few seconds.';
 
-    private const TEXT_OWED_NOTE = ' The customer sees these components but no text from you this turn. Notes you write before a tool call '
-        . 'are hidden from the customer, so they have not read any answer yet. Write your complete answer to their message now, '
-        . 'as if for the first time, without referring to earlier text and without repeating what the components show.';
+    private const TEXT_OWED_NOTE = ' The customer sees these components but no answer from you yet. Anything you wrote before your last '
+        . 'lookup was a working note, and notes you write before a tool call can be hidden from the customer. Write your complete '
+        . 'answer to their message now, without repeating or pointing to your earlier notes and without repeating what the '
+        . 'components show.';
 
     private const SUMMARY_MAX_CHARS = 200;
 
@@ -158,6 +159,7 @@ class Orchestrator
         $modelId = $config->modelId;
         $client = null;
         $textTail = '';
+        $answerText = '';
         $textBreak = false;
         $textOwed = false;
         $textAsked = false;
@@ -210,6 +212,7 @@ class Orchestrator
                                 }
                                 $textBreak = false;
                                 $textTail = $item->text;
+                                $answerText .= $item->text;
                                 yield Event::textDelta($item->text);
                                 continue;
                             }
@@ -217,6 +220,9 @@ class Orchestrator
                                 $textBreak = true;
                                 $outcome = $executor->dispatch($item->name, $item->input, $item->id);
                                 $settled[$item->id] = $outcome;
+                                if (!$executor->endsClean($item->name, $outcome)) {
+                                    $answerText = '';
+                                }
                                 yield Event::toolCall(
                                     $item->name,
                                     $item->id,
@@ -363,7 +369,8 @@ class Orchestrator
                     ];
                 }
                 $closes = $config->closeOnPresentation && $history->roundClosesTurn($toolUses, $settled, $executor);
-                $textOwed = $closes && !$textAsked && $textTail === '' && $blocks !== [];
+                $lastChance = $round + 1 >= $config->maxToolIterations || microtime(true) >= $deadline;
+                $textOwed = ($closes || $lastChance) && !$textAsked && trim($answerText) === '' && $blocks !== [];
                 $textAsked = $textAsked || $textOwed;
                 if ($textOwed) {
                     $blocks[count($blocks) - 1]['content'] .= self::TEXT_OWED_NOTE;
